@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958733498686",
+    "project_id": "elearning-app-a6e15",
+    "storage_bucket": "elearning-app-a6e15.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958733498686:android:ec919230808af1a2f0d46f",
+        "android_client_info": {
+          "package_name": "com.example.e_leaningapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEatVnKqV7uiRj71fGHStv-eyP6Wd3BUw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

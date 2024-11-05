@@ -1,0 +1,15 @@
+export '../providers/admin_provider.dart';
+export '../providers/all_courses_provider.dart';
+export '../providers/auth_provider.dart';
+export '../providers/banners_provider.dart';
+export '../providers/categories_provider.dart';
+export '../providers/course_provider.dart';
+export '../providers/registration_provider.dart';
+export '../providers/lecture_provider.dart';
+export '../providers/notification_provider.dart';
+export '../providers/search_engine_provider.dart';
+export '../providers/theme_provider.dart';
+export '../providers/user_provider.dart';
+export '../providers/internet_connection_provider.dart';
+export '../providers/language_provider.dart';
+export '../providers/quiz_provider.dart';
