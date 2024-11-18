@@ -86,11 +86,15 @@ class MessageLookup extends MessageLookupByLibrary {
             "ពេលនេះមិនមានវគ្គសិក្សាដែលអាចប្រើបានទេ! ទាញចុះដើម្បីបន្ទាន់សម័យ។"),
         "noCoursesFoundForThisCategory": MessageLookupByLibrary.simpleMessage(
             "មិនមានវគ្គសិក្សាសម្រាប់ប្រភេទនេះទេ។"),
+        "noDownloadedVideosFound":
+            MessageLookupByLibrary.simpleMessage("គ្មានវីដេអូបានទាញយកទេ"),
         "noMoreCoursesToLoad": MessageLookupByLibrary.simpleMessage(
             "មិនមានវគ្គសិក្សាដែលអាចផ្ទុកបានទៀតទេ។"),
         "noMoreData": m2,
         "noRegisteredCoursesFound": MessageLookupByLibrary.simpleMessage(
             "មិនមានវគ្គសិក្សាដែលបានចុះឈ្មោះទេ។"),
+        "noResultsFound":
+            MessageLookupByLibrary.simpleMessage("រកមិនឃើញលទ្ធផល"),
         "no_button": MessageLookupByLibrary.simpleMessage("អត់អីទេ!"),
         "no_more_notifications": MessageLookupByLibrary.simpleMessage(
             "មិនមានការជូនដំណឹងបន្ថែមទៀតដើម្បីផ្ទុក។"),
@@ -117,10 +121,13 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("បញ្ចេញដើម្បីបន្ទាន់សម័យ"),
         "searchCourses":
             MessageLookupByLibrary.simpleMessage("ស្វែងរកវគ្គសិក្សា"),
+        "searchHint": MessageLookupByLibrary.simpleMessage("ស្វែងរក៖ មេរៀន"),
         "selectAssetsTitle":
             MessageLookupByLibrary.simpleMessage("ជ្រើសរើសរូបភាព"),
         "settings": MessageLookupByLibrary.simpleMessage("ការកំណត់"),
         "settingsTitle": MessageLookupByLibrary.simpleMessage("ការកំណត់"),
+        "startSearching": MessageLookupByLibrary.simpleMessage(
+            "ចាប់ផ្តើមស្វែងរកដោយការសរសេរចូលទីនេះ"),
         "students": MessageLookupByLibrary.simpleMessage("សិស្ស"),
         "today": MessageLookupByLibrary.simpleMessage("ថ្ងៃនេះ"),
         "videoNotFound": m3,

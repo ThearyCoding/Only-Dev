@@ -5,6 +5,7 @@ import '../di/dependency_injection.dart';
 import '../export/export.dart';
 import '../service/firebase/firebase_api_courses.dart';
 import '../service/firebase/firebase_api_quiz.dart';
+
 class CourseProvider extends ChangeNotifier {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
   final FirebaseApiCourses _apiCourses = locator<FirebaseApiCourses>();
@@ -19,15 +20,18 @@ class CourseProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingCourseByCategoryId = false;
 
+  bool _isLoadingRecentCourses = false;
+  bool _isLoadingPopularCourses = false;
+
   CourseModel? _course;
   AdminModel? _admin;
   bool _isLoadingCourseDetail = false;
-  
+
   bool _hasFetchedRecentCourses = false;
   bool _hasFetchedPopularCourses = false;
-  
-  String? _firstVideoUrl; // New variable to store the first video URL
-  bool _isLoadingFirstVideo = false; // New variable to manage loading state
+
+  String? _firstVideoUrl;
+  bool _isLoadingFirstVideo = false;
 
   // Getters
   List<CourseModel> get courses => _courses;
@@ -44,13 +48,15 @@ class CourseProvider extends ChangeNotifier {
   bool get isLoadingCourseDetail => _isLoadingCourseDetail;
   bool get isLoadingCourseByCategoryId => _isLoadingCourseByCategoryId;
   String? get firstVideoUrl => _firstVideoUrl;
-  bool get isLoadingFirstVideo => _isLoadingFirstVideo; 
+  bool get isLoadingFirstVideo => _isLoadingFirstVideo;
   DocumentSnapshot? get snapshot => _lastDocument;
-  
+
+  bool get isLoadingRecentCourses => _isLoadingRecentCourses;
+  bool get isLoadingPopularCourses => _isLoadingPopularCourses;
+
   CourseProvider() {
     fetchCourses();
   }
-  
 
   Future<void> fetchQuizCount(String courseId) async {
     try {
@@ -65,7 +71,7 @@ class CourseProvider extends ChangeNotifier {
   void fetchRecentCourses() {
     if (_hasFetchedRecentCourses) return;
 
-    setLoading(true);
+    setLoadingRecentCourses(true);
 
     try {
       FirebaseFirestore.instance
@@ -77,19 +83,19 @@ class CourseProvider extends ChangeNotifier {
         _recentCourses = courseQuery.docs
             .map((doc) => CourseModel.fromMap(doc.data()))
             .toList();
-        setLoading(false);
+        setLoadingRecentCourses(false);
         _hasFetchedRecentCourses = true;
       });
     } catch (e) {
       log('Error fetching recent courses: $e');
-      setLoading(false);
+      setLoadingRecentCourses(false);
     }
   }
 
   void fetchPopularCourses() {
     if (_hasFetchedPopularCourses) return;
 
-    setLoading(true);
+    setLoadingPopularCourses(true);
 
     try {
       FirebaseFirestore.instance
@@ -101,12 +107,12 @@ class CourseProvider extends ChangeNotifier {
         _popularCourses = courseQuery.docs
             .map((doc) => CourseModel.fromMap(doc.data()))
             .toList();
-        setLoading(false);
+        setLoadingPopularCourses(false);
         _hasFetchedPopularCourses = true;
       });
     } catch (e) {
       log('Error fetching popular courses: $e');
-      setLoading(false);
+      setLoadingPopularCourses(false);
       rethrow;
     }
   }
@@ -135,7 +141,8 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> getCoursesByCategory(String categoryId, {bool isRefresh = false}) async {
+  Future<void> getCoursesByCategory(String categoryId,
+      {bool isRefresh = false}) async {
     if (_isLoadingCourseByCategoryId) return;
 
     setLoadingCoursebyCategoryId(true);
@@ -202,7 +209,8 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchCourseAndAdminById(String categoryId, String courseId) async {
+  Future<void> fetchCourseAndAdminById(
+      String categoryId, String courseId) async {
     try {
       setLoadingCourseDetail(true);
       final data = await _apiCourses.fetchCourseAndAdminById(
@@ -233,7 +241,8 @@ class CourseProvider extends ChangeNotifier {
     setLoadingFirstVideo(true);
 
     try {
-      final videoUrl = await _apiLecture.fetchFirstVideoUrl(categoryId, courseId);
+      final videoUrl =
+          await _apiLecture.fetchFirstVideoUrl(categoryId, courseId);
       _firstVideoUrl = videoUrl;
       notifyListeners();
     } catch (e) {
@@ -261,6 +270,16 @@ class CourseProvider extends ChangeNotifier {
 
   void setLoadingFirstVideo(bool value) {
     _isLoadingFirstVideo = value;
+    notifyListeners();
+  }
+
+  void setLoadingRecentCourses(bool value) {
+    _isLoadingRecentCourses = value;
+    notifyListeners();
+  }
+
+  void setLoadingPopularCourses(bool value) {
+    _isLoadingPopularCourses = value;
     notifyListeners();
   }
 }

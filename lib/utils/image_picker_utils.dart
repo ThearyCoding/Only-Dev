@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:e_leaningapp/core/global_navigation.dart';
 import 'package:e_leaningapp/generated/l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:insta_assets_picker/insta_assets_picker.dart';
 
@@ -26,7 +25,7 @@ class ImageUtils {
           maxAssets: 1,
           requestType: RequestType.image,
           pickerConfig: InstaAssetPickerConfig(
-            title: S.current.selectAssetsTitle,
+            title: AppLocalizations.current.selectAssetsTitle,
             textDelegate: assetPickerTextDelegateFromLocale(
                 Localizations.localeOf(context)),
             cropDelegate: const InstaAssetCropDelegate(
@@ -35,21 +34,17 @@ class ImageUtils {
             ),
             closeOnComplete: true,
             pickerTheme: theme.copyWith(
-              
-              canvasColor: Colors.black, // body background color
-              splashColor: Colors.grey, // ontap splash color
+              canvasColor: Colors.black,
+              splashColor: Colors.grey,
               colorScheme: theme.colorScheme.copyWith(
-                surface: Colors.black87, // albums list background color
+                surface: Colors.black87,
               ),
               appBarTheme: theme.appBarTheme.copyWith(
-                backgroundColor: Colors.black, // app bar background color
+                backgroundColor: Colors.black,
                 titleTextStyle: Theme.of(context)
                     .appBarTheme
                     .titleTextStyle
-                    ?.copyWith(
-                      fontSize: 10,
-                        color: Colors
-                            .white), // change app bar title text style to be like app theme
+                    ?.copyWith(fontSize: 10, color: Colors.white),
               ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
@@ -127,28 +122,6 @@ class ImageUtils {
         return File(croppedFile.path);
       }
       return null;
-    }
-    return null;
-  }
-
-  static Future<File?> pickAndCropImage(BuildContext context) async {
-    if (_isFilePickerActive) return null;
-    _isFilePickerActive = true;
-
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['png', 'jpg', 'jpeg'],
-      );
-
-      if (result != null && result.files.single.path != null) {
-        File pickedFile = File(result.files.single.path!);
-        return await _cropImage(pickedFile);
-      }
-    } catch (e) {
-      log('Error picking file: $e');
-    } finally {
-      _isFilePickerActive = false;
     }
     return null;
   }

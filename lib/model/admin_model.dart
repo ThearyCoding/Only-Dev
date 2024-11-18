@@ -30,4 +30,5 @@ class AdminModel {
   Map<String, dynamic> toJson() {
     return {'uid': id, 'fullName': name, 'email': email, 'imageUrl': imageUrl};
   }
+  
 }

@@ -9,10 +9,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
 import 'core/global_navigation.dart';
 import 'providers/internet_connection_provider.dart';
 import 'providers/language_provider.dart';
+import 'utils/toast_utils.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -23,7 +23,6 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   late GoRouter _router;
-  late FToast fToast;
 
   @override
   void initState() {
@@ -33,9 +32,10 @@ class MyAppState extends State<MyApp> {
     AwesomeNotificationService.initialize(_router);
 
     fToast = FToast();
-    fToast.init(context);
+    fToast!.init(context);
     Provider.of<InternetConnectionProvider>(context, listen: false);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class MyAppState extends State<MyApp> {
                     Locale('km', ''),
                   ],
                   localizationsDelegates: const [
-                    S.delegate,
+                    AppLocalizations.delegate,
                     GlobalMaterialLocalizations.delegate,
                     GlobalWidgetsLocalizations.delegate,
                     GlobalCupertinoLocalizations.delegate,

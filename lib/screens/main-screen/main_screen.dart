@@ -2,10 +2,8 @@ import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:e_leaningapp/providers/notification_provider.dart';
 import 'package:e_leaningapp/screens/user-screens/user_information_screen.dart';
 import 'package:dot_navigation_bar/dot_navigation_bar.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../export/export.dart';
-import '../../utils/show_error_utils.dart';
 import '../home-screen/home_screen.dart';
 import '../notification-screen/notification_screen.dart';
 
@@ -21,14 +19,12 @@ class MainPageState extends State<MainPage> {
   bool wasConnectedToInternet = true;
   int _selectedIndex = 0;
   late NotificationProvider notificationProvider;
+
   @override
   void initState() {
     super.initState();
-
     notificationProvider =
         Provider.of<NotificationProvider>(context, listen: false);
-    //   isConnected();
-    
   }
 
   void _onItemTapped(int index) {
@@ -94,28 +90,22 @@ class MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return ThemeSwitchingArea(
       child: Scaffold(
-        body: Stack(
+        body: IndexedStack(
+          index: _selectedIndex,
           children: [
-            Offstage(
-                offstage: _selectedIndex != 0,
-                child: MyHomePage(
-                  onSeeAllCoursesTapped: _onSeeAllCourses,
-                  onProfileImageTapped: _onProfileImageTapped,
-                  onNotificationsTapped: _onNotificationTapped,
-                )),
-            Offstage(
-                offstage: _selectedIndex != 1, child: const AllCoursesScreen()),
-            Offstage(
-                offstage: _selectedIndex != 2,
-                child: const NotificationsScreen()),
-            Offstage(
-                offstage: _selectedIndex != 3,
-                child: const UserInformationScreen()),
+            HomePage(
+              onSeeAllCoursesTapped: _onSeeAllCourses,
+              onProfileImageTapped: _onProfileImageTapped,
+              onNotificationsTapped: _onNotificationTapped,
+            ),
+            const AllCoursesScreen(),
+            const NotificationsScreen(),
+            const UserInformationScreen(),
           ],
         ),
-        //  extendBody: true,
         bottomNavigationBar: DotNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
@@ -128,15 +118,17 @@ class MainPageState extends State<MainPage> {
             DotNavigationBarItem(
               icon: _buildIcon(Icons.video_collection, _selectedIndex == 1),
             ),
-            DotNavigationBarItem(icon: Consumer<NotificationProvider>(
-              builder: (context, value, child) {
-                return _buildIcon(
-                  IconlyBold.notification,
-                  _selectedIndex == 2,
-                  badgeCount: notificationProvider.unreadCount.value,
-                );
-              },
-            )),
+            DotNavigationBarItem(
+              icon: Consumer<NotificationProvider>(
+                builder: (context, value, child) {
+                  return _buildIcon(
+                    IconlyBold.notification,
+                    _selectedIndex == 2,
+                    badgeCount: notificationProvider.unreadCount.value,
+                  );
+                },
+              ),
+            ),
             DotNavigationBarItem(
               icon: _buildIcon(IconlyBold.profile, _selectedIndex == 3),
             ),
@@ -151,47 +143,6 @@ class MainPageState extends State<MainPage> {
           unselectedItemColor: Colors.grey,
         ),
       ),
-    );
-  }
-
-  Timer?
-      connectionLostTimer; // Timer to repeatedly show snackbar when connection is lost
-
-  void isConnected() {
-    InternetConnectionUtils.listenToInternetConnectionStatus(
-      (bool isConnected) {
-        if (isConnected != wasConnectedToInternet) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              setState(() {
-                isConnectedToInternet = isConnected;
-
-                if (!isConnected) {
-                  // Start or restart the timer to show snackbar every 30 seconds
-                  connectionLostTimer?.cancel(); // Cancel any existing timer
-                  showSnackbar(
-                    'Please check your internet connection!',
-                  );
-                  connectionLostTimer =
-                      Timer.periodic(const Duration(seconds: 10), (_) {
-                    showSnackbar(
-                      'Please check your internet connection!',
-                    );
-                  });
-                } else {
-                  connectionLostTimer?.cancel(); // Cancel the timer
-                  showSnackbar(
-                    'Internet connection is back!',
-                  );
-                }
-
-                // Update the wasConnectedToInternet variable
-                wasConnectedToInternet = isConnected;
-              });
-            }
-          });
-        }
-      },
     );
   }
 }

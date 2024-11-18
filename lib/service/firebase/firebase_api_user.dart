@@ -1,19 +1,20 @@
 import 'dart:developer';
 import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import '../../export/curriculum_export.dart';
 import '../../utils/show_error_utils.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
   final User? user = locator<FirebaseAuth>().currentUser;
+  final FirebaseStorage _storage = locator<FirebaseStorage>();
   Future<String?> getPhotoUrlFromFirestore(String uid) async {
     try {
       DocumentSnapshot docSnapshot =
           await _firestore.collection('users').doc(uid).get();
 
       if (docSnapshot.exists) {
-        // Assuming 'photoURL' is a field in the document
         String? photoURL = docSnapshot['photoURL'];
         return photoURL;
       } else {
@@ -87,7 +88,7 @@ class UserService {
             },
           },
         }, SetOptions(merge: true)); // Merge the new field with existing fields
-        showSnackbar('You have completed this video!');
+        showSnackbar('You have completed this video!', icon: Icons.check);
       }
     } catch (e) {
       log('Error updating view counts: $e');
@@ -228,14 +229,14 @@ class UserService {
   }
 
   Future<void> userRegistration(
-      String? uid,
-      String? email,
-      String? photoURL,
-      String firstName,
-      String lastName,
-      int gender,
-      DateTime dob,
-     ) async {
+    String? uid,
+    String? email,
+    String? photoURL,
+    String firstName,
+    String lastName,
+    int gender,
+    DateTime dob,
+  ) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
@@ -246,7 +247,6 @@ class UserService {
         'email': email,
         'gender': gender,
         'dob': dob,
-      
       }, SetOptions(merge: true));
     } catch (error) {
       log("Error registering user: $error");
@@ -309,5 +309,61 @@ class UserService {
       showFriendlyErrorSnackbar(e);
     }
     return null;
+  }
+
+  Future<void> deleteImageUser(String imageUrl) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(user!.uid)
+          .update({'photoURL': FieldValue.delete()});
+
+      if (_isValidFirebaseStorageUrl(imageUrl)) {
+        bool isImageInStorage = await _isImageInStorage(imageUrl);
+        if (isImageInStorage) {
+          await _deleteImageUserFromStorage(imageUrl);
+        } else {
+          log(
+              name: 'deleteImage',
+              'Image not found in storage, no need to delete');
+        }
+      } else {
+        log(
+            name: 'deleteImage',
+            'Invalid Firebase Storage URL, cannot delete image');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  bool _isValidFirebaseStorageUrl(String? url) {
+    return url != null &&
+        url.startsWith("https://firebasestorage.googleapis.com/");
+  }
+
+  Future<bool> _isImageInStorage(String imageUrl) async {
+    try {
+      await _storage.refFromURL(imageUrl).getMetadata();
+      return true;
+    } catch (e) {
+      if (e is FirebaseException && e.code == 'object-not-found') {
+        return false;
+      } else {
+        log(name: 'isImageInStorage', 'Error checking image: ${e.toString()}');
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _deleteImageUserFromStorage(String imageUrl) async {
+    try {
+      await _storage.refFromURL(imageUrl).delete();
+      log(name: 'deleteImage', 'Image deleted successfully');
+    } catch (e) {
+      if (e is FirebaseException) {
+        showFriendlyErrorSnackbar(e);
+      }
+    }
   }
 }

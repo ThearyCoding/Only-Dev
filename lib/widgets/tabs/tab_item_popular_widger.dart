@@ -67,7 +67,7 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
   Widget build(BuildContext context) {
     super.build(context);
     return Consumer<CourseProvider>(builder: (context, value, child) {
-      if (courseProvider.isLoading) {
+      if (courseProvider.isLoadingPopularCourses) {
         return const BuildShimmerCourseCardV2();
       }
       if (courseProvider.popularCourses.isEmpty) {
@@ -110,7 +110,6 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
                       course: course,
                       admin: admin,
                       quizCount: quizCount,
-                      userId: user!.uid,
                       isRegistered: isRegistered,
                       totalLectures: totalLectures,
                     );

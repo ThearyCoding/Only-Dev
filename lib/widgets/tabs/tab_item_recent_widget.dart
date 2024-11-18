@@ -62,11 +62,11 @@ class _TabItemRecentWidgetState extends State<TabItemRecentWidget>
   Widget build(BuildContext context) {
     super.build(context);
     return Consumer<CourseProvider>(builder: (context, value, child) {
-      if (courseProvider.isLoading) {
+      if (courseProvider.isLoadingRecentCourses) {
         return const BuildShimmerCourseCardV2();
       }
       if (courseProvider.recentCourses.isEmpty) {
-        return const Center(child: Text('No courses found'));
+        return const Center(child: Text('No recent courses found'));
       }
 
       return NotificationListener(
@@ -106,7 +106,6 @@ class _TabItemRecentWidgetState extends State<TabItemRecentWidget>
                       course: course,
                       admin: admin,
                       quizCount: quizCount,
-                      userId: user!.uid,
                       isRegistered: isRegistered,
                       totalLectures: totalLectures,
                     );

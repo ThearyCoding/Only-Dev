@@ -1,19 +1,22 @@
 import 'dart:developer';
 import 'dart:io';
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
-import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/providers/user_provider.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:animated_theme_switcher/animated_theme_switcher.dart';
+export 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import '../../di/dependency_injection.dart';
+import '../../providers/user_provider.dart';
 import '../../export/export.dart';
 import '../../generated/l10n.dart';
 import '../../providers/theme_provider.dart';
 import '../../service/firebase/firebase_api_storage.dart';
 import '../../utils/image_picker_utils.dart';
 import '../../utils/show_dialog_sign_out_utils.dart';
-export 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import '../../utils/compress_image_util.dart';
 
 class UserInformationScreen extends StatefulWidget {
   const UserInformationScreen({
@@ -30,36 +33,94 @@ class UserInformationScreenState extends State<UserInformationScreen> {
   late CustomizeThemeProvider themeProvider;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   User? user = locator<FirebaseAuth>().currentUser;
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolled = false;
   @override
   void initState() {
     super.initState();
     userProvider = Provider.of<UserProvider>(context, listen: false);
     themeProvider = Provider.of<CustomizeThemeProvider>(context, listen: false);
+    _scrollController.addListener(_scrollListener);
   }
 
-  
+  void _scrollListener() {
+    if (_scrollController.offset > 10 && !_isScrolled) {
+      setState(() {
+        _isScrolled = true;
+      });
+    } else if (_scrollController.offset <= 10 && _isScrolled) {
+      setState(() {
+        _isScrolled = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isdark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        actions: [_buildSwitcher(isdark)],
-      ),
-      body: Consumer<UserProvider>(
-        builder: (context, value, child) {
-          final user = userProvider.user;
-          if (userProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else {
-            return user == null ? _buildErrorState() : _build(user);
-          }
-        },
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverAppBar(
+            elevation: 0,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            pinned: true,
+            title: _isScrolled ? const Text('Profile Settings') : null,
+            flexibleSpace: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                double appBarHeight = constraints.biggest.height;
+                double blurAmount = appBarHeight > kToolbarHeight ? 0 : 10;
+
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: blurAmount,
+                          sigmaY: blurAmount,
+                        ),
+                        child: Container(
+                          color: Theme.of(context)
+                              .scaffoldBackgroundColor
+                              .withOpacity(blurAmount > 0 ? 0.6 : 0),
+                        ),
+                      ),
+                    ),
+                    AppBar(
+                      elevation: 0,
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
+                      actions: [_buildSwitcher(isDark)],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Consumer<UserProvider>(
+              builder: (context, value, child) {
+                final user = userProvider.user;
+                if (userProvider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else {
+                  return user == null ? _buildErrorState() : _build(user);
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -68,7 +129,7 @@ class UserInformationScreenState extends State<UserInformationScreen> {
     String initials = _extractUserName(userModel);
     Color backgroundColor = Colors.white;
     backgroundColor = _getBackgroundColor(userModel, backgroundColor);
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -84,133 +145,132 @@ class UserInformationScreenState extends State<UserInformationScreen> {
         double padding = _padding(isSmallest, isSmall);
         double listTilePadding = _listTilePadding(isSmallest, isSmall);
 
-        return Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: avatarSize,
-                  height: avatarSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark
-                        ? Colors.grey.shade300
-                        : Colors.grey.shade700,
-                  ),
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: userModel.photoURL.isNotEmpty
-                          ? () => context.push(RoutesPath.detailImageScreen,
-                                  extra: {
-                                    'imageUrl': userModel.photoURL,
-                                  })
-                          : null,
-                      child: Container(
-                        width: avatarSize - 10,
-                        height: avatarSize - 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: backgroundColor,
-                        ),
-                        child: CircleAvatar(
-                          radius: (avatarSize - 10) / 2,
-                          backgroundColor: Colors.transparent,
-                          child: userModel.photoURL.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: userModel.photoURL,
-                                  placeholder: (context, url) =>
-                                      const CircularProgressIndicator(),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(Icons.error),
-                                  imageBuilder: (context, imageProvider) =>
-                                      CircleAvatar(
-                                    radius: (avatarSize - 10) / 2,
-                                    backgroundImage: imageProvider,
-                                  ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    initials.toUpperCase(),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: avatarSize * 0.4,
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: avatarSize,
+                    height: avatarSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color:
+                          isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                    ),
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: userModel.photoURL.isNotEmpty
+                            ? () => context
+                                    .push(RoutesPath.detailImageScreen, extra: {
+                                  'imageUrl': userModel.photoURL,
+                                })
+                            : null,
+                        child: Container(
+                          width: avatarSize - 10,
+                          height: avatarSize - 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: backgroundColor,
+                          ),
+                          child: CircleAvatar(
+                            radius: (avatarSize - 10) / 2,
+                            backgroundColor: Colors.transparent,
+                            child: userModel.photoURL.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: userModel.photoURL,
+                                    placeholder: (context, url) =>
+                                        const CircularProgressIndicator(),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.error),
+                                    imageBuilder: (context, imageProvider) =>
+                                        CircleAvatar(
+                                      radius: (avatarSize - 10) / 2,
+                                      backgroundImage: imageProvider,
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      initials.toUpperCase(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: avatarSize * 0.4,
+                                      ),
                                     ),
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: () async {
-                      await _pickImage();
-                    },
-                    child: Container(
-                      height: iconSize * 2,
-                      width: iconSize * 2,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDark ? Colors.grey.shade500 : Colors.black,
-                      ),
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: iconSize,
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () async {
+                        await _pickImage();
+                      },
+                      child: Container(
+                        height: iconSize * 2,
+                        width: iconSize * 2,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark ? Colors.grey.shade500 : Colors.black,
+                        ),
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: iconSize,
+                        ),
                       ),
                     ),
                   ),
+                ],
+              ),
+              SizedBox(height: listTilePadding / 2),
+              Text(
+                '${userModel.firstName} ${userModel.lastName}',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                  fontSize: fontSizeName,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
-            SizedBox(height: listTilePadding / 2),
-            Text(
-              '${userModel.firstName} ${userModel.lastName}',
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontSize: fontSizeName,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            SizedBox(height: listTilePadding / 3),
-            Text(
-              userModel.email,
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontSize: fontSizeEmail,
-              ),
-            ),
-            SizedBox(height: listTilePadding / 2),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: padding),
-              child: Text(
-                userModel.bio?.isNotEmpty == true
-                    ? userModel.bio!
-                    : localization.noBioAvailable,
+              SizedBox(height: listTilePadding / 3),
+              Text(
+                userModel.email,
                 style: TextStyle(
                   color: isDark ? Colors.white : Colors.black,
                   fontSize: fontSizeEmail,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.visible,
               ),
-            ),
-            SizedBox(height: listTilePadding),
-            Expanded(
-              child: _listviewItem(
+              SizedBox(height: listTilePadding / 2),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: padding),
+                child: Text(
+                  userModel.bio?.isNotEmpty == true
+                      ? userModel.bio!
+                      : localization.noBioAvailable,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: fontSizeEmail,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+              SizedBox(height: listTilePadding),
+              _listviewItem(
                   listTilePadding: listTilePadding,
                   localization: localization,
                   user: user,
                   userProvider: userProvider,
                   userModel: userModel),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -346,16 +406,19 @@ class UserInformationScreenState extends State<UserInformationScreen> {
     }
   }
 
-  File? _croppedFile;
+  File? _imageFile;
   Future<void> _pickImage() async {
     File? croppedFile = await ImageUtils.pickImage();
+
     if (croppedFile != null) {
+      File? image = await CompressImageUtils.compressImage(croppedFile);
       setState(() {
-        _croppedFile = croppedFile;
+        _imageFile = image;
       });
-      _uploadImageAndSaveUrl(_croppedFile!);
+      _uploadImageAndSaveUrl(_imageFile!);
     }
   }
+
   ThemeSwitcher _buildSwitcher(bool isdark) {
     return ThemeSwitcher(builder: (context) {
       return Consumer<CustomizeThemeProvider>(
@@ -390,137 +453,134 @@ class _listviewItem extends StatelessWidget {
       required this.userModel});
 
   final double listTilePadding;
-  final S localization;
+  final AppLocalizations localization;
   final User? user;
   final UserProvider userProvider;
   final UserModel userModel;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: listTilePadding),
-      children: [
-        Text(
-          localization.yourAccount,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: listTilePadding / 2),
-        CustomListTile(
-          leadingIcon: Icon(
-            IconlyBold.profile,
-            size: 18,
-            color: Theme.of(context).iconTheme.color,
-          ),
-          title: localization.editProfile,
-          onTap: () {
-            context.push(
-              RoutesPath.editProfileInformation,
-              extra: {
-                'userModel': userModel,
-                'auth': user!,
-              },
-            );
-          },
-        ),
-        SizedBox(height: listTilePadding / 2),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            localization.appSettings,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            localization.yourAccount,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-        SizedBox(height: listTilePadding / 2),
-        CustomListTile(
-          leadingIcon: const Icon(Icons.settings, size: 18),
-          title: localization.settings,
-          onTap: () {
-            context.push(RoutesPath.settingscreen);
-          },
-        ),
-        SizedBox(height: listTilePadding),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            localization.notificationsTitle,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          SizedBox(height: listTilePadding / 2),
+          CustomListTile(
+            leadingIcon: Icon(
+              IconlyBold.profile,
+              size: 18,
+              color: Theme.of(context).iconTheme.color,
             ),
-          ),
-        ),
-        SizedBox(height: listTilePadding / 2),
-        CustomListTile(
-          leadingIcon: const Icon(Icons.notifications, size: 18),
-          title: localization.notifications,
-          onTap: () {
-            context.push(RoutesPath.isEnableNotifications);
-          },
-        ),
-        SizedBox(height: listTilePadding / 2),
-        CustomListTile(
-            leadingIcon: const Icon(Icons.video_collection, size: 18),
-            title: localization.myCourses,
+            title: localization.editProfile,
             onTap: () {
-              context.push(RoutesPath.myCoursesScreen);
-            }),
-        SizedBox(
-          height: listTilePadding,
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            bool? confirmSignOut = await showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) => LogOutDialog(
-                message: localization.logout_message,
-                title: localization.logout_title,
-                icon: Icons.logout,
-              ),
-            );
-            if (confirmSignOut!) {
-              EasyLoading.show(
-                status: 'Logout User',
-              );
-              String userId = locator<FirebaseAuth>().currentUser!.uid;
+              Provider.of<UserProvider>(context, listen: false)
+                  .setUserData(userModel);
 
-              if (userId != null && userId.isNotEmpty) {
-                await locator<FirebaseFirestore>()
-                    .collection('users')
-                    .doc(userId)
-                    .update({
-                  'fcmToken': FieldValue.delete(),
-                });
-              }
-              userProvider.handleUserLogout();
-              EasyLoading.dismiss();
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: Colors.red,
-            padding: EdgeInsets.symmetric(
-                vertical: listTilePadding, horizontal: listTilePadding),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              context.push(RoutesPath.editProfileInformation);
+            },
+          ),
+          SizedBox(height: listTilePadding / 2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              localization.appSettings,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          child: Text(
-            localization.logOut,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          SizedBox(height: listTilePadding / 2),
+          CustomListTile(
+            leadingIcon: const Icon(Icons.settings, size: 18),
+            title: localization.settings,
+            onTap: () {
+              context.push(RoutesPath.settingscreen);
+            },
+          ),
+          SizedBox(height: listTilePadding),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              localization.notificationsTitle,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-      ],
+          SizedBox(height: listTilePadding / 2),
+          CustomListTile(
+            leadingIcon: const Icon(Icons.notifications, size: 18),
+            title: localization.notifications,
+            onTap: () {
+              context.push(RoutesPath.isEnableNotifications);
+            },
+          ),
+          SizedBox(height: listTilePadding / 2),
+          CustomListTile(
+              leadingIcon: const Icon(Icons.video_collection, size: 18),
+              title: localization.myCourses,
+              onTap: () {
+                context.push(RoutesPath.myCoursesScreen);
+              }),
+          SizedBox(
+            height: listTilePadding,
+          ),
+          ZoomTapAnimation(
+            onTap: () async {
+              await _onLogOuttap(context);
+            },
+            child: SizedBox(
+                width: double.infinity,
+                child: CustomElevatedButtonWidget02(
+                  onPressed: () async {
+                    await _onLogOuttap(context);
+                  },
+                  text: localization.logOut,
+                  textColor: Colors.white,
+                  backgroundColor: Colors.red,
+                )),
+          ),
+        ],
+      ),
     );
   }
-  
+
+  Future<void> _onLogOuttap(BuildContext context) async {
+    bool? confirmSignOut = await showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => LogOutDialog(
+        message: localization.logout_message,
+        title: localization.logout_title,
+        icon: Icons.logout,
+      ),
+    );
+    if (confirmSignOut!) {
+      EasyLoading.show(
+        status: 'Logout User',
+      );
+      String userId = locator<FirebaseAuth>().currentUser!.uid;
+
+      if (userId != null && userId.isNotEmpty) {
+        await locator<FirebaseFirestore>()
+            .collection('users')
+            .doc(userId)
+            .update({
+          'fcmToken': FieldValue.delete(),
+        });
+      }
+      userProvider.handleUserLogout();
+      EasyLoading.dismiss();
+    }
+  }
 }

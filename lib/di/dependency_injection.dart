@@ -1,3 +1,5 @@
+import 'package:e_leaningapp/service/shared/shared_preferences_service.dart';
+
 import '../export/curriculum_export.dart';
 import '../service/firebase/firebase_api_categories.dart';
 import '../service/firebase/firebase_api_lecture.dart';
@@ -8,31 +10,18 @@ import '../service/firebase/firebase_api_quiz.dart';
 
 final GetIt locator = GetIt.instance;
 
-// will pass TickerProvider tickerProvider in function setLocator
 void setupLocator() async {
-
-  
-  // Register services and providers
-  // locator.registerLazySingleton(() => AuthenticationProvider());
-  // locator.registerLazySingleton(() => UserProvider(locator(), locator));
-  // locator.registerLazySingleton(() => LectureProvider());
-  // locator.registerLazySingleton(() => CourseProvider());
-  // locator.registerLazySingleton(() => AdminProvider());
-  // locator.registerLazySingleton(() => CategoriesProvider());
-  // locator.registerLazySingleton(() => CustomizeThemeProvider());
-  // locator.registerLazySingleton(() => NotificationProvider());
-  // locator.registerFactory(() => AllCoursesProvider(tickerProvider: locator));
-  // locator.registerLazySingleton(() => SearchEngineProvider());
-  // locator.registerLazySingleton(() => BannersProvider());
-
   // // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
   locator.registerSingleton<SharedPreferences>(sharedPreferences);
 
   // Register Firebase instances
   locator.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  locator.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
-  locator.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+  locator.registerLazySingleton<FirebaseFirestore>(
+      () => FirebaseFirestore.instance);
+  locator
+      .registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+  locator.registerLazySingleton<FacebookAuth>(() => FacebookAuth.instance);
 
   // Register other services
   locator.registerLazySingleton(() => FirebaseApiRegistration());
@@ -45,6 +34,7 @@ void setupLocator() async {
   locator.registerLazySingleton(() => AuthServiceGoogle());
   locator.registerLazySingleton(() => FirebaseApiLecture());
   locator.registerLazySingleton(() => FirebaseApiCategories());
+  locator.registerLazySingleton(() => SharedPreferencesService());
 
   await locator.allReady();
 }

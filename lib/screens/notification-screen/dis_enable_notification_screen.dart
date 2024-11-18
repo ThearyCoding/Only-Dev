@@ -11,7 +11,7 @@ class DisEnableNotificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Provider.of<NotificationProvider>(context, listen: false);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,

@@ -18,7 +18,7 @@ export '../../model/admin_model.dart';
 
 export '../../screens/course-screen/show_all_course_screen.dart';
 export '../../screens/search-screen/search_engine_screen.dart';
-export '../../screens/complete_info_screen.dart';
+export '../screens/user-screens/complete_info_screen.dart';
 export '../../firebase_options.dart';
 export '../../messaging/user_authentication_local_storage.dart';
 export '../../service/firebase/auth_service_google.dart';
@@ -51,7 +51,7 @@ export '../widgets/background-widget/background_image.dart';
 export '../../utils/time_utils.dart';
 export '../../widgets/loadings/build_quiz_loading_shimmer.dart';
 export '../screens/quiz-screen/quiz_result_screen.dart';
-export '../../screens/update_profile_screen.dart';
+export '../screens/user-screens/update_profile_screen.dart';
 export '../../widgets/list-widget/custom_list_tile_widget.dart';
 
 export '../../widgets/loadings/build_categories_shimmer_widget.dart';

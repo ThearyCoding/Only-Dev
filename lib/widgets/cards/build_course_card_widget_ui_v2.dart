@@ -17,7 +17,6 @@ class CourseCardV2 extends StatefulWidget {
   final CourseModel course;
   final AdminModel admin;
   final int quizCount;
-  final String userId;
   final bool isRegistered;
   final int totalLectures;
 
@@ -26,7 +25,6 @@ class CourseCardV2 extends StatefulWidget {
     required this.course,
     required this.admin,
     required this.quizCount,
-    required this.userId,
     required this.isRegistered,
     required this.totalLectures,
   }) : super(key: key);
@@ -54,7 +52,7 @@ class CourseCardV2State extends State<CourseCardV2>
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final secondaryTextColor = isDarkMode ? Colors.white70 : Colors.black87;
     final borderColor = _isTapped ? Colors.green : Colors.transparent;
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
 
     return ZoomTapAnimation(
       onTap: (){
@@ -242,7 +240,7 @@ class CourseCardV2State extends State<CourseCardV2>
     );
   }
 
-  navigation(S localization) {
+  navigation(AppLocalizations localization) {
     if (widget.isRegistered) {
       context.push(
         RoutesPath.topicScreen,

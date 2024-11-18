@@ -1,4 +1,7 @@
+import 'dart:developer';
 import 'dart:io';
+import 'package:flutter_download_manager/flutter_download_manager.dart';
+
 import '../../core/global_navigation.dart';
 import '../../di/dependency_injection.dart';
 import '../../providers/admin_provider.dart';
@@ -12,6 +15,7 @@ import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 import '../../export/export.dart';
 import '../../generated/l10n.dart';
 import '../../utils/show_error_utils.dart';
+import 'package:path/path.dart' as path;
 
 class MyCoursesScreen extends StatefulWidget {
   const MyCoursesScreen({super.key});
@@ -24,6 +28,9 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
     with SingleTickerProviderStateMixin {
   final User? user = locator<FirebaseAuth>().currentUser;
   late TabController _tabController;
+  String savedDir = "";
+  Set<String> downloadedVideos = {};
+  var downloadManager = DownloadManager();
 
   @override
   void initState() {
@@ -31,17 +38,26 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RegistrationProvider>().fetchAllRegistrations(user!.uid);
-      loadDownloadedVideos();
+      _initialize();
     });
+  }
+
+  Future<void> _initialize() async {
+    final directory = await getApplicationSupportDirectory();
+    savedDir = directory.path;
+
+    // Load downloaded videos after setting savedDir
+    await _loadDownloadedVideos();
   }
 
   @override
   Widget build(BuildContext context) {
     final isdark = Theme.of(context).brightness == Brightness.dark;
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           splashRadius: 20,
@@ -71,10 +87,10 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
           }),
           controller: _tabController,
           indicator: RectangularIndicator(
-              bottomLeftRadius: 50,
-              bottomRightRadius: 50,
-              topLeftRadius: 50,
-              topRightRadius: 50,
+              bottomLeftRadius: 10,
+              bottomRightRadius: 10,
+              topLeftRadius: 10,
+              topRightRadius: 10,
               verticalPadding: 5,
               horizontalPadding: 5,
               color: Colors.blueAccent.shade400.withOpacity(.3)),
@@ -99,7 +115,7 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
     );
   }
 
-  Widget buildOngoing(S localization) {
+  Widget buildOngoing(AppLocalizations localization) {
     return Consumer<RegistrationProvider>(
       builder: (context, registrationProvider, child) {
         // Get registered course IDs
@@ -169,7 +185,7 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
     );
   }
 
-  Widget buildCompleted(S localization) {
+  Widget buildCompleted(AppLocalizations localization) {
     return Consumer<RegistrationProvider>(
       builder: (context, registrationProvider, child) {
         // Get registered course IDs
@@ -241,63 +257,85 @@ class MyCoursesScreenState extends State<MyCoursesScreen>
     );
   }
 
-  Future<void> loadDownloadedVideos() async {
-    final Directory appDocDir = await getApplicationDocumentsDirectory();
-    final List<FileSystemEntity> files = appDocDir.listSync();
-    setState(() {
-      downloadedVideos = files
-          .where((file) => file.path.endsWith('.mp4'))
-          .map((file) => file.path.split('/').last.replaceAll('.mp4', ''))
-          .toSet();
-    });
+  Future<void> _loadDownloadedVideos() async {
+    try {
+      // List all downloads managed by flutter_download_manager
+      final downloadedFiles = downloadManager.getAllDownloads();
+
+      // Collect the video titles (names) of all downloaded files
+      final Set<String> videos = downloadedFiles.map((download) {
+        // Assuming the download task holds a request object with a 'path' field representing the saved location
+        return path.basenameWithoutExtension(
+            download.request.path); // Correct property to access the saved path
+      }).toSet();
+
+      setState(() {
+        downloadedVideos = videos;
+      });
+    } catch (e) {
+      showSnackbar('Failed to load downloaded videos: $e');
+    }
   }
 
   Future<void> removeDownloadedVideo(String videoTitle) async {
-    try {
-      final context = navigatorKey.currentState!.context;
+    final context = navigatorKey.currentState!.context;
 
+    try {
+      // Get the application documents directory
       final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final String filePath = '${appDocDir.path}/$videoTitle.mp4';
+      final String filePath =
+          '${appDocDir.path}/$videoTitle.mp4'; // Ensure the file path is correct
+
+      // Create the file object
       final File file = File(filePath);
 
+      // Check if the file exists
       if (await file.exists()) {
+        // Delete the file
         await file.delete();
-        await loadDownloadedVideos();
-        if (context != null) {
-          // ignore: use_build_context_synchronously
-          showSnackbar(S.of(context).videoRemoved(videoTitle));
+        log("Video file deleted: $filePath");
+
+        await _loadDownloadedVideos();
+
+        // Show success snackbar
+        if (context != null && context.mounted) {
+          showSnackbar(AppLocalizations.of(context).videoRemoved(videoTitle));
         }
       } else {
-        if (context != null) {
-          // ignore: use_build_context_synchronously
-          showSnackbar(S.of(context).videoNotFound(videoTitle));
+        if (context != null && context.mounted) {
+          showSnackbar(AppLocalizations.of(context).videoNotFound(videoTitle));
         }
       }
     } catch (e) {
-      if (context != null) {
-        // ignore: use_build_context_synchronously
-        showSnackbar(S.of(context).failedToRemoveVideo(e));
+      log("Error removing video: $e");
+
+      if (context != null && context.mounted) {
+        showSnackbar(AppLocalizations.of(context).failedToRemoveVideo(
+            'errors that may occur during the deletion process'));
       }
     }
   }
 
-  Set<String> downloadedVideos = {};
-  Widget buildDownload(S localization) {
-    return ListView.builder(
-      key: const PageStorageKey<String>('courseList-video-download'),
-      itemCount: downloadedVideos.length,
-      itemBuilder: (context, index) {
-        final videoTitle = downloadedVideos.elementAt(index);
-        return ListTile(
-          title: Text(videoTitle),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              removeDownloadedVideo(videoTitle);
+  Widget buildDownload(AppLocalizations localization) {
+    return downloadedVideos.isEmpty
+        ? Center(
+            child: Text(localization.noDownloadedVideosFound),
+          )
+        : ListView.builder(
+            key: const PageStorageKey<String>('courseList-video-download'),
+            itemCount: downloadedVideos.length,
+            itemBuilder: (context, index) {
+              final videoTitle = downloadedVideos.elementAt(index);
+              return ListTile(
+                title: Text(videoTitle),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    removeDownloadedVideo(videoTitle);
+                  },
+                ),
+              );
             },
-          ),
-        );
-      },
-    );
+          );
   }
 }

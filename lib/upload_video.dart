@@ -7,6 +7,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 

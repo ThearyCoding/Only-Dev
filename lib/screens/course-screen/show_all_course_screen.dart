@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
@@ -6,6 +5,8 @@ import '../../providers/registration_provider.dart';
 import '../../generated/l10n.dart';
 import '../../providers/all_courses_provider.dart';
 import '../../widgets/course-widget/course_list_widget.dart';
+import '../../widgets/loadings/build_shimmer_course_card_v2.dart';
+import '../../widgets/loadings/build_tap_shimmer_widget.dart';
 import '../search-screen/search_engine_screen.dart';
 
 class AllCoursesScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _AllCoursesScreenState extends State<AllCoursesScreen>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -61,6 +62,12 @@ class _AllCoursesScreenState extends State<AllCoursesScreen>
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Consumer<AllCoursesProvider>(
             builder: (context, provider, child) {
+              if (provider.isLoadingCategories) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: BuildTapShimmerWidget(),
+                );
+              }
               if (provider.categories.isEmpty ||
                   provider.tabController == null) {
                 return const SizedBox.shrink();
@@ -78,11 +85,12 @@ class _AllCoursesScreenState extends State<AllCoursesScreen>
                       : Colors.transparent;
                 }),
                 indicator: RectangularIndicator(
-                    bottomLeftRadius: 100,
-                    bottomRightRadius: 100,
-                    topLeftRadius: 100,
-                    topRightRadius: 100,
+                    bottomLeftRadius: 10,
+                    bottomRightRadius: 10,
+                    topLeftRadius: 10,
+                    topRightRadius: 10,
                     verticalPadding: 5,
+                    horizontalPadding: 5,
                     color: Colors.blueAccent.shade400.withOpacity(.3)),
                 indicatorColor: Colors.blueAccent[500],
                 controller: provider.tabController,
@@ -101,7 +109,7 @@ class _AllCoursesScreenState extends State<AllCoursesScreen>
       body: Consumer<AllCoursesProvider>(
         builder: (context, provider, child) {
           if (provider.categories.isEmpty || provider.tabController == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const BuildShimmerCourseCardV2();
           }
 
           return PageStorage(

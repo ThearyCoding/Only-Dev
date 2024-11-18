@@ -1,0 +1,26 @@
+export 'package:better_player/better_player.dart';
+export 'package:flutter/rendering.dart';
+export 'package:flutter_svg/flutter_svg.dart';
+export 'package:go_router/go_router.dart';
+export 'package:provider/provider.dart';
+export 'package:flutter/material.dart';
+export 'package:loading_btn/loading_btn.dart';
+export 'package:palette_generator/palette_generator.dart';
+export '../../core/global_navigation.dart';
+export '../../di/dependency_injection.dart';
+export '../../export/provider_export.dart';
+export '../../service/stripe/stripe_service.dart';
+export '../../utils/configuration_better_player.dart';
+export '../../widgets/buttons/custom_btn_loading_widget.dart';
+export '../../utils/show_dialog_infor_utils.dart';
+export '../../generated/l10n.dart';
+export '../../service/firebase/firebase_api_quiz.dart';
+export '../../widgets/loadings/build_course_detail_shimmer.dart';
+export '../../model/admin_model.dart';
+export '../../model/courses_model.dart';
+export '../../routes/app_routes.dart';
+export '../../widgets/topic-widget/description_topic_widget.dart';
+
+export 'package:cached_network_image/cached_network_image.dart';
+export 'package:firebase_auth/firebase_auth.dart';
+export 'package:shimmer/shimmer.dart';

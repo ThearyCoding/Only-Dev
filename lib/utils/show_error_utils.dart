@@ -1,18 +1,64 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../core/global_navigation.dart';
 import '../export/export.dart';
 
-enum CustomSnackPosition { top, bottom }
+FToast? fToast;
 
-void showSnackbar(String message, {ToastGravity gravity = ToastGravity.TOP}) {
-  Fluttertoast.showToast(
-    msg: message,
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: gravity,
-    backgroundColor: Colors.grey.shade800,
-    textColor: Colors.white,
+void showSnackbar(
+  String message, {
+  IconData? icon,
+  Color? backgroundColor,
+  bool showAtTop = false,
+}) {
+  final context = navigatorKey.currentContext;
+  if (context == null) return;
+
+  fToast ??= FToast();
+  fToast!.init(context);
+
+  final toastBackgroundColor = backgroundColor ?? Colors.grey.shade800;
+
+  Widget toast = Container(
+    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(25.0),
+      color: toastBackgroundColor,
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) Icon(icon, color: Colors.white),
+        if (icon != null) const SizedBox(width: 12.0),
+        Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ],
+    ),
   );
+
+  if (!showAtTop) {
+    fToast!.showToast(
+      child: toast,
+      toastDuration: const Duration(seconds: 2),
+      positionedToastBuilder: (context, child) {
+        return Positioned(
+          top: 26.0,
+          left: 16.0,
+          right: 16.0,
+          child: child,
+        );
+      },
+    );
+  } else {
+    fToast!.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: const Duration(seconds: 2),
+    );
+  }
 }
 
 void handleError(error, String message) {

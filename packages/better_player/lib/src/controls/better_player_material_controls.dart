@@ -96,12 +96,17 @@ class _BetterPlayerMaterialControlsState
                   .onDoubleTapDown
                   ?.call();
             }
-
+            final currentPosition =
+                _betterPlayerController!.videoPlayerController!.value.position;
             final screenWidth = constraints.maxWidth;
             final tapPosition = details.localPosition.dx;
+
             if (_betterPlayerController!
                 .videoPlayerController!.value.initialized) {
               if (tapPosition < screenWidth / 2) {
+                // Prevent seeking if the video is at the beginning
+                if (currentPosition == Duration.zero) return;
+
                 _seekBackward();
                 _showSeekEffect(true);
               } else {
@@ -109,7 +114,7 @@ class _BetterPlayerMaterialControlsState
                 _showSeekEffect(false);
               }
 
-              // Add this to hide controls after the effect
+              // Hide controls after the effect
               changePlayerControlsNotVisible(true);
             }
           },
@@ -259,8 +264,12 @@ class _BetterPlayerMaterialControlsState
 
   void _seekBackward() {
     final currentPosition =
-        _betterPlayerController?.videoPlayerController!.value.position;
-    _betterPlayerController!.seekTo(currentPosition! - Duration(seconds: 10));
+        _betterPlayerController!.videoPlayerController!.value.position;
+
+    // Prevent seeking if at the start of the video
+    if (currentPosition == Duration.zero) return;
+
+    _betterPlayerController!.seekTo(currentPosition - Duration(seconds: 10));
   }
 
   void _seekForward() {

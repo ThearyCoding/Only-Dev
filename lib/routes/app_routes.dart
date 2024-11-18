@@ -1,36 +1,26 @@
-import '../screens/other-screen/khqr_payment_page.dart';
-
-import '../screens/other-screen/payment_options_page.dart';
-import '../core/global_navigation.dart';
-import '../screens/cart-screen/cart_screen.dart';
-import '../screens/course-screen/courses_screent.dart';
-import '../screens/course-screen/my_courses_screen.dart';
-import '../screens/detail_image_screen.dart';
-import '../screens/display_post_screen.dart';
-import '../screens/notification-screen/dis_enable_notification_screen.dart';
-import '../screens/quiz-screen/review_question_screen.dart';
-import '../screens/settings-screens/language_selection_screen.dart';
-import '../screens/settings-screens/setting_screen.dart';
-import '../service/firebase/auth_state_handler.dart';
-import 'package:go_router/go_router.dart';
-import '../export/export.dart';
-import '../screens/user-screens/user_information_screen.dart';
-import '../screens/quiz-screen/result_quiz_screen.dart';
+import 'package:e_leaningapp/screens/error-screen/error_screen.dart';
+import '../export/app_routes_export.dart';
 part 'routes_path.dart';
+part 'route_name.dart';
 
 class AppRoutes {
-
   static GoRouter getRouter() {
     return GoRouter(
       initialLocation: RoutesPath.login,
       navigatorKey: navigatorKey,
       routes: [
-        GoRoute(path: RoutesPath.khqrpaymentScreen,pageBuilder: (context, state) {
-          return const CupertinoPage(child: KhqrPaymentPage());
-        },),
-        GoRoute(path: RoutesPath.paymentOptionsPage,builder: (context, state) {
-          return const PaymentOptionsPage();
-        },),
+        GoRoute(
+          path: RoutesPath.khqrpaymentScreen,
+          pageBuilder: (context, state) {
+            return const CupertinoPage(child: KhqrPaymentPage());
+          },
+        ),
+        GoRoute(
+          path: RoutesPath.paymentOptionsPage,
+          builder: (context, state) {
+            return const PaymentOptionsPage();
+          },
+        ),
         GoRoute(
           path: RoutesPath.reviewquestionscreen,
           builder: (context, state) {
@@ -140,14 +130,7 @@ class AppRoutes {
         GoRoute(
           path: RoutesPath.editProfileInformation,
           builder: (context, state) {
-            final args = state.extra as Map<String, dynamic>? ?? {};
-            final UserModel userModel = args['userModel'] as UserModel;
-            final User auth = args['auth'] as User;
-
-            return EditProfileInformation(
-              userModel: userModel,
-              auth: auth,
-            );
+            return const EditProfileInformation();
           },
         ),
         GoRoute(
@@ -205,10 +188,7 @@ class AppRoutes {
                 courseId: courseId,
               );
             } else {
-              return const Scaffold(
-                body: Center(
-                    child: Text('Invalid arguments for DetailCourseScreen')),
-              );
+              return ErrorScreen(message: state.name ?? "");
             }
           },
         ),
@@ -227,14 +207,13 @@ class AppRoutes {
           },
         ),
         GoRoute(
-          name: RoutesPath.languageSelectionScreen,
-          path: RoutesPath.languageSelectionScreen,builder: (context, state) {
-          return const LanguageSelectionScreen();
-        })
+            name: RoutesPath.languageSelectionScreen,
+            path: RoutesPath.languageSelectionScreen,
+            builder: (context, state) {
+              return const LanguageSelectionScreen();
+            }),
       ],
-      errorBuilder: (context, state) => Scaffold(
-        body: Center(child: Text('No route defined for $state')),
-      ),
+      errorBuilder: (context, state) => ErrorScreen(message: state.name ?? ""),
     );
   }
 }

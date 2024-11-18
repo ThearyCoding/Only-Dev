@@ -23,8 +23,17 @@ class UserProvider with ChangeNotifier {
 
   AuthenticationProvider? authProvider;
 
+  UserModel? _userModel;
+
+  UserModel? get userModel => _userModel;
+
   UserProvider(this.authProvider) {
     _checkAuthState();
+  }
+
+  void setUserData(UserModel userModel) {
+    _userModel = userModel;
+    notifyListeners();
   }
 
   Future<void> _checkAuthState() async {
@@ -69,20 +78,20 @@ class UserProvider with ChangeNotifier {
     }
   }
 
+  @override
+  dispose() {
+    _userDocSubscription!.cancel();
+    super.dispose();
+  }
+
   Future<void> handleUserLogout() async {
     final context = navigatorKey.currentContext;
     log('Handling user logout');
     await authProvider!.logoutUser();
     await _auth.signOut();
     if (context != null) {
-      // ignore: use_build_context_synchronously
+      if (!context.mounted) return;
       context.go('/');
     }
-  }
-
-  @override
-  void dispose() {
-    _userDocSubscription?.cancel();
-    super.dispose();
   }
 }

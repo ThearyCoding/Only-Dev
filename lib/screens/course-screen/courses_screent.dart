@@ -46,7 +46,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -139,7 +139,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
                             course: course,
                             admin: admin,
                             quizCount: quizCount,
-                            userId: user!.uid,
                             isRegistered: isRegistered,
                             totalLectures: 20,
                           );

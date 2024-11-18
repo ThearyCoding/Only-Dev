@@ -10,7 +10,7 @@ class CustomizeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ClassicHeader(
       height: 60.0,
@@ -37,7 +37,7 @@ class CustomizeFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ClassicFooter(
       height: 60.0,

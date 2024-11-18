@@ -21,6 +21,7 @@ class _ProviderSetupState extends State<ProviderSetup>
             create: (context) => InternetConnectionProvider()),
         ChangeNotifierProvider(
           create: (context) => AuthenticationProvider(),
+          
         ),
         ChangeNotifierProxyProvider<AuthenticationProvider, UserProvider>(
           create: (context) => UserProvider(
@@ -44,7 +45,7 @@ class _ProviderSetupState extends State<ProviderSetup>
           create: (context) => BannersProvider(),
         ),
         ChangeNotifierProvider(create: (context) => LanguageProvider()),
-        ChangeNotifierProvider(create: (context) => QuizProvider())
+        ChangeNotifierProvider(create: (context) => QuizProvider()),
       ],
       child: const MyApp(),
     );

@@ -1,13 +1,8 @@
-import 'dart:io';
-import 'package:e_leaningapp/providers/lecture_provider.dart';
-import 'package:e_leaningapp/widgets/loadings/build_content_loading_shimmer.dart';
-import 'package:expandable/expandable.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_download_manager/flutter_download_manager.dart';
-import 'package:provider/provider.dart';
+import 'dart:developer';
+
 import '../../export/export.dart';
-// ignore: depend_on_referenced_packages
-import '../../utils/show_error_utils.dart';
+import '../../export/topic_export.dart';
+import '../../service/shared/shared_preferences_service.dart';
 import '../list-widget/list_item_widget.dart';
 
 class ContentTabWidget extends StatefulWidget {
@@ -20,6 +15,7 @@ class ContentTabWidget extends StatefulWidget {
     String timestamp,
     num views,
     int position,
+    int duration,
     String courseId,
     String sectionId,
     String lectureId,
@@ -38,10 +34,13 @@ class ContentTabWidget extends StatefulWidget {
 
 class ContentTabWidgetState extends State<ContentTabWidget> {
   late LectureProvider provider;
-  final User? user = FirebaseAuth.instance.currentUser;
+  final User? user = locator<FirebaseAuth>().currentUser;
   var downloadManager = DownloadManager();
   Set<String> downloadedVideos = {};
   var savedDir = "";
+  SharedPreferencesService sharedPreferencesService =
+      SharedPreferencesService();
+
   @override
   void initState() {
     super.initState();
@@ -64,8 +63,35 @@ class ContentTabWidgetState extends State<ContentTabWidget> {
     }
   }
 
-  double progress = 0.0;
+  Future<void> _handlePlayVideo(Lecture lecture, Section section) async {
+    List<dynamic> progress =
+        await sharedPreferencesService.getSavedVideoProgress(lecture.videoUrl);
+    int startPosition = 0;
+    int duration = 0;
 
+    if (progress.isNotEmpty) {
+      startPosition = progress[3];
+      duration = progress[4];
+    }
+
+    widget.playVideoCallback(
+      lecture.videoUrl,
+      lecture.title,
+      lecture.description,
+      TimeUtils.formatTimestamp(lecture.timestamp),
+      lecture.views,
+      startPosition,
+      duration,
+      widget.courseId,
+      section.id,
+      lecture.id,
+    );
+
+    provider.setSelectedLectureId(lecture.id);
+    provider.setCurrentPlayingVideo(lecture.title, lecture.description,
+        TimeUtils.formatTimestamp(lecture.timestamp), lecture.views.toInt());
+    provider.saveSectionExpanded(widget.courseId, section.id, lecture.id);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,177 +99,174 @@ class ContentTabWidgetState extends State<ContentTabWidget> {
     final lectureProvider = Provider.of<LectureProvider>(context);
 
     return Scaffold(
-        body: lectureProvider.isLoading
-            ? const BuildContentLoadingShimmer()
-            : ListView(
-                key: const PageStorageKey<String>('video-tab'),
-                children: provider.sections.map<Widget>((Section section) {
-                  bool isSectionExpanded =
-                      provider.isSectionExpanded(section.id);
-                  int index = provider.sections.indexOf(section);
-                  bool isLastSection = index == provider.sections.length - 1;
+      body: lectureProvider.isLoading
+          ? const BuildContentLoadingShimmer()
+          : ListView(
+              key: const PageStorageKey<String>('video-tab'),
+              children: provider.sections.map<Widget>((Section section) {
+                bool isSectionExpanded = provider.isSectionExpanded(section.id);
+                int index = provider.sections.indexOf(section);
+                bool isLastSection = index == provider.sections.length - 1;
 
-                  return ExpandableNotifier(
-                    initialExpanded: isSectionExpanded,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                          bottom: isLastSection ? 100 : 5,
-                          top: 5,
-                          left: 5,
-                          right: 5),
-                      child: Card(
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        elevation: 2,
-                        child: Column(
-                          children: <Widget>[
-                            ScrollOnExpand(
-                              scrollOnExpand: true,
-                              scrollOnCollapse: false,
-                              child: ExpandablePanel(
-                                theme: ExpandableThemeData(
-                                    headerAlignment:
-                                        ExpandablePanelHeaderAlignment.center,
-                                    tapBodyToCollapse: false,
-                                    iconColor: isDarkMode
-                                        ? Colors.white
-                                        : Colors.black),
-                                header: Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Text(
-                                    'Section ${index + 1}: ${section.title}',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
+                return ExpandableNotifier(
+                  initialExpanded: isSectionExpanded,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        bottom: isLastSection ? 100 : 5,
+                        top: 5,
+                        left: 5,
+                        right: 5),
+                    child: Card(
+                      clipBehavior: Clip.antiAlias,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 2,
+                      child: Column(
+                        children: <Widget>[
+                          ScrollOnExpand(
+                            scrollOnExpand: true,
+                            scrollOnCollapse: false,
+                            child: ExpandablePanel(
+                              theme: ExpandableThemeData(
+                                  headerAlignment:
+                                      ExpandablePanelHeaderAlignment.center,
+                                  tapBodyToCollapse: false,
+                                  tapHeaderToExpand: false,
+                                  inkWellBorderRadius:
+                                      BorderRadius.circular(10),
+                                  iconColor:
+                                      isDarkMode ? Colors.white : Colors.black),
+                              header: Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: Text(
+                                  'Section ${index + 1}: ${section.title}',
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
                                 ),
-                                collapsed: Text(
-                                  // ignore: avoid_types_as_parameter_names
-                                  '${section.lectures.length} lectures | ${TimeUtils.formatDuration(section.lectures.fold<int>(0, (sum, lecture) => sum + lecture.videoDuration))}',
-                                  softWrap: true,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                expanded: Column(
-                                  children: section.lectures
-                                      .map<Widget>((Lecture lecture) {
-                                    bool isWatched = provider.isLectureWatched(
-                                        widget.courseId,
-                                        section.id,
-                                        lecture.id);
+                              ),
+                              collapsed: Text(
+                                // ignore: avoid_types_as_parameter_names
+                                '${section.lectures.length} lectures | ${TimeUtils.formatDuration(section.lectures.fold<int>(0, (sum, lecture) => sum + lecture.videoDuration))}',
+                                softWrap: true,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              expanded: Column(
+                                children: section.lectures
+                                    .map<Widget>((Lecture lecture) {
+                                  bool isWatched = provider.isLectureWatched(
+                                      widget.courseId, section.id, lecture.id);
 
-                                    return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 5, horizontal: 8.0),
-                                        child: ListItem(
-                                            provider: provider,
-                                            isWatched: isWatched,
-                                            onTap: () {
-                                              if (provider.selectedLectureId ==
-                                                  lecture.id) {
-                                                return;
-                                              }
-                                              widget.playVideoCallback(
-                                                lecture.videoUrl,
-                                                lecture.title,
-                                                lecture.description,
-                                                TimeUtils.formatTimestamp(
-                                                    lecture.timestamp),
-                                                lecture.views,
-                                                0,
-                                                widget.courseId,
-                                                section.id,
-                                                lecture.id,
-                                              );
-                                              provider.setSelectedLectureId(
-                                                  lecture.id);
-                                              provider.setCurrentPlayingVideo(
-                                                  lecture.title,
-                                                  lecture.description,
-                                                  TimeUtils.formatTimestamp(
-                                                      lecture.timestamp),
-                                                  lecture.views.toInt());
-                                              provider.saveSectionExpanded(
-                                                  widget.courseId,
-                                                  section.id,
-                                                  lecture.id);
-                                            },
-                                            onDownloadPlayPausedPressed:
-                                                (url) async {
-                                              setState(() {
-                                                var task = downloadManager
-                                                    .getDownload(url);
-
-                                                if (task != null &&
-                                                    !task.status.value
-                                                        .isCompleted) {
-                                                  switch (task.status.value) {
-                                                    case DownloadStatus
-                                                          .downloading:
-                                                      downloadManager
-                                                          .pauseDownload(url);
-                                                      break;
-                                                    case DownloadStatus.paused:
-                                                      downloadManager
-                                                          .resumeDownload(url);
-                                                      break;
-                                                    case DownloadStatus.queued:
-                                                    case DownloadStatus
-                                                          .completed:
-                                                      showSnackbar(
-                                                          'Download completed');
-
-                                                    case DownloadStatus.failed:
-                                                      showSnackbar(
-                                                          'Download failed');
-
-                                                    case DownloadStatus
-                                                          .canceled:
-                                                  }
-                                                } else {
-                                                  downloadManager.addDownload(
-                                                      url,
-                                                      "$savedDir/${downloadManager.getFileNameFromUrl(url)}");
-                                                }
-                                              });
-                                            },
-                                            onDelete: (url) {
-                                              var fileName =
-                                                  "$savedDir/${downloadManager.getFileNameFromUrl(url)}";
-                                              var file = File(fileName);
-                                              file.delete();
-
-                                              downloadManager
-                                                  .removeDownload(url);
-                                              setState(() {});
-                                            },
-                                            lecture: lecture,
-                                            downloadTask:
-                                                downloadManager.getDownload(
-                                                    lecture.videoUrl)));
-                                  }).toList(),
-                                ),
-                                builder: (_, collapsed, expanded) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 10, bottom: 5),
-                                    child: Expandable(
-                                      collapsed: collapsed,
-                                      expanded: expanded,
-                                      theme: const ExpandableThemeData(
-                                          crossFadePoint: 0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 5, horizontal: 8.0),
+                                    child: ListItem(
+                                      provider: provider,
+                                      isWatched: isWatched,
+                                      onTap: () {
+                                        if (provider.selectedLectureId ==
+                                            lecture.id) {
+                                          return;
+                                        }
+                                        _handlePlayVideo(lecture, section);
+                                      },
+                                      onDownloadPlayPausedPressed: (url) async {
+                                        setState(() {
+                                          var task =
+                                              downloadManager.getDownload(url);
+
+                                          if (task != null &&
+                                              !task.status.value.isCompleted) {
+                                            switch (task.status.value) {
+                                              case DownloadStatus.downloading:
+                                                downloadManager
+                                                    .pauseDownload(url);
+                                                break;
+                                              case DownloadStatus.paused:
+                                                downloadManager
+                                                    .resumeDownload(url);
+                                                break;
+                                              case DownloadStatus.queued:
+                                              case DownloadStatus.completed:
+                                                downloadManager
+                                                    .whenDownloadComplete(url);
+
+                                                if (task.status.value ==
+                                                    DownloadStatus.completed) {
+                                                  _saveCompletedDownload(
+                                                      url, lecture.title);
+                                                }
+                                                break;
+
+                                              case DownloadStatus.failed:
+                                              case DownloadStatus.canceled:
+                                            }
+                                          } else {
+                                            downloadManager.addDownload(url,
+                                                "$savedDir/${downloadManager.getFileNameFromUrl(url)}");
+                                          }
+                                        });
+                                      },
+                                      onDelete: (url) {
+                                        var fileName =
+                                            "$savedDir/${downloadManager.getFileNameFromUrl(url)}";
+                                        var file = File(fileName);
+                                        file.delete();
+
+                                        downloadManager.removeDownload(url);
+                                        setState(() {});
+                                      },
+                                      lecture: lecture,
+                                      downloadTask: downloadManager
+                                          .getDownload(lecture.videoUrl),
                                     ),
                                   );
-                                },
+                                }).toList(),
                               ),
+                              builder: (_, collapsed, expanded) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 10, right: 10, bottom: 5),
+                                  child: Expandable(
+                                    collapsed: collapsed,
+                                    expanded: expanded,
+                                    theme: const ExpandableThemeData(
+                                        crossFadePoint: 0),
+                                  ),
+                                );
+                              },
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                }).toList(),
-              ));
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+
+  Future<void> _saveCompletedDownload(String url, String videoTitle) async {
+    var task = downloadManager.getDownload(url);
+
+    if (task != null && task.status.value == DownloadStatus.completed) {
+      try {
+        String completedFilePath = "$savedDir/$videoTitle";
+
+        File downloadedFile =
+            File(completedFilePath + DownloadManager.partialExtension);
+
+        if (await downloadedFile.exists()) {
+          await downloadedFile.rename(completedFilePath);
+          log("Download completed and file saved at: $completedFilePath");
+        } else {
+          log("No partial file found for URL: $url");
+        }
+      } catch (e) {
+        log("Error saving completed download: $e");
+      }
+    }
   }
 }

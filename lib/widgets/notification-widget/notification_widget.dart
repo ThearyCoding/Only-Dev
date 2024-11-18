@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_leaningapp/export/curriculum_export.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -82,8 +84,8 @@ class NotificationItem extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   notification.timestamp != null
-                      ? DateFormat('EEE / M/d/yy - h:mm a')
-                          .format(notification.timestamp)
+                      ? DateFormat('EEE /MMM/yy: h:mm a').format(notification.timestamp)
+
                       : 'No Date',
                   style: GoogleFonts.roboto(
                     fontSize: 11,
@@ -99,6 +101,7 @@ class NotificationItem extends StatelessWidget {
   }
 
  void navigation(BuildContext context) {
+    log('notification type : $notification');
     if (notification.type == "course") {
       context.push(
         RoutesPath.detailCourseScreen,

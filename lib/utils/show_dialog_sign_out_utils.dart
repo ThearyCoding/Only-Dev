@@ -66,7 +66,7 @@ class LogOutDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),

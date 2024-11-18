@@ -6,14 +6,15 @@ class CustomBtnLoadingWidget extends StatefulWidget {
   final dynamic Function(Function, Function, ButtonState)? onTap;
   final Color? backgroundColor;
   final double borderRadius;
+  final bool? isInput;
 
-  const CustomBtnLoadingWidget({
-    super.key,
-    this.onTap,
-    required this.btnText,
-    this.backgroundColor = Colors.green,
-    this.borderRadius = 0.0
-  });
+  const CustomBtnLoadingWidget(
+      {super.key,
+      this.onTap,
+      required this.btnText,
+      this.backgroundColor = Colors.green,
+      this.borderRadius = 0.0,
+      this.isInput = false});
 
   @override
   CustomBtnLoadingWidgetState createState() => CustomBtnLoadingWidgetState();
@@ -24,6 +25,7 @@ class CustomBtnLoadingWidgetState extends State<CustomBtnLoadingWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -39,10 +41,15 @@ class CustomBtnLoadingWidgetState extends State<CustomBtnLoadingWidget> {
                   borderRadius: widget.borderRadius,
                   roundLoadingShape: false,
                   animate: true,
-                  // color:
-                  //     btnState == ButtonState.busy ? Colors.grey : Colors.green,
                   color: widget.backgroundColor,
-                  disabledColor: Colors.grey[500],
+                  elevation: 0,
+                  borderSide: BorderSide(
+                    strokeAlign: 1.0,
+                    width: 1.0,
+                    color: widget.isInput == true
+                        ? Colors.transparent
+                        : Colors.grey,
+                  ),
                   width: MediaQuery.of(context).size.width * 0.7,
                   loader: Container(
                     padding: const EdgeInsets.all(10),
@@ -77,7 +84,8 @@ class CustomBtnLoadingWidgetState extends State<CustomBtnLoadingWidget> {
                       : null,
                   child: Text(
                     widget.btnText,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black),
                   ),
                 ),
               ),

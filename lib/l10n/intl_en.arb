@@ -64,6 +64,10 @@
   "today": "Today",
   "earlier": "Earlier",
   "chooseLanguage": "Choose Your Language",
-  "selectAssetsTitle": "Select Images"
+  "selectAssetsTitle": "Select Images",
+  "searchHint": "Search for courses...",
+  "startSearching": "Start searching by typing here",
+  "noResultsFound": "No results found",
+  "noDownloadedVideosFound": "No downloaded videos found"
   
 }

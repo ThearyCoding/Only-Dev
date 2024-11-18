@@ -64,5 +64,9 @@
   "today": "ថ្ងៃនេះ",
   "earlier": "មុននេះ",
   "chooseLanguage": "ជ្រើសរើសភាសារបស់អ្នក",
-  "selectAssetsTitle": "ជ្រើសរើសរូបភាព"
+  "selectAssetsTitle": "ជ្រើសរើសរូបភាព",
+  "searchHint": "ស្វែងរក៖ មេរៀន",
+  "startSearching": "ចាប់ផ្តើមស្វែងរកដោយការសរសេរចូលទីនេះ",
+  "noResultsFound": "រកមិនឃើញលទ្ធផល",
+    "noDownloadedVideosFound": "គ្មានវីដេអូបានទាញយកទេ"
 }

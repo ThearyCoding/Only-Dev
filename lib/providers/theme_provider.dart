@@ -1,4 +1,5 @@
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
+import '../../di/dependency_injection.dart';
 import 'package:flutter/material.dart';
 
 import '../export/export.dart';
@@ -15,15 +16,15 @@ class CustomizeThemeProvider extends ChangeNotifier {
   }
 
   Future<void> loadTheme() async {
-    _prefs = await SharedPreferences.getInstance();
+    // ignore: await_only_futures
+    _prefs = await locator<SharedPreferences>();
     _currentTheme = getThemeModeFromStorage();
     notifyListeners();
   }
 
   void switchTheme(BuildContext context) {
-    _currentTheme = _currentTheme == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    _currentTheme =
+        _currentTheme == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
 
     _saveThemeToStorage(_currentTheme);
 
@@ -34,7 +35,7 @@ class CustomizeThemeProvider extends ChangeNotifier {
       isReversed: _currentTheme == ThemeMode.light,
     );
 
-  //  notifyListeners();
+    //  notifyListeners();
   }
 
   ThemeMode getThemeModeFromStorage() {

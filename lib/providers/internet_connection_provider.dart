@@ -22,7 +22,7 @@ class InternetConnectionProvider extends ChangeNotifier {
       if (_isConnected != connected) {
         _isConnected = connected;
         notifyListeners();
-        _showSnackbar( connected ? S.current.internetConnectionRestored : S.current.internetConnectionLost,);
+        _showSnackbar( connected ? AppLocalizations.current.internetConnectionRestored : AppLocalizations.current.internetConnectionLost,);
 
         if (!connected) {
           _startConnectionLostTimer();
@@ -36,7 +36,7 @@ class InternetConnectionProvider extends ChangeNotifier {
   void _startConnectionLostTimer() {
     _connectionLostTimer?.cancel();
     _connectionLostTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _showSnackbar(S.current.internetConnectionLost);
+      _showSnackbar(AppLocalizations.current.internetConnectionLost);
     });
   }
 

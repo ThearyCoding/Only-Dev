@@ -114,7 +114,6 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
                         course: course,
                         admin: admin,
                         quizCount: quizCount,
-                        userId: user!.uid,
                         isRegistered: isRegistered,
                         totalLectures: totalLectures,
                       );

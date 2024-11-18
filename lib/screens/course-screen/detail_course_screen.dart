@@ -1,22 +1,8 @@
-import 'package:better_player/better_player.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/material.dart';
-import 'package:loading_btn/loading_btn.dart';
-import 'package:palette_generator/palette_generator.dart';
-import '../../core/global_navigation.dart';
-import '../../di/dependency_injection.dart';
-import '../../export/provider_export.dart';
-import '../../service/stripe/stripe_service.dart';
-import '../../utils/configuration_better_player.dart';
-import '../../widgets/buttons/custom_btn_loading_widget.dart';
-import '../../export/export.dart';
-import '../../utils/show_dialog_infor_utils.dart';
-import '../../generated/l10n.dart';
-import '../../service/firebase/firebase_api_quiz.dart';
-import '../../widgets/loadings/build_course_detail_shimmer.dart';
+import 'package:expandable/expandable.dart';
+
+import '../../export/detail_export.dart';
+import '../../model/lecture_model.dart';
+import '../../utils/time_utils.dart';
 
 class DetailCourseScreen extends StatefulWidget {
   final String categoryId;
@@ -35,26 +21,28 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
   final User? user = locator<FirebaseAuth>().currentUser;
   late RegistrationProvider registrationProvider;
+  late LectureProvider lectureProvider;
   late CourseProvider courseProvider;
   double profileheight = 40;
   double converheight = 220;
   int totalVideos = 0;
   int watchedtotal = 0;
   int totalQuestionQuiz = 0;
-
+  final ScrollController _scrollController = ScrollController();
+  bool _isBottomSheetVisible = true;
   BetterPlayerController? betterPlayerController;
-  //PodPlayerController? podPlayerController;
-
   Color dominantColor = Colors.grey;
   bool isLoading = true;
+
   void _initializeVideoController(String? videoUrl) async {
-    if (_isYouTubeUrl(videoUrl)) {
-    } else {
+    if (videoUrl != null && !_isYouTubeUrl(videoUrl)) {
       betterPlayerController = BetterPlayerController(
         configurationBetterPlayer(0),
         betterPlayerDataSource: BetterPlayerDataSource(
-            BetterPlayerDataSourceType.network, videoUrl!,
-            cacheConfiguration: cacheConfiguration(videoUrl)),
+          BetterPlayerDataSourceType.network,
+          videoUrl,
+          cacheConfiguration: cacheConfiguration(videoUrl),
+        ),
       );
     }
   }
@@ -67,13 +55,14 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
   @override
   void initState() {
     super.initState();
-
+    lectureProvider = Provider.of<LectureProvider>(context, listen: false);
     _scrollController.addListener(_scrollListener);
     courseProvider = Provider.of<CourseProvider>(context, listen: false);
     registrationProvider =
         Provider.of<RegistrationProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await fetchInitialData();
+      await getDominantColor();
     });
   }
 
@@ -82,7 +71,6 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
       isLoading = true;
     });
 
-    final courseProvider = Provider.of<CourseProvider>(context, listen: false);
     final totalQuestions = await _apiQuiz.fetchTotalQuestions(widget.courseId);
     totalQuestionQuiz = totalQuestions;
 
@@ -91,7 +79,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
         courseProvider.getFirstVideoUrl(widget.categoryId, widget.courseId),
         courseProvider.fetchCourseAndAdminById(
             widget.categoryId, widget.courseId),
-        getDominantColor(),
+        lectureProvider.getSections(widget.categoryId, widget.courseId)
       ]);
       _initializeVideoController(courseProvider.firstVideoUrl);
 
@@ -134,14 +122,13 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
   }
 
   Future<PaletteGenerator> _generatePalatteColor(CourseModel course) async {
-    final PaletteGenerator paletteGenerator =
-        await PaletteGenerator.fromImageProvider(
-            CachedNetworkImageProvider(course.imageUrl));
-    return paletteGenerator;
+    if (course.imageUrl.isEmpty) {
+      return PaletteGenerator.fromColors([PaletteColor(Colors.grey, 2)]);
+    }
+    return await PaletteGenerator.fromImageProvider(
+      CachedNetworkImageProvider(course.imageUrl),
+    );
   }
-
-  final ScrollController _scrollController = ScrollController();
-  bool _isBottomSheetVisible = true;
 
   void _scrollListener() {
     if (_scrollController.position.userScrollDirection ==
@@ -165,174 +152,75 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
   void dispose() {
     _scrollController.dispose();
     betterPlayerController?.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final localization = S.of(context);
+    final localization = AppLocalizations.of(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SafeArea(
-        child: Scaffold(
-            body: Consumer2<CourseProvider, RegistrationProvider>(
-              builder: (context, courseProvider, registrationProvider, child) {
-                final course = courseProvider.course;
-                final admin = courseProvider.admin;
+      child: Scaffold(
+          body: Consumer2<CourseProvider, RegistrationProvider>(
+            builder: (context, courseProvider, registrationProvider, child) {
+              final course = courseProvider.course;
+              final admin = courseProvider.admin;
 
-                if (isLoading) {
-                  return const BuildCourseDetailShimmer();
-                }
-
-                if (course == null || admin == null) {
-                  return const Center(
-                    child: Text(
-                      'Failed to load course details',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  );
-                }
-
-                return CustomScrollView(
-                  controller: _scrollController,
-                  slivers: [
-                    SliverAppBar(
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor,
-                      leading: InkWell(
-                        borderRadius: BorderRadius.circular(50),
-                        onTap: () async {
-                          if (registrationProvider.hasShownDialog == true) {
-                            bool? shouldExit = await showCustomDialog(
-                              context,
-                              'Registration in Progress',
-                              'You are currently registering. If you exit now, your registration progress may be lost. Do you want to continue?',
-                            );
-                            if (shouldExit == true) {
-                              registrationProvider.isCancelled = true;
-                            }
-                          } else {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.all(10),
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: dominantColor.withOpacity(0.6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.arrow_back_ios, size: 16),
-                        ),
-                      ),
-                      expandedHeight: converheight,
-                      flexibleSpace:
-                          buildFlexibleSpaceBar(context, courseProvider),
-                    ),
-                    _buildDetails(localization, course, admin)
-                  ],
+              if (isLoading) {
+                return const BuildCourseDetailShimmer();
+              } else if (course == null || admin == null) {
+                return const Center(
+                  child: Text(
+                    'Failed to load course details',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 );
-              },
-            ),
-            bottomSheet: _buildBottomSheet(localization, isDarkMode)));
-  }
+              }
 
-  navigatorToTopicscreen(String title) async {
-    context.push(RoutesPath.topicScreen, extra: {
-      'courseId': widget.courseId,
-      'categoryId': widget.categoryId,
-      'title': title,
-    });
-  }
-
-  void addToCartDialog(CourseModel course, String author) {
-    final context = navigatorKey.currentState!.context;
-    if (context != null) {
-      showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            contentPadding: EdgeInsets.zero,
-            titlePadding: const EdgeInsets.symmetric(horizontal: 11),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 5),
-                    child: Text(author),
-                  ),
-                  title: Text(
-                    maxLines: 3,
-                    course.title,
-                    style: const TextStyle(
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  leading: CachedNetworkImage(
-                    imageUrl: course.imageUrl,
-                    fit: BoxFit.contain,
-                    width: 60,
-                    height: 60,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
+              return CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    leading: InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: () async {
+                        if (registrationProvider.hasShownDialog == true) {
+                          bool? shouldExit = await showCustomDialog(
+                            context,
+                            'Registration in Progress',
+                            'You are currently registering. If you exit now, your registration progress may be lost. Do you want to continue?',
+                          );
+                          if (shouldExit == true) {
+                            registrationProvider.isCancelled = true;
+                          }
+                        } else {
+                          Navigator.of(context).pop();
+                        }
+                      },
                       child: Container(
-                        color: Colors.white,
+                        margin: const EdgeInsets.all(10),
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: dominantColor.withOpacity(0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_back_ios, size: 16),
                       ),
                     ),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
+                    expandedHeight: converheight,
+                    flexibleSpace:
+                        buildFlexibleSpaceBar(context, courseProvider),
                   ),
-                ),
-                const SizedBox(height: 15),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 13),
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
-                        padding: const EdgeInsets.symmetric(vertical: 15)),
-                    onPressed: () {},
-                    child: const Text(
-                      "Go to cart",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-              ],
-            ),
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Added to cart",
-                  style: TextStyle(
-                    fontSize: 17,
-                  ),
-                ),
-                IconButton(
-                  splashRadius: 20,
-                  onPressed: () {
-                    context.pop();
-                  },
-                  icon: SvgPicture.asset(
-                    'assets/icons/icons8-cancel.svg',
-                    // ignore: deprecated_member_use
-                    color: Colors.grey,
-                    height: 20,
-                    width: 20,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }
+                  _buildDetails(localization, course, admin),
+                ],
+              );
+            },
+          ),
+          bottomSheet: _buildBottomSheet(localization, isDarkMode)),
+    );
   }
 
   FlexibleSpaceBar buildFlexibleSpaceBar(
@@ -354,8 +242,8 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
         imageUrl: courseProvider.course!.imageUrl,
         fit: BoxFit.cover,
         placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
+          baseColor: Colors.grey[300] ?? Colors.grey,
+          highlightColor: Colors.grey[100] ?? Colors.grey,
           child: Container(
             color: Colors.white,
           ),
@@ -370,7 +258,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
   }
 
   SliverToBoxAdapter _buildDetails(
-      S localization, CourseModel course, AdminModel admin) {
+      AppLocalizations localization, CourseModel course, AdminModel admin) {
     return SliverToBoxAdapter(
       child: Column(
         children: [
@@ -435,18 +323,23 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
           const Divider(
             color: Colors.grey,
           ),
-          Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom + 100),
-            child:
-                DescriptionWidget(videoDescription: course.description ?? ''),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.only(
+          //       bottom: MediaQuery.of(context).padding.bottom + 100),
+          //   child:
+          //       DescriptionWidget(videoDescription: course.description ?? ''),
+          // ),
+          DescriptionWidget(videoDescription: course.description ?? ''),
+
+          BuildCourseCurriculum(
+            lectureProvider: lectureProvider,
+          )
         ],
       ),
     );
   }
 
-  Widget _buildBottomSheet(S localization, bool isDarkMode) {
+  Widget _buildBottomSheet(AppLocalizations localization, bool isDarkMode) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: _isBottomSheetVisible ? 120 : 0,
@@ -454,7 +347,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
         builder: (context, courseProvider, registrationProvider, child) {
           final course = courseProvider.course;
           final admin = courseProvider.admin;
-          if (isLoading) {
+          if (course == null || admin == null || isLoading) {
             return const SizedBox.shrink();
           }
 
@@ -469,7 +362,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        course!.price == 0
+                        course.price == 0
                             ? localization.Free
                             : '\$ ${course.price!.toStringAsFixed(2)}',
                         style: TextStyle(
@@ -634,5 +527,173 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
       }
       stopLoading();
     }
+  }
+
+  navigatorToTopicscreen(String title) async {
+    context.push(RoutesPath.topicScreen, extra: {
+      'courseId': widget.courseId,
+      'categoryId': widget.categoryId,
+      'title': title,
+    });
+  }
+
+  void addToCartDialog(CourseModel course, String author) {
+    final context = navigatorKey.currentState!.context;
+    if (context != null) {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            contentPadding: EdgeInsets.zero,
+            titlePadding: const EdgeInsets.symmetric(horizontal: 11),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Text(author),
+                  ),
+                  title: Text(
+                    maxLines: 3,
+                    course.title,
+                    style: const TextStyle(
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  leading: CachedNetworkImage(
+                    imageUrl: course.imageUrl,
+                    fit: BoxFit.contain,
+                    width: 60,
+                    height: 60,
+                    placeholder: (context, url) => Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Container(
+                        color: Colors.white,
+                      ),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        padding: const EdgeInsets.symmetric(vertical: 15)),
+                    onPressed: () {},
+                    child: const Text(
+                      "Go to cart",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+              ],
+            ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Added to cart",
+                  style: TextStyle(
+                    fontSize: 17,
+                  ),
+                ),
+                IconButton(
+                  splashRadius: 20,
+                  onPressed: () {
+                    context.pop();
+                  },
+                  icon: SvgPicture.asset(
+                    'assets/icons/icons8-cancel.svg',
+                    // ignore: deprecated_member_use
+                    color: Colors.grey,
+                    height: 20,
+                    width: 20,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+}
+
+class BuildCourseCurriculum extends StatelessWidget {
+  final LectureProvider lectureProvider;
+  const BuildCourseCurriculum({super.key, required this.lectureProvider});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Curriculum',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 10),
+          const Divider(),
+          const SizedBox(height: 5),
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: lectureProvider.sections.length,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (ctx, index) {
+              final section = lectureProvider.sections[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                child: ExpandablePanel(
+                  theme: ExpandableThemeData(
+                    hasIcon: true,
+                    headerAlignment: ExpandablePanelHeaderAlignment.center,
+                    tapBodyToCollapse: false,
+                    tapHeaderToExpand: false,
+                    inkWellBorderRadius: BorderRadius.circular(10),
+                    iconColor: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  header: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Text(
+                      'Section ${index + 1}: ${section.title}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  collapsed: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      // ignore: avoid_types_as_parameter_names
+                      '${section.lectures.length} lectures | ${TimeUtils.formatDuration(section.lectures.fold<int>(0, (sum, lecture) => sum + lecture.videoDuration))}',
+                      softWrap: true,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  expanded: Column(
+                      children: section.lectures.map<Widget>((Lecture lecture) {
+                    return ListTile(
+                      title: Text(lecture.title,
+                          style: Theme.of(context).textTheme.bodySmall),
+                    );
+                  }).toList()),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -11,6 +11,7 @@ BetterPlayerConfiguration configurationBetterPlayer(
   return BetterPlayerConfiguration(
     autoPlay: true,
     looping: false,
+
     fullScreenByDefault: fullScreenByDefault,
     allowedScreenSleep: allowedScreenSleep,
     aspectRatio: 16 / 9,
@@ -18,18 +19,21 @@ BetterPlayerConfiguration configurationBetterPlayer(
     autoDetectFullscreenDeviceOrientation: true,
     autoDetectFullscreenAspectRatio: true,
     fullScreenAspectRatio: 9 / 16,
+    
     deviceOrientationsOnFullScreen: const [DeviceOrientation.portraitUp],
     deviceOrientationsAfterFullScreen: const [DeviceOrientation.portraitUp],
     startAt: Duration(milliseconds: startPosition),
     controlsConfiguration: BetterPlayerControlsConfiguration(
-        enableProgressText: true,
-        progressBarPlayedColor: Colors.red,
-        enableAudioTracks: false,
-        enableQualities: false,
-        showControls: showControls,
-        enableSubtitles: false,
-        controlBarColor: Colors.black.withOpacity(0.5),
-        progressBarHandleColor: Colors.red),
+      enableProgressText: true,
+      progressBarPlayedColor: Colors.red,
+      enableAudioTracks: false,
+      enableQualities: false,
+      showControls: showControls,
+      enableSubtitles: false,
+      controlBarColor: Colors.black.withOpacity(0.5),
+      progressBarHandleColor: Colors.red,
+      
+    ),
   );
 }
 
@@ -40,10 +44,12 @@ BetterPlayerPlaylistConfiguration createPlayList(
       loopVideos: loopVideos);
 }
 
-BetterPlayerCacheConfiguration cacheConfiguration(String videoUrl) {
-  return const BetterPlayerCacheConfiguration(
-    useCache: true,
-    maxCacheSize: 200 * 1024 * 1024,
-    maxCacheFileSize: 50 * 1024 * 1024,
-  );
+BetterPlayerCacheConfiguration cacheConfiguration(String videoUrl,
+    {int maxCacheSize = 50 * 1024 * 1024}) {
+  return BetterPlayerCacheConfiguration(
+      useCache: true,
+      maxCacheSize: maxCacheSize,
+      key: videoUrl.toString(),
+      maxCacheFileSize: 50 * 1024 * 1024,
+      preCacheSize: 10 * 1024 * 1024);
 }

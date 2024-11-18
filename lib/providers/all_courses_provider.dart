@@ -8,21 +8,25 @@ import '../utils/show_error_utils.dart';
 
 class AllCoursesProvider with ChangeNotifier {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
+  final FirebaseApiCategories _apiCategories = locator<FirebaseApiCategories>();
+  final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
+
   List<CourseModel> courses = [];
   DocumentSnapshot<Map<String, dynamic>>? lastDocument;
   TabController? tabController;
   String activeFetchId = '';
-  bool isLoading = false;
+  bool isLoadingCategories = false;
   bool isPaginating = false;
   bool hasMoreData = true;
   Map<String, AdminModel> adminMap = {};
   Map<String, int> quizCounts = {};
+  Map<String, bool> categoryLoadingMap =
+      {}; // Map for each category's loading status
   List<CourseModel> courseByCategoryId = [];
-  User? user = FirebaseAuth.instance.currentUser;
+  User? user = locator<FirebaseAuth>().currentUser;
   List<CategoryModel> categories = [];
   String selectedCategory = 'all';
   final int limit = 5;
-  final FirebaseApiCategories _apiCategories = locator<FirebaseApiCategories>();
   final Set<String> courseIds = <String>{};
   final Map<String, List<CourseModel>> categoryCourseCache = {};
 
@@ -37,21 +41,27 @@ class AllCoursesProvider with ChangeNotifier {
 
   Future<void> fetchCategories(TickerProvider tickerProvider) async {
     try {
-      List<CategoryModel> tempCategories =
-          await _apiCategories.getCategories();
+      isLoadingCategories = true;
+      notifyListeners();
+      List<CategoryModel> tempCategories = await _apiCategories.getCategories();
       tempCategories.insert(
           0, CategoryModel(id: 'all', title: 'All', imageUrl: ''));
       categories = tempCategories;
 
       tabController =
           TabController(length: categories.length, vsync: tickerProvider);
-      // _refreshControllers =
-      //     List.generate(categories.length, (_) => RefreshController());
+      for (var category in categories) {
+        categoryLoadingMap[category.id] =
+            false; // Initialize loading status for each category
+      }
 
       notifyListeners();
       fetchCourses();
     } catch (error) {
       handleError(error, 'Error fetching categories');
+    } finally {
+      isLoadingCategories = false;
+      notifyListeners();
     }
   }
 
@@ -59,71 +69,60 @@ class AllCoursesProvider with ChangeNotifier {
     bool isRefresh = false,
     bool isPagination = false,
   }) async {
-    if (isLoading || isPaginating) return;
+    if (isPaginating || (categoryLoadingMap[selectedCategory] ?? false)) return;
 
     if (isPagination) {
       isPaginating = true;
     } else {
-      isLoading = true;
+      categoryLoadingMap[selectedCategory] = true;
     }
+    notifyListeners();
 
     final currentFetchId = DateTime.now().millisecondsSinceEpoch.toString();
-    activeFetchId = currentFetchId; // Set the current fetch ID
+    activeFetchId = currentFetchId;
     final currentCategory = selectedCategory;
 
     try {
       QuerySnapshot<Map<String, dynamic>> courseSnapshot;
 
       if (isRefresh || courses.isEmpty) {
-        // Fetching from the beginning or refreshing
         courseSnapshot = await _getCourseSnapshot();
         lastDocument =
             courseSnapshot.docs.isNotEmpty ? courseSnapshot.docs.last : null;
       } else {
-        // Fetching more data (pagination)
         courseSnapshot = await _getCourseSnapshot(startAfter: lastDocument);
         lastDocument = courseSnapshot.docs.isNotEmpty
             ? courseSnapshot.docs.last
             : lastDocument;
       }
 
-      // Convert documents to CourseModel
       final List<CourseModel> fetchedCourses = courseSnapshot.docs
           .map((doc) => CourseModel.fromMap(doc.data()))
           .toList();
 
       await Future.wait([
         fetchAdminData(),
-        fetchQuizAndTotalLessons(fetchedCourses),
+        if (fetchedCourses.isNotEmpty) fetchQuizCount(fetchedCourses.first.id),
       ]);
 
       if (activeFetchId != currentFetchId ||
           selectedCategory != currentCategory) {
-        return; // Cancel the operation if the category changed or another fetch started
+        return;
       }
 
       if (isRefresh) {
         courses.clear();
         courseIds.clear();
-        for (var course in fetchedCourses) {
-          if (!courseIds.contains(course.id)) {
-            courses.add(course);
-            courseIds.add(course.id);
-          }
-        }
-      } else {
-        for (var course in fetchedCourses) {
-          if (!courseIds.contains(course.id)) {
-            courses.add(course);
-            courseIds.add(course.id);
-          }
+      }
+
+      for (var course in fetchedCourses) {
+        if (!courseIds.contains(course.id)) {
+          courses.add(course);
+          courseIds.add(course.id);
         }
       }
 
-      // Check if less than limit items were fetched, indicating no more data
       hasMoreData = fetchedCourses.length >= limit;
-      if (!hasMoreData) {}
-
       if (selectedCategory == currentCategory) {
         categoryCourseCache[selectedCategory] = List<CourseModel>.from(courses);
       }
@@ -133,7 +132,7 @@ class AllCoursesProvider with ChangeNotifier {
       handleError(error, 'Error fetching courses');
     } finally {
       if (activeFetchId == currentFetchId) {
-        isLoading = false;
+        categoryLoadingMap[selectedCategory] = false;
         isPaginating = false;
         notifyListeners();
       }
@@ -142,16 +141,16 @@ class AllCoursesProvider with ChangeNotifier {
 
   void onTabTapped(int index) {
     if (tabController == null) return;
+    String previousCategory = selectedCategory;
     selectedCategory = categories[index].id;
-    getCoursesByCategory(categories[index].id);
+
+    // Reset the previous category's loading state
+    categoryLoadingMap[previousCategory] = false;
+    getCoursesByCategory(selectedCategory);
   }
 
   void getCoursesByCategory(String categoryId) {
-    if (isLoading) {
-      if (categoryCourseCache.containsKey(selectedCategory)) {
-        categoryCourseCache.remove(selectedCategory);
-      }
-    }
+    if (categoryLoadingMap[categoryId] == true) return;
 
     selectedCategory = categoryId;
 
@@ -159,7 +158,7 @@ class AllCoursesProvider with ChangeNotifier {
       courses = categoryCourseCache[categoryId]!;
       courseIds
           .addAll(categoryCourseCache[categoryId]!.map((course) => course.id));
-      notifyListeners(); // Notify listeners of state changesa
+      notifyListeners();
     } else {
       if (!isPaginating) {
         courses.clear();
@@ -173,7 +172,7 @@ class AllCoursesProvider with ChangeNotifier {
   Future<QuerySnapshot<Map<String, dynamic>>> _getCourseSnapshot({
     DocumentSnapshot<Map<String, dynamic>>? startAfter,
   }) {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+    Query<Map<String, dynamic>> query = _firestore
         .collectionGroup('courses')
         .orderBy('timestamp', descending: true)
         .limit(limit);
@@ -191,27 +190,14 @@ class AllCoursesProvider with ChangeNotifier {
 
   Future<void> fetchAdminData() async {
     try {
-      QuerySnapshot adminSnapshot =
-          await FirebaseFirestore.instance.collection('admins').get();
-      Map<String, AdminModel> adminMapData = {
+      QuerySnapshot adminSnapshot = await _firestore.collection('admins').get();
+      adminMap = {
         for (var doc in adminSnapshot.docs)
           doc.id: AdminModel.fromJson(doc.data() as Map<String, dynamic>)
       };
-      adminMap = adminMapData;
       notifyListeners();
     } catch (error) {
       handleError(error, 'Error fetching admin data');
-    }
-  }
-
-  Future<void> fetchQuizAndTotalLessons(List<CourseModel> courseDocs) async {
-    try {
-      await Future.wait(courseDocs.map((course) async {
-        String courseId = course.id;
-        await fetchQuizCount(courseId);
-      }));
-    } catch (error) {
-      handleError(error, 'Error fetching quiz and PDF counts');
     }
   }
 

@@ -83,11 +83,15 @@ class MessageLookup extends MessageLookupByLibrary {
             "No Courses available at this time! Pull down to refresh."),
         "noCoursesFoundForThisCategory": MessageLookupByLibrary.simpleMessage(
             "No courses found for this category."),
+        "noDownloadedVideosFound":
+            MessageLookupByLibrary.simpleMessage("No downloaded videos found"),
         "noMoreCoursesToLoad": MessageLookupByLibrary.simpleMessage(
             "No more courses available to load."),
         "noMoreData": m2,
         "noRegisteredCoursesFound": MessageLookupByLibrary.simpleMessage(
             "No registered courses found."),
+        "noResultsFound":
+            MessageLookupByLibrary.simpleMessage("No results found"),
         "no_button": MessageLookupByLibrary.simpleMessage("No Thanks!"),
         "no_more_notifications": MessageLookupByLibrary.simpleMessage(
             "No more notification available to load."),
@@ -111,10 +115,14 @@ class MessageLookup extends MessageLookupByLibrary {
         "releaseToRefresh":
             MessageLookupByLibrary.simpleMessage("Release to refresh"),
         "searchCourses": MessageLookupByLibrary.simpleMessage("Search Courses"),
+        "searchHint":
+            MessageLookupByLibrary.simpleMessage("Search for courses..."),
         "selectAssetsTitle":
             MessageLookupByLibrary.simpleMessage("Select Images"),
         "settings": MessageLookupByLibrary.simpleMessage("Settings"),
         "settingsTitle": MessageLookupByLibrary.simpleMessage("Settings"),
+        "startSearching": MessageLookupByLibrary.simpleMessage(
+            "Start searching by typing here"),
         "students": MessageLookupByLibrary.simpleMessage("students"),
         "today": MessageLookupByLibrary.simpleMessage("Today"),
         "videoNotFound": m3,
