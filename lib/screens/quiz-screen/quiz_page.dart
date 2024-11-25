@@ -1,4 +1,4 @@
-import 'package:e_leaningapp/export/export.dart';
+import '../../export/export.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';

@@ -1,5 +1,5 @@
-import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/export/export.dart';
+import '../../di/dependency_injection.dart';
+import '../../export/export.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photo_view/photo_view.dart';

@@ -38,6 +38,21 @@ class Lecture {
     );
   }
 
+  factory Lecture.empty(){
+    return Lecture(
+      id: '',
+      title: '',
+      description: '',
+      videoDuration: 0,
+      videoUrl: '',
+      timestamp: DateTime.now(),
+      sectionId: '',
+      thumbnailUrl: '',
+      views: 0,
+      
+    );
+  }
+
   factory Lecture.fromMap(Map<String, dynamic> json) {
     return Lecture(
       id: json['id'],

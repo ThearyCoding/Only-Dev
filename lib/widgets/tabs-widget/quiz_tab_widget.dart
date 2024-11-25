@@ -1,5 +1,5 @@
-import 'package:e_leaningapp/export/export.dart';
-import 'package:e_leaningapp/providers/lecture_provider.dart';
+import '../../export/export.dart';
+import '../../providers/lecture_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';

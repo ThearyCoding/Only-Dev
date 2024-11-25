@@ -1,5 +1,5 @@
 import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/widgets/loadings/custom_smart_refresh.dart';
+import 'package:e_leaningapp/widgets/loadings-widget/custom_smart_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +11,7 @@ import '../../providers/course_provider.dart';
 import '../../providers/registration_provider.dart';
 import '../../utils/show_error_utils.dart';
 import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
-import '../../widgets/loadings/build_shimmer_course_card_v2.dart';
+import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 class CoursesScreen extends StatefulWidget {
   final String categoryId;
   final String title;

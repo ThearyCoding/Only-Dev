@@ -5,8 +5,8 @@ import '../../providers/registration_provider.dart';
 import '../../generated/l10n.dart';
 import '../../providers/all_courses_provider.dart';
 import '../../widgets/course-widget/course_list_widget.dart';
-import '../../widgets/loadings/build_shimmer_course_card_v2.dart';
-import '../../widgets/loadings/build_tap_shimmer_widget.dart';
+import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
+import '../../widgets/loadings-widget/build_tap_shimmer_widget.dart';
 import '../search-screen/search_engine_screen.dart';
 
 class AllCoursesScreen extends StatefulWidget {

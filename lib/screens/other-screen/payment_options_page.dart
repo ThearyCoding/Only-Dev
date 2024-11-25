@@ -1,4 +1,4 @@
-import 'package:e_leaningapp/routes/app_routes.dart';
+import '../../routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';

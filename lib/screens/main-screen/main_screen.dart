@@ -1,8 +1,8 @@
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
-import 'package:e_leaningapp/providers/notification_provider.dart';
-import 'package:e_leaningapp/screens/user-screens/user_information_screen.dart';
 import 'package:dot_navigation_bar/dot_navigation_bar.dart';
 import 'package:provider/provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../screens/user-screens/user_information_screen.dart';
 import '../../export/export.dart';
 import '../home-screen/home_screen.dart';
 import '../notification-screen/notification_screen.dart';

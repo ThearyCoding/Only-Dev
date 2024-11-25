@@ -1,5 +1,5 @@
-import 'package:e_leaningapp/generated/l10n.dart';
-import 'package:e_leaningapp/providers/notification_provider.dart';
+import '../../generated/l10n.dart';
+import '../../providers/notification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';

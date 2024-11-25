@@ -48,6 +48,7 @@ class ContentTabWidgetState extends State<ContentTabWidget> {
     provider = Provider.of<LectureProvider>(context, listen: false);
     provider.loadLastWatchedLecture(widget.courseId);
     provider.loadWatchedLectures();
+
     _loadDownloadedVideos();
   }
 
@@ -64,33 +65,48 @@ class ContentTabWidgetState extends State<ContentTabWidget> {
   }
 
   Future<void> _handlePlayVideo(Lecture lecture, Section section) async {
-    List<dynamic> progress =
-        await sharedPreferencesService.getSavedVideoProgress(lecture.videoUrl);
-    int startPosition = 0;
-    int duration = 0;
+    try {
+      // Retrieve progress for the selected lecture
+      List<dynamic> progress = await sharedPreferencesService
+          .getSavedVideoProgress(lecture.videoUrl);
+      int startPosition = progress.isNotEmpty ? progress[3] : 0;
+      int duration = progress.isNotEmpty ? progress[4] : lecture.videoDuration;
 
-    if (progress.isNotEmpty) {
-      startPosition = progress[3];
-      duration = progress[4];
+      // Ensure startPosition is valid
+      if (startPosition > duration) {
+        startPosition = 0;
+      }
+
+      // Find lecture index within its section
+      int lectureIndex = section.lectures.indexOf(lecture);
+
+      // Update selected video index and lecture ID in the provider
+      provider.setSelectedIndex(lectureIndex);
+      provider.setSelectedLectureId(lecture.id);
+
+      // Save the last watched lecture and section
+      await provider.saveSectionExpanded(
+        widget.courseId,
+        section.id,
+        lecture.id,
+      );
+
+      // Invoke callback to play the video
+      widget.playVideoCallback(
+        lecture.videoUrl,
+        lecture.title,
+        lecture.description,
+        TimeUtils.formatTimestamp(lecture.timestamp),
+        lecture.views,
+        startPosition,
+        duration,
+        widget.courseId,
+        section.id,
+        lecture.id,
+      );
+    } catch (e) {
+      showSnackbar('Error playing video: $e');
     }
-
-    widget.playVideoCallback(
-      lecture.videoUrl,
-      lecture.title,
-      lecture.description,
-      TimeUtils.formatTimestamp(lecture.timestamp),
-      lecture.views,
-      startPosition,
-      duration,
-      widget.courseId,
-      section.id,
-      lecture.id,
-    );
-
-    provider.setSelectedLectureId(lecture.id);
-    provider.setCurrentPlayingVideo(lecture.title, lecture.description,
-        TimeUtils.formatTimestamp(lecture.timestamp), lecture.views.toInt());
-    provider.saveSectionExpanded(widget.courseId, section.id, lecture.id);
   }
 
   @override

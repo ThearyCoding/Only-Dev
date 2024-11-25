@@ -15,7 +15,7 @@ class AwesomeNotificationService {
 
   static Future<void> initNotification() async {
     await AwesomeNotifications().initialize(
-      null,
+    null,
       [
         NotificationChannel(
           channelKey: 'basic_channel',

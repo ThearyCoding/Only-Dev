@@ -14,13 +14,15 @@ class VideoPlayerHelper {
       locator<SharedPreferencesService>();
 
   bool _isDisposed = false;
-  Set<String> downloadedVideos = {};
+  Set<String> downloadedVideos;
+
+  BetterPlayerController? betterPlayerController;
+
   VideoPlayerHelper({
     required this.lectureProvider,
     required this.user,
     required this.downloadedVideos,
   });
-
   Future<void> initVideoPlayer(String categoryId, String courseId,
       List<Section> sections, VoidCallback onCompleted) async {
     if (sections.isNotEmpty && !_isDisposed) {
@@ -31,9 +33,6 @@ class VideoPlayerHelper {
       onCompleted();
     }
   }
-
-  BetterPlayerController? betterPlayerController;
-  String? currentVideoUrl;
 
   Future<void> setupVideoPlayer(
     String videoUrl,
@@ -48,22 +47,23 @@ class VideoPlayerHelper {
     String sectionId,
     String lectureId,
   ) async {
-  
-  // Check if the BetterPlayerController exists and if it's already playing the correct video
-  if (betterPlayerController != null && currentVideoUrl == videoUrl) {
-    // If the video URL is the same, resume playback from the start position
-    await betterPlayerController!.seekTo(Duration(milliseconds: startPosition));
-    betterPlayerController!.play();
-    log("Resumed playback with existing BetterPlayerController");
-  } else {
-    // Dispose of the existing controller if it exists and video URL has changed
     if (betterPlayerController != null) {
+      // Dispose of the existing controller
       betterPlayerController!.dispose();
       betterPlayerController = null;
-      log("Disposed of previous BetterPlayerController due to URL change");
     }
 
-    // Initialize a new BetterPlayerController with the new video URL
+    await sharedPreferencesService.saveVideoProgress(
+      videoUrl,
+      lectureProvider.selectedIndexVideo,
+      sectionId,
+      lectureId,
+      startPosition,
+      duration,
+      false,
+      courseId,
+    );
+
     await initBetterPlayerController(
       videoUrl,
       videoTitle,
@@ -76,29 +76,10 @@ class VideoPlayerHelper {
       sectionId,
       lectureId,
     );
-    log("Initialized new BetterPlayerController");
-
-    // Update the current video URL to keep track of the loaded video
-    currentVideoUrl = videoUrl;
-  }
-}
-
-
-  void _handleVideoEnded(
-    String categoryId,
-    String courseId,
-    String sectionId,
-    String lectureId,
-  ) async {
-    await UserService().updateViewCounts(
-      categoryId,
-      courseId,
-      sectionId,
-      lectureId,
-    );
-    log("View counts updated for video end");
+    lectureProvider.setSelectedLectureId(lectureId);
   }
 
+  /// Initializes a new BetterPlayerController with the given configuration.
   Future<void> initBetterPlayerController(
     String videoUrl,
     String videoTitle,
@@ -119,47 +100,73 @@ class VideoPlayerHelper {
               title: videoTitle,
             ));
 
-    BetterPlayerController newBetterPlayerController = BetterPlayerController(
+    BetterPlayerController newController = BetterPlayerController(
       configurationBetterPlayer(startPosition),
       betterPlayerDataSource: dataSource,
     );
 
+    // Add event listeners for progress and playback completion
     bool hasUpdatedViewCount = false;
+    newController.addEventsListener((event) async {
+      final position =
+          newController.videoPlayerController?.value.position.inMilliseconds ??
+              0;
+      final totalDuration =
+          newController.videoPlayerController?.value.duration?.inMilliseconds ??
+              0;
 
-    newBetterPlayerController.addEventsListener((event) async {
-      if (event.betterPlayerEventType == BetterPlayerEventType.progress) {
-        final currentPosition = newBetterPlayerController
-                .videoPlayerController?.value.position.inMilliseconds ??
-            0;
-        final totalDuration = newBetterPlayerController
-                .videoPlayerController?.value.duration?.inMilliseconds ??
-            0;
-        await saveVideoProgress(
-          videoUrl,
-          lectureProvider.selectedIndexVideo,
-          sectionId,
-          lectureId,
-          currentPosition,
-          totalDuration,
-          currentPosition == totalDuration,
-          courseId,
-        );
-      }
+      switch (event.betterPlayerEventType) {
+        case BetterPlayerEventType.progress:
+        case BetterPlayerEventType.initialized:
+        case BetterPlayerEventType.seekTo:
+          await saveVideoProgress(
+            videoUrl,
+            lectureProvider.selectedIndexVideo,
+            sectionId,
+            lectureId,
+            position,
+            totalDuration,
+            position == totalDuration,
+            courseId,
+          );
+          break;
 
-      if (event.betterPlayerEventType == BetterPlayerEventType.finished) {
-        if (!hasUpdatedViewCount) {
-          hasUpdatedViewCount = true;
-          _handleVideoEnded(categoryId, courseId, sectionId, lectureId);
-        }
+        case BetterPlayerEventType.finished:
+          if (!hasUpdatedViewCount) {
+            hasUpdatedViewCount = true;
+            _handleVideoEnded(categoryId, courseId, sectionId, lectureId);
+          }
+          break;
+
+        default:
+          break;
       }
     });
 
     _betterPlayerKey = GlobalKey();
-    newBetterPlayerController.setBetterPlayerGlobalKey(_betterPlayerKey);
+    newController.setBetterPlayerGlobalKey(_betterPlayerKey);
+    betterPlayerController = newController;
+
+    // Save and set the current playing video details
     saveSectionExpanded(courseId, sectionId, lectureId);
-    betterPlayerController = newBetterPlayerController;
     setCurrentPlayingVideo(videoUrl, videoTitle, description, timestamp, views,
         startPosition, courseId, sectionId, lectureId);
+  }
+
+  /// Handles video completion event.
+  void _handleVideoEnded(
+    String categoryId,
+    String courseId,
+    String sectionId,
+    String lectureId,
+  ) async {
+    await UserService().updateViewCounts(
+      categoryId,
+      courseId,
+      sectionId,
+      lectureId,
+    );
+    log("View counts updated for video end");
   }
 
   Future<void> saveSectionExpanded(
@@ -181,61 +188,52 @@ class VideoPlayerHelper {
         sectionId, lectureId, position, duration, watched, courseId);
   }
 
+  /// Retrieves the saved video progress from SharedPreferences.
   Future<List<dynamic>> getSavedVideoProgress(String videoUrl) async {
     return await sharedPreferencesService.getSavedVideoProgress(videoUrl);
   }
 
-Future<void> checkUserProgress(
-    String categoryId, String courseId, List<Section> sections) async {
-  // Attempt to get saved progress for the first lecture's video URL
-  String videoUrl = sections[0].lectures[0].videoUrl;
-  List<dynamic> progress = await sharedPreferencesService.getSavedVideoProgress(videoUrl);
-
-  int lastWatchedIndex = 0;
-  String sectionId = sections[0].id;
-  String lectureId = sections[0].lectures[0].id;
-  int startPosition = 0;
-  int duration = sections[0].lectures[0].videoDuration;
-
-  // If there is saved progress, update variables accordingly
-  if (progress.isNotEmpty) {
-    lastWatchedIndex = progress[0];
-    sectionId = progress[1];
-    lectureId = progress[2];
-    startPosition = progress[3];
-    duration = progress[4];
-
-    // Check if last watched index is within bounds
-    if (lastWatchedIndex >= sections.length) {
-      lastWatchedIndex = 0;
-      sectionId = sections[0].id;
-      lectureId = sections[0].lectures[0].id;
-      startPosition = 0;
-      duration = sections[0].lectures[0].videoDuration;
+  /// Checks and restores the user's progress on the current course and section.
+  Future<void> checkUserProgress(
+    String categoryId,
+    String courseId,
+    List<Section> sections,
+  ) async {
+    if (sections.isEmpty || sections[0].lectures.isEmpty) {
+      log('No sections or lectures found.');
+      return;
     }
-  }
 
-  lectureProvider.setSelectedLectureId(lectureId);
+    List<dynamic> progress =
+        await getSavedVideoProgress(sections[0].lectures[0].videoUrl);
+    log('Progress retrieved: $progress');
 
-  // Set up video player with retrieved or default values
-  await setupVideoPlayer(
-    videoUrl,
-    sections[lastWatchedIndex].lectures[0].title,
-    sections[lastWatchedIndex].lectures[0].description,
-    TimeUtils.formatTimestamp(sections[lastWatchedIndex].lectures[0].timestamp),
-    sections[lastWatchedIndex].lectures[0].views,
-    startPosition,
-    duration,
-    categoryId,
-    courseId,
-    sectionId,
-    lectureId,
-  );
-}
+    int videoIndex = progress.isNotEmpty ? progress[0] : 0;
+    int startPosition = progress.isNotEmpty ? progress[3] : 0;
 
-  void dispose() {
-    _isDisposed = true;
-    betterPlayerController?.dispose();
+    // if (videoIndex < 0 || videoIndex >= sections[0].lectures.length) {
+    //   log('Invalid video index. Resetting to default.');
+    //   videoIndex = 0;
+    //   startPosition = 0;
+    // }
+    Lecture lecture = sections[0].lectures[videoIndex];
+    log('Initializing video: ${lecture.title}, index: $videoIndex');
+
+    await setupVideoPlayer(
+      lecture.videoUrl,
+      lecture.title,
+      lecture.description,
+      TimeUtils.formatTimestamp(lecture.timestamp),
+      lecture.views,
+      startPosition,
+      lecture.videoDuration,
+      categoryId,
+      courseId,
+      sections[0].id,
+      lecture.id,
+    );
+
+    lectureProvider.setSelectedIndex(videoIndex);
   }
 
   void setCurrentPlayingVideo(
@@ -251,31 +249,13 @@ Future<void> checkUserProgress(
   ) {
     Section? section = lectureProvider.sections.firstWhere(
       (section) => section.id == sectionId,
-      orElse: () => Section(
-        id: '',
-        title: '',
-        learningObjective: '',
-        lectures: [],
-        courseId: courseId,
-      ),
+      orElse: () => Section.emtpy(),
     );
-    Lecture? lecture;
-    if (section != null) {
-      lecture = section.lectures.firstWhere(
-        (lecture) => lecture.id == lectureId,
-        orElse: () => Lecture(
-          id: '',
-          title: '',
-          description: description,
-          videoUrl: videoUrl,
-          timestamp: DateTime.now(),
-          sectionId: sectionId,
-          thumbnailUrl: '',
-          videoDuration: 0,
-          views: views,
-        ),
-      );
-    }
+
+    Lecture? lecture = section.lectures.firstWhere(
+      (lecture) => lecture.id == lectureId,
+      orElse: () => Lecture.empty(),
+    );
 
     if (lecture != null) {
       videoTitle = lecture.title;
@@ -287,5 +267,10 @@ Future<void> checkUserProgress(
     lectureProvider.setCurrentPlayingVideo(
         videoTitle, description, timestamp, views.toInt());
     lectureProvider.setSelectedLectureId(lectureId);
+  }
+
+  void dispose() {
+    _isDisposed = true;
+    betterPlayerController?.dispose();
   }
 }

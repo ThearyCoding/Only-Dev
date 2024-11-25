@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../../export/export.dart';
 import '../../export/topic_export.dart';
 
@@ -16,51 +18,58 @@ class TopicsScreenState extends State<TopicsScreen>
     with SingleTickerProviderStateMixin {
   VideoPlayerHelper? _videoPlayerHelper;
   late TabController _tabController;
-  int selectedTileIndex = 0;
   late LectureProvider lectureProvider;
 
   final User? user = locator<FirebaseAuth>().currentUser;
   final PanelController _panelController = PanelController();
   final PageStorageBucket _bucket = PageStorageBucket();
   Set<String> downloadedVideos = {};
+
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 2, vsync: this);
     lectureProvider = Provider.of<LectureProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _videoPlayerHelper = VideoPlayerHelper(
-        lectureProvider: lectureProvider,
-        user: user,
-        downloadedVideos: downloadedVideos,
-      );
-
-      if (widget.categoryId != null &&
-          widget.courseId != null &&
-          widget.title != null) {
-        lectureProvider
-            .getSections(widget.categoryId ?? '', widget.courseId ?? '')
-            .then(
-          (value) {
-            _videoPlayerHelper?.initVideoPlayer(
-              widget.categoryId ?? '',
-              widget.courseId!,
-              lectureProvider.sections,
-              () => setState(() {}),
-            );
-          },
-        );
-      }
+      _initializeVideoPlayer();
     });
-  
 
     _tabController.addListener(() {
       if (_tabController.index == 1 && !lectureProvider.hasFetchedQuestions) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          lectureProvider.fetchTotalQuestions(widget.courseId ?? '');
-        });
+        lectureProvider.fetchTotalQuestions(widget.courseId ?? '');
       }
     });
+  }
+
+  Future<void> _initializeVideoPlayer() async {
+    if (widget.categoryId != null &&
+        widget.courseId != null &&
+        widget.title != null) {
+      try {
+        await lectureProvider.getSections(
+          widget.categoryId ?? '',
+          widget.courseId ?? '',
+        );
+
+        _videoPlayerHelper = VideoPlayerHelper(
+          lectureProvider: lectureProvider,
+          user: user,
+          downloadedVideos: downloadedVideos,
+        );
+
+        await _videoPlayerHelper?.initVideoPlayer(
+          widget.categoryId ?? '',
+          widget.courseId!,
+          lectureProvider.sections,
+          () => setState(() {
+      
+          }),
+        );
+      } catch (e) {
+        log('Error initializing video player: $e');
+      }
+    }
   }
 
   @override
@@ -113,6 +122,12 @@ class TopicsScreenState extends State<TopicsScreen>
         controller: _panelController,
         minHeight: 0,
         maxHeight: 600,
+        onPanelClosed: () {
+          _videoPlayerHelper?.betterPlayerController?.play();
+        },
+        onPanelOpened: () {
+          _videoPlayerHelper?.betterPlayerController?.pause();
+        },
         panel: DraggableScrollableSheet(
           initialChildSize: 1.0,
           minChildSize: 0.4,
@@ -136,7 +151,6 @@ class TopicsScreenState extends State<TopicsScreen>
                           IconButton(
                             onPressed: () {
                               _panelController.close();
-                              lectureProvider.toggleDescriptionExpansion();
                             },
                             icon: SvgPicture.asset(
                               width: 20,
@@ -235,14 +249,10 @@ class TopicsScreenState extends State<TopicsScreen>
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () {
-                            controller.toggleDescriptionExpansion();
                             _panelController.open();
-                            _videoPlayerHelper!.betterPlayerController!.pause();
                           },
-                          child: Text(
-                            controller.isDescriptionExpanded
-                                ? '...less'
-                                : '...more',
+                          child: const Text(
+                            '...more',
                           ),
                         ),
                       ],

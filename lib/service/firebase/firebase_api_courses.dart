@@ -1,11 +1,12 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../di/dependency_injection.dart';
 
 import '../../model/admin_model.dart';
 import '../../model/courses_model.dart';
 
 class FirebaseApiCourses {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
 
   Future<CourseModel?> fetchCourseById(String courseId) async {
     try {
@@ -67,7 +68,7 @@ class FirebaseApiCourses {
         AdminModel? admin;
         if (adminDoc.exists) {
           // Parse admin data
-          admin = AdminModel.fromMap(adminDoc.data() as Map<String, dynamic>);
+          admin = AdminModel.fromJson(adminDoc.data() as Map<String, dynamic>);
         }
 
         // Return the course and admin as a Map
@@ -76,7 +77,6 @@ class FirebaseApiCourses {
           'admin': admin,
         };
       } else {
-        // Return null if no course is found
         return null;
       }
     } catch (e) {

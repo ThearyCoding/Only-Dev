@@ -1,11 +1,12 @@
 
+import '../di/dependency_injection.dart';
 import '../export/export.dart';
 import '../utils/show_error_utils.dart';
 
 class AuthenticationProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   bool get isLoggedIn => _isLoggedIn;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = locator<FirebaseAuth>();
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 

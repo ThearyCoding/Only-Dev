@@ -1,25 +1,22 @@
-import 'package:e_leaningapp/providers/quiz_provider.dart';
-import 'package:e_leaningapp/utils/show_dialog_infor_utils.dart';
-import 'package:e_leaningapp/widgets/check-box-widget/custom_checkbox.dart';
+import '../../providers/quiz_provider.dart';
+import '/../utils/show_dialog_infor_utils.dart';
+import '/../widgets/check-box-widget/custom_checkbox.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/buttons/custom_btn_for_quiz.dart';
 import '../../widgets/other-widget/custom_underline_painter.dart';
 
-// ignore: must_be_immutable
 class ResultPage extends StatelessWidget {
   final List<Map<String, dynamic>> questions;
   final List<String> userAnswers;
   final List<String> correctAnswers;
 
-  ResultPage({
+  const ResultPage({
     super.key,
     required this.questions,
     required this.userAnswers,
     required this.correctAnswers,
   });
-
-  bool showSolution = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +32,8 @@ class ResultPage extends StatelessWidget {
       }
     }
     double scorePercentage = (correctCount / totalQuestions) * 100;
-    final QuizProvider quizProvider = Provider.of<QuizProvider>(context,listen: false);
+    final QuizProvider quizProvider =
+        Provider.of<QuizProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

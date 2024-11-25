@@ -3,7 +3,8 @@ import '../../providers/categories_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../providers/registration_provider.dart';
 import '../../providers/user_provider.dart';
-import '../../widgets/tabs/custom_tap_material_indicator.dart';
+import '../../widgets/tabs-widget/custom_tap_material_indicator.dart';
+import '../../widgets/tabs-widget/tab_item.dart';
 import '../user-screens/user_information_screen.dart';
 import '../../export/export.dart';
 import '../../generated/l10n.dart';
@@ -271,28 +272,28 @@ class HomePageState extends State<HomePage>
                                   indicatorColor: Colors.blueAccent[500],
                                   isScrollable: true,
                                   tabs: [
-                                    // TabItem(
-                                    //   title: localizations.lessons,
-                                    //   count: courseController.courses.length,
-                                    // ),
-                                    // TabItem(
-                                    //   title: localizations.recentLessons,
-                                    //   count:
-                                    //       courseController.recentCourses.length,
-                                    // ),
-                                    // TabItem(
-                                    //   title: localizations.popularLessons,
-                                    //   count:
-                                    //       courseController.popularCourses.length,
-                                    // ),
+                                    TabItem(
+                                      title: localizations.lessons,
+                                      count: courseController.courses.length,
+                                    ),
+                                    TabItem(
+                                      title: localizations.recentLessons,
+                                      count:
+                                          courseController.recentCourses.length,
+                                    ),
+                                    TabItem(
+                                      title: localizations.popularLessons,
+                                      count: courseController
+                                          .popularCourses.length,
+                                    ),
 
-                                    Tab(
-                                      text: localizations.lessons,
-                                    ),
-                                    Tab(
-                                      text: localizations.recentLessons,
-                                    ),
-                                    Tab(text: localizations.popularLessons)
+                                    // Tab(
+                                    //   text: localizations.lessons,
+                                    // ),
+                                    // Tab(
+                                    //   text: localizations.recentLessons,
+                                    // ),
+                                    // Tab(text: localizations.popularLessons)
                                   ],
                                 ),
                               ),

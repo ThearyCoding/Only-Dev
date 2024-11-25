@@ -1,12 +1,12 @@
-import 'package:e_leaningapp/generated/l10n.dart';
-import 'package:e_leaningapp/utils/show_error_utils.dart';
-import 'package:e_leaningapp/widgets/loadings/custom_smart_refresh.dart';
+import '../../generated/l10n.dart';
+import '../../utils/show_error_utils.dart';
+import '../../widgets/loadings-widget/custom_smart_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../../model/notification_model.dart';
 import '../../providers/notification_provider.dart';
-import '../../widgets/loadings/build_notification_shimmer_loading.dart';
+import '../../widgets/loadings-widget/build_notification_shimmer_loading.dart';
 import '../../widgets/notification-widget/notification_widget.dart';
 import '../post_editor_screen.dart';
 
@@ -42,7 +42,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(
-       localization.notifications,
+          localization.notifications,
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black,
           ),
@@ -75,9 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             controller: _refreshController,
             enablePullUp: true,
             header: const CustomizeHeader(),
-            footer:  CustomizeFooter(
-              noDataText: localization.notifications
-            ),
+            footer: CustomizeFooter(noDataText: localization.notifications),
             onRefresh: () async {
               _refreshController.loadComplete();
               await provider.onRefresh();
@@ -88,13 +86,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               await provider.onLoading();
               _refreshController.loadComplete();
               if (!provider.hasMoreNotifications) {
-               showSnackbar(localization.no_more_notifications);
+                showSnackbar(localization.no_more_notifications);
                 _refreshController.loadNoData();
                 return;
               }
             },
             child: provider.notifications.isEmpty
-                ?  Center(
+                ? Center(
                     child: Text(localization.no_notifications),
                   )
                 : ListView(

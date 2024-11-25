@@ -1,6 +1,6 @@
 import 'package:e_leaningapp/export/curriculum_export.dart';
-import 'package:e_leaningapp/widgets/loadings/build_shimmer_course_card_v2.dart';
-import 'package:e_leaningapp/widgets/loadings/custom_smart_refresh.dart';
+import 'package:e_leaningapp/widgets/loadings-widget/build_shimmer_course_card_v2.dart';
+import 'package:e_leaningapp/widgets/loadings-widget/custom_smart_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
@@ -80,7 +80,7 @@ class CourseListWidgetState extends State<CourseListWidget> {
 
         return Scrollbar(
           thumbVisibility: true,
-             interactive: true, 
+          interactive: true,
           controller: _scrollController,
           child: SmartRefresher(
             scrollController: _scrollController,
@@ -104,28 +104,24 @@ class CourseListWidgetState extends State<CourseListWidget> {
                     ),
                   )
                 : ListView.builder(
+                  controller: _scrollController,
                     key: PageStorageKey<String>(widget.categoryId),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 10),
                     itemCount: widget.allCoursesProvider.courses.length,
                     itemBuilder: (context, idx) {
                       if (idx < 0 ||
                           idx >= widget.allCoursesProvider.courses.length) {
                         return const SizedBox.shrink();
                       }
-                
+
                       final course = widget.allCoursesProvider.courses[idx];
-                
+
                       final quizCount =
                           widget.allCoursesProvider.quizCounts[course.id] ?? 0;
                       final admin =
                           widget.allCoursesProvider.adminMap[course.adminId] ??
-                              AdminModel(
-                                id: '',
-                                name: 'Unknown',
-                                email: '',
-                                imageUrl: '',
-                              );
+                              AdminModel.empty();
                       final isRegistered = widget
                           .registrationProvider.registeredCourses
                           .any((register) => register.courseId == course.id);

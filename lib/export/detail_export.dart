@@ -15,7 +15,7 @@ export '../../widgets/buttons/custom_btn_loading_widget.dart';
 export '../../utils/show_dialog_infor_utils.dart';
 export '../../generated/l10n.dart';
 export '../../service/firebase/firebase_api_quiz.dart';
-export '../../widgets/loadings/build_course_detail_shimmer.dart';
+export '../widgets/loadings-widget/build_course_detail_shimmer.dart';
 export '../../model/admin_model.dart';
 export '../../model/courses_model.dart';
 export '../../routes/app_routes.dart';

@@ -1,4 +1,4 @@
-import 'package:e_leaningapp/di/dependency_injection.dart';
+import '../../di/dependency_injection.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -93,6 +93,29 @@ class NotificationProvider extends ChangeNotifier {
         onRefresh();
       }
     });
+  }
+
+  Future<void> toggleDetailSeen(
+      String notificationId, bool isDetailSeen) async {
+    try {
+      final index = _notifications.indexWhere((n) => n.id == notificationId);
+      if (index != -1) {
+        _notifications[index] = _notifications[index].copyWith(
+          isDetailSeen: isDetailSeen,
+        );
+        notifyListeners();
+      }
+      await _firestore
+          .collection('users')
+          .doc(user!.uid)
+          .collection('notifications')
+          .doc(notificationId)
+          .update({'isDetailSeen': isDetailSeen});
+
+      log('Notification $notificationId detail seen status toggled to $isDetailSeen in Firestore');
+    } catch (e) {
+      log('Error toggling detail seen status: $e');
+    }
   }
 
   Future<void> _fetchInitialNotifications() async {

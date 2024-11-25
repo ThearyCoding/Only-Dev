@@ -1,6 +1,6 @@
 import 'package:e_leaningapp/export/curriculum_export.dart';
 import 'package:flutter/material.dart';
-import '../widgets/loadings/custom_cirular_progress_indicator.dart';
+import '../widgets/loadings-widget/custom_cirular_progress_indicator.dart';
 
 void configEasyLoading() {
   EasyLoading.instance

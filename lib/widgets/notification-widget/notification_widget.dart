@@ -1,12 +1,12 @@
-import 'dart:developer';
-
 import 'package:e_leaningapp/export/curriculum_export.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import '../../model/notification_model.dart';
+import '../../providers/notification_provider.dart';
 
 class NotificationItem extends StatelessWidget {
   final NotificationModel notification;
@@ -19,9 +19,21 @@ class NotificationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Color change based on isDetailSeen value
+    final notificationColor = notification.isDetailSeen
+        ? (isDarkMode ? Colors.green.shade400 : Colors.blue.shade100)
+        : (isDarkMode
+            ? Colors.orange.shade400.withOpacity(0.3)
+            : Colors.green.shade400);
+
     return ZoomTapAnimation(
-     // onLongTap: ()=> navigation(context),
-      onTap: ()=> navigation(context),
+      onTap: () async {
+        navigation(context);
+        await context
+            .read<NotificationProvider>()
+            .toggleDetailSeen(notification.id, true);
+      },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
         shape: RoundedRectangleBorder(
@@ -36,14 +48,19 @@ class NotificationItem extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: isDarkMode
-                  ? Colors.orange.shade400.withOpacity(.3)
-                  : Colors.green.shade400,
+              color: notificationColor, // Dynamic color based on isDetailSeen
             ),
             child: Icon(
               IconlyBold.notification,
               color: isDarkMode ? Colors.white : Colors.grey.shade200,
             ),
+          ),
+          trailing: IconButton(
+            splashRadius: 20,
+            icon: const Icon(Icons.more_horiz),
+            onPressed: () {
+              showBottomSheet(context);
+            },
           ),
           title: Text(
             notification.post == null
@@ -84,8 +101,8 @@ class NotificationItem extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Text(
                   notification.timestamp != null
-                      ? DateFormat('EEE /MMM/yy: h:mm a').format(notification.timestamp)
-
+                      ? DateFormat('EEE /MMM/yy: h:mm a')
+                          .format(notification.timestamp)
                       : 'No Date',
                   style: GoogleFonts.roboto(
                     fontSize: 11,
@@ -100,8 +117,7 @@ class NotificationItem extends StatelessWidget {
     );
   }
 
- void navigation(BuildContext context) {
-    log('notification type : $notification');
+  void navigation(BuildContext context) {
     if (notification.type == "course") {
       context.push(
         RoutesPath.detailCourseScreen,
@@ -115,5 +131,45 @@ class NotificationItem extends StatelessWidget {
         'postId': notification.postId,
       });
     }
+  }
+
+  void showBottomSheet(BuildContext context) {
+    final isdarkMode = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (ctx) {
+        final screenHeight = MediaQuery.of(context).size.height;
+        return Container(
+          height: screenHeight * 0.5,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(10), topRight: Radius.circular(10)),
+            color: isdarkMode ? Colors.grey.shade900 : Colors.grey.shade300,
+          ),
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: isdarkMode
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade800,
+                  ),
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
 }

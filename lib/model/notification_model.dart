@@ -1,7 +1,8 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:e_leaningapp/model/post_model.dart';
+
+import 'post_model.dart';
 
 class NotificationModel {
   final String registerId;
@@ -11,10 +12,12 @@ class NotificationModel {
   final String courseId;
   final String id;
   final bool isRead;
+  final bool isDetailSeen;
   final String type;
   final String categoryId;
   final String? postId;
   final PostModel? post;
+
   NotificationModel({
     required this.registerId,
     required this.title,
@@ -23,6 +26,7 @@ class NotificationModel {
     required this.courseId,
     required this.id,
     required this.isRead,
+    this.isDetailSeen = false,
     required this.type,
     required this.categoryId,
     this.postId,
@@ -37,8 +41,11 @@ class NotificationModel {
     String? courseId,
     String? id,
     bool? isRead,
+    bool? isDetailSeen, // Added here
     String? type,
     String? categoryId,
+    String? postId,
+    PostModel? post,
   }) {
     return NotificationModel(
       registerId: registerId ?? this.registerId,
@@ -48,8 +55,26 @@ class NotificationModel {
       courseId: courseId ?? this.courseId,
       id: id ?? this.id,
       isRead: isRead ?? this.isRead,
+      isDetailSeen: isDetailSeen ?? this.isDetailSeen, 
       type: type ?? this.type,
       categoryId: categoryId ?? this.categoryId,
+      postId: postId ?? this.postId,
+      post: post ?? this.post,
+    );
+  }
+
+  factory NotificationModel.empty() {
+    return NotificationModel(
+      id: '',
+      registerId: '',
+      title: 'Unknown',
+      message: '',
+      timestamp: DateTime.now(),
+      courseId: '',
+      isRead: false,
+      isDetailSeen: false,
+      type: '',
+      categoryId: '',
     );
   }
 
@@ -62,8 +87,11 @@ class NotificationModel {
       'courseId': courseId,
       'id': id,
       'isRead': isRead,
+      'isDetailSeen': isDetailSeen, 
       'type': type,
       'categoryId': categoryId,
+      'postId': postId,
+      'post': post,
     };
   }
 
@@ -76,6 +104,7 @@ class NotificationModel {
       courseId: map['courseId'] as String? ?? '',
       id: map['id'] as String? ?? '',
       isRead: map['isRead'] as bool? ?? false,
+      isDetailSeen: map['isDetailSeen'] as bool? ?? false, 
       type: map['type'] as String? ?? 'general',
       categoryId: map['categoryId'] as String? ?? '',
       postId: map['postId'] as String?,
@@ -90,7 +119,7 @@ class NotificationModel {
 
   @override
   String toString() {
-    return 'NotificationModel(registerId: $registerId, title: $title, message: $message, timestamp: $timestamp, courseId: $courseId, id: $id, isRead: $isRead, type: $type , categoryId: $categoryId)';
+    return 'NotificationModel(registerId: $registerId, title: $title, message: $message, timestamp: $timestamp, courseId: $courseId, id: $id, isRead: $isRead, isDetailSeen: $isDetailSeen, type: $type , categoryId: $categoryId)';
   }
 
   @override
@@ -104,6 +133,7 @@ class NotificationModel {
         other.courseId == courseId &&
         other.id == id &&
         other.isRead == isRead &&
+        other.isDetailSeen == isDetailSeen &&
         other.type == type &&
         other.categoryId == categoryId;
   }
@@ -117,6 +147,7 @@ class NotificationModel {
         courseId.hashCode ^
         id.hashCode ^
         isRead.hashCode ^
+        isDetailSeen.hashCode ^ 
         type.hashCode ^
         categoryId.hashCode;
   }

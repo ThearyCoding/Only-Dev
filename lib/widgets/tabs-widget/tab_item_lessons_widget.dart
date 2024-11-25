@@ -1,11 +1,11 @@
-import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/providers/admin_provider.dart';
-import 'package:e_leaningapp/providers/course_provider.dart';
-import 'package:e_leaningapp/providers/registration_provider.dart';
-import 'package:e_leaningapp/widgets/loadings/build_shimmer_course_card_v2.dart';
-import 'package:e_leaningapp/widgets/cards/build_course_card_widget_ui_v2.dart';
+import '../../di/dependency_injection.dart';
+import '../../providers/admin_provider.dart';
+import '../../providers/course_provider.dart';
+import '../../providers/registration_provider.dart';
+import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
+import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
+import '../../export/export.dart';
 import 'package:flutter/material.dart';
-import 'package:e_leaningapp/export/export.dart';
 import 'package:provider/provider.dart';
 class TabItemLessonsWidget extends StatefulWidget {
   const TabItemLessonsWidget({super.key});
@@ -99,12 +99,7 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
                       final quizCount = courseProvider.quizCounts[course.id] ?? 0;
                       final admin = adminProvider.admins.firstWhere(
                         (admin) => admin.id == course.adminId,
-                        orElse: () => AdminModel(
-                          id: '',
-                          name: 'Unknown',
-                          email: '',
-                          imageUrl: '',
-                        ),
+                        orElse: () => AdminModel.empty()
                       );
                       final totalLectures = totalLecturesMap[course.id] ?? 0;
                       final isRegistered = registrationProvider.registeredCourses

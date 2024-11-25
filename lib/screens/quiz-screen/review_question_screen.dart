@@ -1,4 +1,4 @@
-import 'package:e_leaningapp/widgets/cards/build_review_question_card.dart';
+import '/../widgets/cards/build_review_question_card.dart';
 import 'package:flutter/material.dart';
 
 class ReviewQuestionScreen extends StatelessWidget {

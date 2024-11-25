@@ -109,6 +109,7 @@ class CourseProvider extends ChangeNotifier {
             .toList();
         setLoadingPopularCourses(false);
         _hasFetchedPopularCourses = true;
+        notifyListeners();
       });
     } catch (e) {
       log('Error fetching popular courses: $e');

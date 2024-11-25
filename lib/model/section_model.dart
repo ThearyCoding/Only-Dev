@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:e_leaningapp/model/lecture_model.dart';
+import '../../model/lecture_model.dart';
 
 class Section {
   String id;
@@ -16,6 +16,11 @@ class Section {
     required this.courseId,
   });
 
+  factory Section.emtpy() {
+    return Section(
+        id: '', title: '', learningObjective: '', lectures: [], courseId: '');
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -25,18 +30,19 @@ class Section {
       'courseId': courseId,
     };
   }
-factory Section.fromMap(Map<String, dynamic> map) {
-  return Section(
-    id: map['id'] ?? '',
-    title: map['title'] ?? '',
-    learningObjective: map['learningObjective'] ?? '',
-    lectures: (map['lectures'] as List<dynamic>?)
-            ?.map((x) => Lecture.fromMap(x as Map<String, dynamic>))
-            .toList() ??
-        [],
-    courseId: map['courseId'] ?? '',
-  );
-}
+
+  factory Section.fromMap(Map<String, dynamic> map) {
+    return Section(
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      learningObjective: map['learningObjective'] ?? '',
+      lectures: (map['lectures'] as List<dynamic>?)
+              ?.map((x) => Lecture.fromMap(x as Map<String, dynamic>))
+              .toList() ??
+          [],
+      courseId: map['courseId'] ?? '',
+    );
+  }
 
   factory Section.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -44,7 +50,8 @@ factory Section.fromMap(Map<String, dynamic> map) {
       id: data['id'],
       title: data['title'],
       learningObjective: data['learningObjective'],
-      lectures: List<Lecture>.from(data['lectures']?.map((x) => Lecture.fromMap(x)) ?? []),
+      lectures: List<Lecture>.from(
+          data['lectures']?.map((x) => Lecture.fromMap(x)) ?? []),
       courseId: data['courseId'],
     );
   }

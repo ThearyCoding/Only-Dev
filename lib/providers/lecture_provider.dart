@@ -5,11 +5,11 @@ import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:e_leaningapp/utils/show_error_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/section_model.dart';
 import '../service/firebase/firebase_api_quiz.dart';
 import '../service/firebase/firebase_api_user.dart';
+import '../service/shared/shared_preferences_service.dart';
 
 class LectureProvider with ChangeNotifier {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
@@ -22,7 +22,6 @@ class LectureProvider with ChangeNotifier {
   bool _loadingquestions = false;
   int _views = 0;
   bool _isExpanded = false;
-  bool _isDescriptionExpanded = false;
   int _totalQuestions = 0;
   bool _isLoading = false;
   bool _hasFetchedQuestions = false;
@@ -38,7 +37,6 @@ class LectureProvider with ChangeNotifier {
   String get timestamp => _timestamp;
   int get views => _views;
   bool get isExpanded => _isExpanded;
-  bool get isDescriptionExpanded => _isDescriptionExpanded;
   int get totalQuestions => _totalQuestions;
   bool get isLoading => _isLoading;
   String get selectedLectureId => _selectedLectureId;
@@ -76,24 +74,19 @@ class LectureProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleDescriptionExpansion() {
-    _isDescriptionExpanded = !_isDescriptionExpanded;
-    notifyListeners();
-  }
-
   Future<void> fetchTotalQuestions(String courseId) async {
-    if (_hasFetchedQuestions) return; // Avoid re-fetching if already fetched
+    if (_hasFetchedQuestions) return;
     setLoadingquestion(true);
-    notifyListeners(); // Notify listeners that loading has started
+    notifyListeners();
 
     try {
       _totalQuestions = await _apiQuiz.fetchTotalQuestions(courseId);
     } catch (e) {
       showSnackbar("Error fetching questions : $e");
     } finally {
-      setLoadingquestion(false); // Stop loading
-      notifyListeners(); // Notify listeners that loading has stopped
-      _hasFetchedQuestions = true; // Mark as fetched
+      setLoadingquestion(false);
+      notifyListeners();
+      _hasFetchedQuestions = true;
     }
   }
 
@@ -135,14 +128,15 @@ class LectureProvider with ChangeNotifier {
   }
 
   Future<void> loadLastWatchedLecture(String courseId) async {
-    final prefs = await SharedPreferences.getInstance();
-    String userKey =
-        '${FirebaseAuth.instance.currentUser!.uid}_${courseId}_progress';
-    List<String>? progress = prefs.getStringList(userKey);
+    List<String>? savedData =
+        await SharedPreferencesService().getSectionExpanded(courseId);
 
-    if (progress != null && progress.length == 6) {
-      lastWatchedSectionId = progress[1];
-      lastWatchedLectureId = progress[2];
+    if (savedData != null && savedData.length == 2) {
+      lastWatchedSectionId = savedData[0];
+      lastWatchedLectureId = savedData[1];
+    } else {
+      lastWatchedSectionId = null;
+      lastWatchedLectureId = null;
     }
     notifyListeners();
   }
@@ -164,10 +158,8 @@ class LectureProvider with ChangeNotifier {
 
   Future<void> saveSectionExpanded(
       String courseId, String sectionId, String lectureId) async {
-    final prefs = await SharedPreferences.getInstance();
-    String userKey =
-        '${FirebaseAuth.instance.currentUser!.uid}_${courseId}_sectionExpanded';
-    await prefs.setStringList(userKey, [sectionId, lectureId]);
+    await SharedPreferencesService()
+        .saveSectionExpanded(courseId, sectionId, lectureId);
     lastWatchedSectionId = sectionId;
     lastWatchedLectureId = lectureId;
     notifyListeners();

@@ -1,8 +1,5 @@
-import 'package:expandable/expandable.dart';
-
 import '../../export/detail_export.dart';
-import '../../model/lecture_model.dart';
-import '../../utils/time_utils.dart';
+import '../../widgets/course-widget/build_course_curriculum.dart';
 
 class DetailCourseScreen extends StatefulWidget {
   final String categoryId;
@@ -178,44 +175,49 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                 );
               }
 
-              return CustomScrollView(
+              return Scrollbar(
                 controller: _scrollController,
-                slivers: [
-                  SliverAppBar(
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    leading: InkWell(
-                      borderRadius: BorderRadius.circular(50),
-                      onTap: () async {
-                        if (registrationProvider.hasShownDialog == true) {
-                          bool? shouldExit = await showCustomDialog(
-                            context,
-                            'Registration in Progress',
-                            'You are currently registering. If you exit now, your registration progress may be lost. Do you want to continue?',
-                          );
-                          if (shouldExit == true) {
-                            registrationProvider.isCancelled = true;
+                interactive: true,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverAppBar(
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
+                      leading: InkWell(
+                        borderRadius: BorderRadius.circular(50),
+                        onTap: () async {
+                          if (registrationProvider.hasShownDialog == true) {
+                            bool? shouldExit = await showCustomDialog(
+                              context,
+                              'Registration in Progress',
+                              'You are currently registering. If you exit now, your registration progress may be lost. Do you want to continue?',
+                            );
+                            if (shouldExit == true) {
+                              registrationProvider.isCancelled = true;
+                            }
+                          } else {
+                            Navigator.of(context).pop();
                           }
-                        } else {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.all(10),
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: dominantColor.withOpacity(0.6),
-                          shape: BoxShape.circle,
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.all(10),
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: dominantColor.withOpacity(0.6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_back_ios, size: 16),
                         ),
-                        child: const Icon(Icons.arrow_back_ios, size: 16),
                       ),
+                      expandedHeight: converheight,
+                      flexibleSpace:
+                          buildFlexibleSpaceBar(context, courseProvider),
                     ),
-                    expandedHeight: converheight,
-                    flexibleSpace:
-                        buildFlexibleSpaceBar(context, courseProvider),
-                  ),
-                  _buildDetails(localization, course, admin),
-                ],
+                    _buildDetails(localization, course, admin),
+                  ],
+                ),
               );
             },
           ),
@@ -624,76 +626,5 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
         },
       );
     }
-  }
-}
-
-class BuildCourseCurriculum extends StatelessWidget {
-  final LectureProvider lectureProvider;
-  const BuildCourseCurriculum({super.key, required this.lectureProvider});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Curriculum',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 10),
-          const Divider(),
-          const SizedBox(height: 5),
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount: lectureProvider.sections.length,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (ctx, index) {
-              final section = lectureProvider.sections[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 5),
-                child: ExpandablePanel(
-                  theme: ExpandableThemeData(
-                    hasIcon: true,
-                    headerAlignment: ExpandablePanelHeaderAlignment.center,
-                    tapBodyToCollapse: false,
-                    tapHeaderToExpand: false,
-                    inkWellBorderRadius: BorderRadius.circular(10),
-                    iconColor: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  header: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Text(
-                      'Section ${index + 1}: ${section.title}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                  collapsed: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      // ignore: avoid_types_as_parameter_names
-                      '${section.lectures.length} lectures | ${TimeUtils.formatDuration(section.lectures.fold<int>(0, (sum, lecture) => sum + lecture.videoDuration))}',
-                      softWrap: true,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  expanded: Column(
-                      children: section.lectures.map<Widget>((Lecture lecture) {
-                    return ListTile(
-                      title: Text(lecture.title,
-                          style: Theme.of(context).textTheme.bodySmall),
-                    );
-                  }).toList()),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
   }
 }

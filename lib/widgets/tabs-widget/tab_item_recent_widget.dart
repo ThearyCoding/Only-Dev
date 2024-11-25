@@ -1,22 +1,22 @@
-import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/export/export.dart';
-import 'package:e_leaningapp/providers/admin_provider.dart';
-import 'package:e_leaningapp/providers/course_provider.dart';
-import 'package:e_leaningapp/providers/registration_provider.dart';
-import 'package:e_leaningapp/widgets/loadings/build_shimmer_course_card_v2.dart';
-import 'package:e_leaningapp/widgets/cards/build_course_card_widget_ui_v2.dart';
+import '../../di/dependency_injection.dart';
+import '../../export/export.dart';
+import '../../providers/admin_provider.dart';
+import '../../providers/course_provider.dart';
+import '../../providers/registration_provider.dart';
+import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
+import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-class TabItemPopularWidget extends StatefulWidget {
-  const TabItemPopularWidget({super.key});
+class TabItemRecentWidget extends StatefulWidget {
+  const TabItemRecentWidget({super.key});
 
   @override
-  State<TabItemPopularWidget> createState() => _TabItemPopularWidgetState();
+  State<TabItemRecentWidget> createState() => _TabItemRecentWidgetState();
 }
 
-class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
-    with AutomaticKeepAliveClientMixin<TabItemPopularWidget> {
+class _TabItemRecentWidgetState extends State<TabItemRecentWidget>
+    with AutomaticKeepAliveClientMixin<TabItemRecentWidget> {
   late CourseProvider courseProvider;
   late AdminProvider adminProvider;
   late RegistrationProvider registrationProvider;
@@ -25,13 +25,14 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
       RefreshController(initialRefresh: false);
   final ScrollController scrollController = ScrollController();
   final Map<String, int> totalLecturesMap = {};
-  final UserService userService =locator<UserService>();
+  final UserService userService = locator<UserService>();
   @override
   void initState() {
     super.initState();
     courseProvider = Provider.of<CourseProvider>(context, listen: false);
     adminProvider = Provider.of<AdminProvider>(context, listen: false);
-    registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+    registrationProvider =
+        Provider.of<RegistrationProvider>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchTotalLecturesForAllCourses();
     });
@@ -67,11 +68,11 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
   Widget build(BuildContext context) {
     super.build(context);
     return Consumer<CourseProvider>(builder: (context, value, child) {
-      if (courseProvider.isLoadingPopularCourses) {
+      if (courseProvider.isLoadingRecentCourses) {
         return const BuildShimmerCourseCardV2();
       }
-      if (courseProvider.popularCourses.isEmpty) {
-        return const Center(child: Text('No courses found'));
+      if (courseProvider.recentCourses.isEmpty) {
+        return const Center(child: Text('No recent courses found'));
       }
 
       return NotificationListener(
@@ -91,20 +92,14 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final course = courseProvider.popularCourses[index];
+                    final course = courseProvider.recentCourses[index];
                     final quizCount = courseProvider.quizCounts[course.id] ?? 0;
                     final admin = adminProvider.admins.firstWhere(
-                      (admin) => admin.id == course.adminId,
-                      orElse: () => AdminModel(
-                        id: '',
-                        name: 'Unknown',
-                        email: '',
-                        imageUrl: '',
-                      ),
-                    );
+                        (admin) => admin.id == course.adminId,
+                        orElse: () => AdminModel.empty());
                     final totalLectures = totalLecturesMap[course.id] ?? 0;
-                    final isRegistered = registrationProvider
-                        .registeredCourses
+
+                    final isRegistered = registrationProvider.registeredCourses
                         .any((register) => register.courseId == course.id);
                     return CourseCardV2(
                       course: course,
@@ -114,7 +109,7 @@ class _TabItemPopularWidgetState extends State<TabItemPopularWidget>
                       totalLectures: totalLectures,
                     );
                   },
-                  childCount: courseProvider.popularCourses.length,
+                  childCount: courseProvider.recentCourses.length,
                 ),
               ),
             ),

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:e_leaningapp/export/app_routes_export.dart';
 
@@ -37,6 +39,7 @@ class SharedPreferencesService {
       watched.toString(),
       courseId,
     ]);
+    log('Saved progress: videoIndex: $videoIndex, position: $position');
   }
 
   Future<List<dynamic>> getSavedVideoProgress(String videoUrl) async {
@@ -52,6 +55,7 @@ class SharedPreferencesService {
       int duration = int.parse(progress[4]);
       bool watched = progress[5] == 'true';
       String courseId = progress[6];
+      log('Retrieved progress: videoIndex: $videoIndex, position: $position');
       return [
         videoIndex,
         sectionId,
@@ -62,6 +66,14 @@ class SharedPreferencesService {
         courseId
       ];
     }
+    log('No saved progress for video');
     return [];
+  }
+
+  Future<List<String>?> getSectionExpanded(String courseId) async {
+    final prefs = await SharedPreferences.getInstance();
+    String userKey =
+        '${FirebaseAuth.instance.currentUser!.uid}_${courseId}_sectionExpanded';
+    return prefs.getStringList(userKey);
   }
 }

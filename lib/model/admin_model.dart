@@ -18,17 +18,16 @@ class AdminModel {
       imageUrl: json['imageUrl'] ?? "",
     );
   }
-  factory AdminModel.fromMap(Map<String,dynamic> map){
+  factory AdminModel.empty() {
     return AdminModel(
-       id: map['uid'] ?? "",
-      name: map['fullName'] ?? "Unknown",
-      email: map['email'] ?? "",
-      imageUrl: map['imageUrl'] ?? "",
+      id: '',
+      name: 'Unknown',
+      email: '',
+      imageUrl: '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {'uid': id, 'fullName': name, 'email': email, 'imageUrl': imageUrl};
   }
-  
 }
