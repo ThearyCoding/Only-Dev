@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:e_leaningapp/di/dependency_injection.dart';
@@ -14,12 +15,13 @@ class AuthServiceFacebook {
       EasyLoading.show(status: 'Signing in with Facebook...');
 
       // Trigger Facebook sign-in
-      final LoginResult result = await locator<FacebookAuth>().login();
+      final LoginResult result = await locator<FacebookAuth>()
+          .login()
+          .timeout(const Duration(seconds: 10));
 
       if (result.status == LoginStatus.cancelled) {
         // User canceled the sign-in process
         EasyLoading.dismiss();
-        log('User canceled Facebook sign-in.');
         return null;
       } else if (result.status == LoginStatus.failed) {
         // Facebook sign-in failed
@@ -40,7 +42,6 @@ class AuthServiceFacebook {
         // Sign in with the Facebook credential on Firebase
         UserCredential userCredential =
             await locator<FirebaseAuth>().signInWithCredential(credential);
-        
 
         // Sign-in successful
         EasyLoading.dismiss();
@@ -49,14 +50,14 @@ class AuthServiceFacebook {
 
       return null;
     } on FirebaseAuthException catch (error) {
-      // Handle Firebase-specific sign-in errors
       EasyLoading.dismiss();
       showFriendlyErrorSnackbar(error);
       log("FirebaseAuthException: ${error.message}");
     } on PlatformException catch (error) {
-      // Handle platform-specific errors
       EasyLoading.dismiss();
       log("PlatformException: ${error.message}");
+      showSnackbar('A network error occurred. Please try again.');
+    } on TimeoutException {
       showSnackbar('A network error occurred. Please try again.');
     } catch (error) {
       EasyLoading.dismiss();

@@ -1,34 +1,24 @@
-import 'dart:developer';
+import 'package:e_leaningapp/service/firebase/firebase_api_section.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:e_leaningapp/di/dependency_injection.dart';
-import 'package:e_leaningapp/utils/show_error_utils.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-
-import '../model/section_model.dart';
-import '../service/firebase/firebase_api_quiz.dart';
-import '../service/firebase/firebase_api_user.dart';
-import '../service/shared/shared_preferences_service.dart';
+import '../export/export.dart';
 
 class LectureProvider with ChangeNotifier {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
-  final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
+  final FirebaseApiSection _apiSection = locator<FirebaseApiSection>();
   int _selectedVideoIndex = 0;
   String _selectedLectureId = '';
   String _videoTitle = '';
   String _videoDescription = '';
   String _timestamp = '';
-  bool _loadingquestions = false;
+  bool _loadingQuestions = false;
   int _views = 0;
-  bool _isExpanded = false;
   int _totalQuestions = 0;
   bool _isLoading = false;
   bool _hasFetchedQuestions = false;
   User? user = locator<FirebaseAuth>().currentUser;
   List<Section> sections = [];
-  String? lastWatchedSectionId;
-  String? lastWatchedLectureId;
+  int? lastWatchedSectionIndex;
+  int? lastWatchedLectureIndex;
   Map<String, dynamic> watchedLectures = {};
 
   int get selectedIndexVideo => _selectedVideoIndex;
@@ -36,18 +26,20 @@ class LectureProvider with ChangeNotifier {
   String get videoDescription => _videoDescription;
   String get timestamp => _timestamp;
   int get views => _views;
-  bool get isExpanded => _isExpanded;
   int get totalQuestions => _totalQuestions;
   bool get isLoading => _isLoading;
   String get selectedLectureId => _selectedLectureId;
-  bool get loadingquestion => _loadingquestions;
+  bool get loadingQuestions => _loadingQuestions;
   bool get hasFetchedQuestions => _hasFetchedQuestions;
+
   void setLoading(bool value) {
-    _isLoading = value; // Set value to update observable
+    _isLoading = value;
+    notifyListeners();
   }
 
-  void setLoadingquestion(bool value) {
-    _loadingquestions = value;
+  void setLoadingQuestions(bool value) {
+    _loadingQuestions = value;
+    notifyListeners();
   }
 
   void setSelectedIndex(int index) {
@@ -61,7 +53,11 @@ class LectureProvider with ChangeNotifier {
   }
 
   void setCurrentPlayingVideo(
-      String videoTitle, String description, String timestamp, int views) {
+    String videoTitle,
+    String description,
+    String timestamp,
+    int views,
+  ) {
     _videoTitle = videoTitle;
     _videoDescription = description;
     _timestamp = timestamp;
@@ -69,23 +65,16 @@ class LectureProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleExpansion() {
-    _isExpanded = !_isExpanded;
-    notifyListeners();
-  }
-
   Future<void> fetchTotalQuestions(String courseId) async {
     if (_hasFetchedQuestions) return;
-    setLoadingquestion(true);
-    notifyListeners();
+    setLoadingQuestions(true);
 
     try {
       _totalQuestions = await _apiQuiz.fetchTotalQuestions(courseId);
     } catch (e) {
-      showSnackbar("Error fetching questions : $e");
+      showSnackbar("Error fetching questions: $e");
     } finally {
-      setLoadingquestion(false);
-      notifyListeners();
+      setLoadingQuestions(false);
       _hasFetchedQuestions = true;
     }
   }
@@ -95,7 +84,8 @@ class LectureProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      List<Section> tempSections = await fetchSections(categoryId, courseId);
+      List<Section> tempSections =
+          await _apiSection.fetchSections(categoryId, courseId);
       sections = tempSections;
 
       _isLoading = false;
@@ -107,37 +97,37 @@ class LectureProvider with ChangeNotifier {
     }
   }
 
-  Future<List<Section>> fetchSections(
-      String categoryId, String courseId) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection('categories')
-          .doc(categoryId)
-          .collection('courses')
-          .doc(courseId)
-          .collection('sections')
-          .get();
-
-      return querySnapshot.docs
-          .map((doc) => Section.fromFirestore(doc))
-          .toList();
-    } catch (error) {
-      log('Error fetching section: $error');
-      return [];
-    }
-  }
-
   Future<void> loadLastWatchedLecture(String courseId) async {
-    List<String>? savedData =
+    Map<String, dynamic>? savedData =
         await SharedPreferencesService().getSectionExpanded(courseId);
 
-    if (savedData != null && savedData.length == 2) {
-      lastWatchedSectionId = savedData[0];
-      lastWatchedLectureId = savedData[1];
+    if (savedData != null) {
+      lastWatchedSectionIndex = savedData['sectionIndex'];
+      lastWatchedLectureIndex = savedData['lectureIndex'];
     } else {
-      lastWatchedSectionId = null;
-      lastWatchedLectureId = null;
+      lastWatchedSectionIndex = null;
+      lastWatchedLectureIndex = null;
     }
+    notifyListeners();
+  }
+
+  Future<void> saveSectionExpanded(
+    String courseId,
+    int sectionIndex,
+    int lectureIndex,
+  ) async {
+    Section section = sections[sectionIndex];
+    Lecture lecture = section.lectures[lectureIndex];
+
+    await SharedPreferencesService().saveSectionExpanded(
+      courseId,
+      section.id,
+      sectionIndex,
+      lecture.id,
+      lectureIndex,
+    );
+    lastWatchedSectionIndex = sectionIndex;
+    lastWatchedLectureIndex = lectureIndex;
     notifyListeners();
   }
 
@@ -146,26 +136,18 @@ class LectureProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  bool isLectureWatched(String courseId, String sectionId, String lectureId) {
-    if (watchedLectures.containsKey(courseId)) {
-      final courseData = watchedLectures[courseId];
-      if (courseData.containsKey(sectionId)) {
-        return courseData[sectionId][lectureId] == true;
-      }
-    }
-    return false;
+  bool isLectureWatched(
+    String courseId,
+    int sectionIndex,
+    int lectureIndex,
+  ) {
+    String sectionKey = sections[sectionIndex].id;
+    String lectureKey = sections[sectionIndex].lectures[lectureIndex].id;
+
+    return watchedLectures[courseId]?[sectionKey]?[lectureKey] ?? false;
   }
 
-  Future<void> saveSectionExpanded(
-      String courseId, String sectionId, String lectureId) async {
-    await SharedPreferencesService()
-        .saveSectionExpanded(courseId, sectionId, lectureId);
-    lastWatchedSectionId = sectionId;
-    lastWatchedLectureId = lectureId;
-    notifyListeners();
-  }
-
-  bool isSectionExpanded(String sectionId) {
-    return sectionId == lastWatchedSectionId;
+  bool isSectionExpanded(int sectionIndex) {
+    return sectionIndex == lastWatchedSectionIndex;
   }
 }

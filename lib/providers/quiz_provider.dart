@@ -1,9 +1,7 @@
 import 'dart:developer';
 
 import 'package:e_leaningapp/core/global_navigation.dart';
-import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:e_leaningapp/export/export.dart';
-import 'package:go_router/go_router.dart';
 
 class QuizProvider with ChangeNotifier {
   List<Map<String, dynamic>> _questions = [];
@@ -236,7 +234,7 @@ class QuizProvider with ChangeNotifier {
             final context = navigatorKey.currentState!.context;
 
             if (context != null) {
-              // ignore: use_build_context_synchronously
+              if(!context.mounted)return;
               context.go(RoutesPath.resultquizscreen, extra: {
                 "questions": _questions,
                 "userAnswers": _userAnswers,

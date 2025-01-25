@@ -8,7 +8,7 @@ import '../../model/courses_model.dart';
 
 class FirebaseApiNotifications {
   final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
- final User? user = locator<FirebaseAuth>().currentUser;
+  final User? user = locator<FirebaseAuth>().currentUser;
   // Fetch unread notifications count (where isRead is false)
   Stream<int> getUnreadCount() {
     try {
@@ -23,7 +23,24 @@ class FirebaseApiNotifications {
           .snapshots()
           .map((snapshot) => snapshot.docs.length);
     } catch (error) {
-      return Stream.value(0); // Return 0 if the user is null
+      return Stream.value(0);
+    }
+  }
+
+  Future<void> deleteNotification(String notificationId) async {
+    if (user == null) {
+      return;
+    }
+
+    try {
+      var notificationRef = _firestore
+          .collection('users')
+          .doc(user!.uid)
+          .collection('notifications')
+          .doc(notificationId);
+      await notificationRef.delete();
+    } catch (error) {
+      log('Error deleting notification: $error');
     }
   }
 
@@ -44,18 +61,16 @@ class FirebaseApiNotifications {
     }
   }
 
-  // Fetch unread notifications (where isRead is false)
   Future<QuerySnapshot> getUnreadNotifications() {
     try {
       if (user == null) {
-        throw Exception(
-            'User is not logged in.'); // Handle the case where user is null
+        throw Exception('User is not logged in.');
       }
       return _firestore
           .collection('users')
           .doc(user!.uid)
           .collection('notifications')
-          .where('isRead', isEqualTo: false) // Filter by unread notifications
+          .where('isRead', isEqualTo: false)
           .get();
     } catch (error) {
       throw Exception('User is not logged in.');

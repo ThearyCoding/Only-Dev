@@ -1,6 +1,4 @@
 import 'dart:developer';
-
-import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:flutter/material.dart';
 import '../../export/export.dart';
 
@@ -10,7 +8,6 @@ class MainLoginScreen extends StatelessWidget {
   final VoidCallback? onSwitchToSignUp;
   final VoidCallback? onSwitchToLogin;
 
-  // Create a ValueNotifier to track the loading state.
   final ValueNotifier<bool> _isLoggingIn = ValueNotifier(false);
 
   MainLoginScreen({super.key, this.onSwitchToSignUp, this.onSwitchToLogin});
@@ -59,13 +56,12 @@ class MainLoginScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: Column(
                     children: [
-                      // Use ValueListenableBuilder to enable/disable the button
                       ValueListenableBuilder<bool>(
                         valueListenable: _isLoggingIn,
                         builder: (context, isLoggingIn, child) {
                           return CustomButtonWidget(
                             text: 'Continue with email',
-                            bgcolor: const Color.fromARGB(157, 193, 193, 193),
+                            bgcolor: Colors.blue,
                             labelColor: Theme.of(context).textTheme.bodyLarge!.color,
                             onPressed: isLoggingIn
                                 ? null
@@ -104,7 +100,6 @@ class MainLoginScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Disable login buttons when logging in
                       ValueListenableBuilder<bool>(
                         valueListenable: _isLoggingIn,
                         builder: (context, isLoggingIn, child) {

@@ -1,4 +1,5 @@
-import 'package:e_leaningapp/service/shared/shared_preferences_service.dart';
+
+import 'package:e_leaningapp/service/firebase/firebase_api_section.dart';
 
 import '../export/curriculum_export.dart';
 import '../service/firebase/firebase_api_categories.dart';
@@ -6,7 +7,6 @@ import '../service/firebase/firebase_api_lecture.dart';
 import 'package:get_it/get_it.dart';
 import '../service/firebase/firebase_api_courses.dart';
 import '../service/firebase/firebase_api_notifications.dart';
-import '../service/firebase/firebase_api_quiz.dart';
 
 final GetIt locator = GetIt.instance;
 
@@ -35,6 +35,8 @@ void setupLocator() async {
   locator.registerLazySingleton(() => FirebaseApiLecture());
   locator.registerLazySingleton(() => FirebaseApiCategories());
   locator.registerLazySingleton(() => SharedPreferencesService());
+  locator.registerLazySingleton(() => FirebaseApiSection());
+  locator.registerLazySingleton(() => AwesomeNotificationService());
 
   await locator.allReady();
 }

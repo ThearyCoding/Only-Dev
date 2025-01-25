@@ -1,13 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import '../../export/app_routes_export.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 
 class CategoryCard extends StatelessWidget {
-  final String imageUrl;
-  final String title;
+  final CategoryModel category;
   final double widgetWidth;
   final double fontSize;
 
-  const CategoryCard({Key? key, required this.imageUrl, required this.title, required this.widgetWidth, required this.fontSize}) : super(key: key);
+  const CategoryCard({Key? key,required this.category, required this.widgetWidth, required this.fontSize}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,10 +22,8 @@ class CategoryCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(15),
             child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[300],
-              ),
+              imageUrl: category.imageUrl,
+              placeholder: (context, url) => BlurHash(hash: category.blurHash ?? ''),
               errorWidget: (context, url, error) => const Icon(Icons.error),
               height: double.infinity,
               width: double.infinity,
@@ -39,11 +37,11 @@ class CategoryCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: .5),
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
               ),
               child: Text(
-                title,
+                category.title,
                 maxLines: 1,
                 style:  TextStyle(
                   color: Colors.white,

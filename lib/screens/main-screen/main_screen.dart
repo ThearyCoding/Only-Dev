@@ -1,6 +1,4 @@
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:dot_navigation_bar/dot_navigation_bar.dart';
-import 'package:provider/provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../screens/user-screens/user_information_screen.dart';
 import '../../export/export.dart';
@@ -43,7 +41,7 @@ class MainPageState extends State<MainPage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color:
-                isSelected ? Colors.blue.withOpacity(0.2) : Colors.transparent,
+                isSelected ? Colors.blue.withValues(alpha: .2) : Colors.transparent,
           ),
           padding: const EdgeInsets.all(8),
           child: Icon(

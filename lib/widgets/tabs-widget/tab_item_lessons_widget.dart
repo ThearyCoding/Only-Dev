@@ -1,4 +1,5 @@
-import '../../di/dependency_injection.dart';
+import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
+
 import '../../providers/admin_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../providers/registration_provider.dart';
@@ -6,18 +7,19 @@ import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
 import '../../export/export.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
 class TabItemLessonsWidget extends StatefulWidget {
-  const TabItemLessonsWidget({super.key});
+  final Key uniqueKey;
+  const TabItemLessonsWidget(this.uniqueKey, {super.key});
 
   @override
   State<TabItemLessonsWidget> createState() => _TabItemLessonsWidgetState();
 }
 
 class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
-    with AutomaticKeepAliveClientMixin<TabItemLessonsWidget> {
+    with AutomaticKeepAliveClientMixin {
   late CourseProvider courseProvider;
-  late  AdminProvider adminProvider;
+  late AdminProvider adminProvider;
   late RegistrationProvider registrationProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
   final ScrollController scrollController = ScrollController();
@@ -29,39 +31,20 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
     super.initState();
     courseProvider = Provider.of<CourseProvider>(context, listen: false);
     adminProvider = Provider.of<AdminProvider>(context, listen: false);
-    registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchTotalLecturesForAllCourses();
-    });
+    registrationProvider =
+        Provider.of<RegistrationProvider>(context, listen: false);
   }
 
   @override
   void dispose() {
-    scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> fetchTotalLecturesForAllCourses() async {
-    Map<String, int> fetchedTotalLectures = {};
-    List<Future<void>> fetchTasks = [];
-
-    for (var course in courseProvider.courses) {
-      fetchTasks.add(
-        userService.getTotalLectures(course.categoryId, course.id).then((lectures) {
-          fetchedTotalLectures[course.id] = lectures;
-        }),
-      );
-    }
-
-    await Future.wait(fetchTasks);
-    setState(() {
-      totalLecturesMap.addAll(fetchedTotalLectures);
-    });
-  }
+  @override
+  bool get wantKeepAlive => true;
 
   Future<void> _refreshCourses() async {
     await courseProvider.refreshCourses();
-    await fetchTotalLecturesForAllCourses();
   }
 
   @override
@@ -74,56 +57,34 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
       if (courseProvider.courses.isEmpty) {
         return const Center(child: Text('No courses found'));
       }
-
-      return NotificationListener(
-        onNotification: (Notification notification) {
-          ScrollAbsorber.absorbScrollNotification(notification);
-          return false;
-        },
+      return ExtendedVisibilityDetector(
+        uniqueKey: widget.uniqueKey,
         child: RefreshIndicator(
           onRefresh: _refreshCourses,
-          child: CustomScrollView(
-            controller: scrollController,
-            cacheExtent: double.infinity,
+          child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverOverlapInjector(
-                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final course = courseProvider.courses[index];
-                      final quizCount = courseProvider.quizCounts[course.id] ?? 0;
-                      final admin = adminProvider.admins.firstWhere(
-                        (admin) => admin.id == course.adminId,
-                        orElse: () => AdminModel.empty()
-                      );
-                      final totalLectures = totalLecturesMap[course.id] ?? 0;
-                      final isRegistered = registrationProvider.registeredCourses
-                          .any((register) => register.courseId == course.id);
-                      return CourseCardV2(
-                        key: Key(course.id),
-                        course: course,
-                        admin: admin,
-                        quizCount: quizCount,
-                        isRegistered: isRegistered,
-                        totalLectures: totalLectures,
-                      );
-                    },
-                    childCount: courseProvider.courses.length,
-                  ),
-                ),
-              ),
-            ],
+            itemCount: courseProvider.courses.length,
+            itemBuilder: (context, index) {
+              final course = courseProvider.courses[index];
+              final quizCount = courseProvider.quizCounts[course.id] ?? 0;
+              final admin = adminProvider.admins.firstWhere(
+                  (admin) => admin.id == course.adminId,
+                  orElse: () => AdminModel.empty());
+              final totalLectures = courseProvider.lecturesMap[course.id] ?? 0;
+              final isRegistered = registrationProvider.registeredCourses
+                  .any((register) => register.courseId == course.id);
+              return CourseCardV2(
+                key: Key(course.id),
+                course: course,
+                admin: admin,
+                quizCount: quizCount,
+                isRegistered: isRegistered,
+                totalLectures: totalLectures,
+              );
+            },
           ),
         ),
       );
     });
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }

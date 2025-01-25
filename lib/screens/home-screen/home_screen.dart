@@ -1,4 +1,5 @@
-import '../../di/dependency_injection.dart';
+import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
+
 import '../../providers/categories_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../providers/registration_provider.dart';
@@ -7,11 +8,8 @@ import '../../widgets/tabs-widget/custom_tap_material_indicator.dart';
 import '../../widgets/tabs-widget/tab_item.dart';
 import '../user-screens/user_information_screen.dart';
 import '../../export/export.dart';
-import '../../generated/l10n.dart';
 import '../../widgets/categories-widget/category_widget.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback? onProfileImageTapped;
@@ -29,22 +27,21 @@ class HomePage extends StatefulWidget {
   HomePageState createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ScrollController _categoriesscrollCategories = ScrollController();
   final ScrollController _scrollController = ScrollController();
-  late TabController _tabController;
-  late PageController _pageController;
   late CourseProvider courseController;
   late RegistrationProvider registrationController;
   late UserProvider userProvider;
   late CategoriesProvider categoriesProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
+  late final TabController _tabController;
+  final GlobalKey<ExtendedNestedScrollViewState> _key =
+      GlobalKey<ExtendedNestedScrollViewState>();
 
   @override
   void initState() {
     super.initState();
-
     locator<UserService>().saveTokenToDatabase();
 
     userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -55,7 +52,6 @@ class HomePageState extends State<HomePage>
         Provider.of<RegistrationProvider>(context, listen: false);
 
     _tabController = TabController(length: 3, vsync: this);
-    _pageController = PageController();
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       courseController.fetchCourses();
@@ -63,16 +59,7 @@ class HomePageState extends State<HomePage>
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
-        _pageController.jumpToPage(_tabController.index);
         _fetchTabData(_tabController.index);
-      }
-    });
-
-    _pageController.addListener(() {
-      int newIndex = _pageController.page!.round();
-      if (_tabController.index != newIndex) {
-        _tabController.animateTo(newIndex);
-        _fetchTabData(newIndex);
       }
     });
   }
@@ -88,7 +75,6 @@ class HomePageState extends State<HomePage>
   @override
   void dispose() {
     _tabController.dispose();
-    _pageController.dispose();
     _categoriesscrollCategories.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -157,7 +143,8 @@ class HomePageState extends State<HomePage>
           } else {
             expandedHeight = 320.0;
           }
-
+          final double statusBarHeight = MediaQuery.of(context).padding.top;
+          final double pinnedHeaderHeight = statusBarHeight + kToolbarHeight;
           return Column(
             children: [
               Padding(
@@ -202,113 +189,102 @@ class HomePageState extends State<HomePage>
                 child: Scrollbar(
                   interactive: true,
                   controller: _scrollController,
-                  child: NestedScrollView(
+                  child: ExtendedNestedScrollView(
+                    pinnedHeaderSliverHeightBuilder: () {
+                      return pinnedHeaderHeight;
+                    },
+                    onlyOneScrollInBody: true,
                     controller: _scrollController,
                     floatHeaderSlivers: true,
-                    key: Keys.nestedScrollViewKey,
+                    key: _key,
                     headerSliverBuilder:
                         (BuildContext context, bool innerBoxIsScrolled) {
                       return <Widget>[
-                        SliverOverlapAbsorber(
-                          handle:
-                              NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                  context),
-                          sliver: SliverAppBar(
-                            backgroundColor:
-                                Theme.of(context).scaffoldBackgroundColor,
-                            pinned: true,
-                            expandedHeight: expandedHeight + 50,
-                            flexibleSpace: FlexibleSpaceBar(
-                              collapseMode: CollapseMode.pin,
-                              background: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const BannerWidget(),
+                        SliverAppBar(
+                          backgroundColor:
+                              Theme.of(context).scaffoldBackgroundColor,
+                          pinned: true,
+                          automaticallyImplyLeading: false,
+                          expandedHeight: expandedHeight + 50,
+                          flexibleSpace: FlexibleSpaceBar(
+                            collapseMode: CollapseMode.pin,
+                            background: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  CategoryWidget(
-                                    categoriesProvider: categoriesProvider,
-                                    scrollController:
-                                        _categoriesscrollCategories,
-                                  )
-                                ],
-                              ),
-                            ),
-                            bottom: PreferredSize(
-                              preferredSize: const Size.fromHeight(0),
-                              child: Container(
-                                color:
-                                    Theme.of(context).scaffoldBackgroundColor,
-                                child: TabBar(
-                                  controller: _tabController,
-                                  splashFactory: NoSplash.splashFactory,
-                                  overlayColor:
-                                      WidgetStateProperty.resolveWith<Color?>(
-                                          (Set<WidgetState> states) {
-                                    return states.contains(WidgetState.focused)
-                                        ? null
-                                        : Colors.transparent;
-                                  }),
-                                  indicatorSize: TabBarIndicatorSize.label,
-                                  indicator: MaterialIndicator(
-                                    height: 3,
-                                    topLeftRadius: 0,
-                                    topRightRadius: 0,
-                                    bottomLeftRadius: 5,
-                                    bottomRightRadius: 5,
-                                    horizontalPadding: 10,
-                                    color: Colors.blue.shade300,
-                                    verticalPadding:
-                                        AppLocalizations.of(context).khmer ==
-                                                'ខ្មែរ'
-                                            ? 7
-                                            : 10,
-                                    tabPosition: TabPosition.bottom,
-                                  ),
-                                  indicatorColor: Colors.blueAccent[500],
-                                  isScrollable: true,
-                                  tabs: [
-                                    TabItem(
-                                      title: localizations.lessons,
-                                      count: courseController.courses.length,
-                                    ),
-                                    TabItem(
-                                      title: localizations.recentLessons,
-                                      count:
-                                          courseController.recentCourses.length,
-                                    ),
-                                    TabItem(
-                                      title: localizations.popularLessons,
-                                      count: courseController
-                                          .popularCourses.length,
-                                    ),
-
-                                    // Tab(
-                                    //   text: localizations.lessons,
-                                    // ),
-                                    // Tab(
-                                    //   text: localizations.recentLessons,
-                                    // ),
-                                    // Tab(text: localizations.popularLessons)
-                                  ],
+                                  child: const BannerWidget(),
                                 ),
+                                CategoryWidget(
+                                  categoriesProvider: categoriesProvider,
+                                  scrollController: _categoriesscrollCategories,
+                                )
+                              ],
+                            ),
+                          ),
+                          bottom: PreferredSize(
+                            preferredSize: const Size.fromHeight(0),
+                            child: Container(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              child: TabBar(
+                                controller: _tabController,
+                                splashFactory: NoSplash.splashFactory,
+                                overlayColor:
+                                    WidgetStateProperty.resolveWith<Color?>(
+                                        (Set<WidgetState> states) {
+                                  return states.contains(WidgetState.focused)
+                                      ? null
+                                      : Colors.transparent;
+                                }),
+                                indicatorSize: TabBarIndicatorSize.label,
+                                indicator: MaterialIndicator(
+                                  height: 3,
+                                  topLeftRadius: 0,
+                                  topRightRadius: 0,
+                                  bottomLeftRadius: 5,
+                                  bottomRightRadius: 5,
+                                  horizontalPadding: 10,
+                                  color: Colors.blue.shade300,
+                                  verticalPadding:
+                                      AppLocalizations.of(context).khmer ==
+                                              'ខ្មែរ'
+                                          ? 7
+                                          : 10,
+                                  tabPosition: TabPosition.bottom,
+                                ),
+                                indicatorColor: Colors.blueAccent[500],
+                                isScrollable: true,
+                                tabs: [
+                                  TabItem(
+                                    title: localizations.lessons,
+                                    count: courseController.courses.length,
+                                  ),
+                                  TabItem(
+                                    title: localizations.recentLessons,
+                                    count:
+                                        courseController.recentCourses.length,
+                                  ),
+                                  TabItem(
+                                    title: localizations.popularLessons,
+                                    count:
+                                        courseController.popularCourses.length,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
                       ];
                     },
-                    body: PageView(
-                      physics: const NeverScrollableScrollPhysics(),
-                      controller: _pageController,
+                    body: TabBarView(
+                      controller: _tabController,
                       children: const [
-                        TabItemLessonsWidget(),
-                        TabItemRecentWidget(),
-                        TabItemPopularWidget(),
+                        TabItemLessonsWidget(Key('tab1')),
+                        TabItemRecentWidget(Key('tab2')),
+                        TabItemPopularWidget(Key('tab3'))
                       ],
                     ),
                   ),

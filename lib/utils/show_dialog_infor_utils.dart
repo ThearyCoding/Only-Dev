@@ -1,10 +1,9 @@
 import 'package:e_leaningapp/core/global_navigation.dart';
 import 'package:flutter/material.dart';
 
-
-Future<bool?> askComfirmation(
+class ShowDialogInforUtils {
+  static Future<bool?> showCustomDialog(
   BuildContext context,
-  Function cancelTimer,
   String title,
   String content,
 ) async {
@@ -34,23 +33,23 @@ Future<bool?> askComfirmation(
               Navigator.pop(context, false);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  side: BorderSide(color: Colors.grey.shade300),
-                ),
-                overlayColor: Colors.grey.shade300),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+              overlayColor: Colors.grey.shade300,
+            ),
             child: Text(
               "Cancel",
               style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyLarge!.color),
+                color: Theme.of(context).textTheme.bodyLarge!.color,
+              ),
             ),
           ),
           ElevatedButton(
             onPressed: () {
-              cancelTimer();
               Navigator.pop(context, true);
-              
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -62,7 +61,66 @@ Future<bool?> askComfirmation(
     },
   );
 }
-
+}
+ Future<bool?> askComfirmation(
+    BuildContext context,
+    Function cancelTimer,
+    String title,
+    String content,
+  ) async {
+    return await showDialog<bool>(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          content: Text(
+            content,
+            style: const TextStyle(
+              fontSize: 16,
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  overlayColor: Colors.grey.shade300),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge!.color),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                cancelTimer();
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text("Exit"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 Future<bool?> showCustomDialog(
   BuildContext context,
   String title,
@@ -123,8 +181,7 @@ Future<bool?> showCustomDialog(
   );
 }
 
-Future<bool> showDialogRegisterSuccess(
-    String title) async {
+Future<bool> showDialogRegisterSuccess(String title) async {
   final context = navigatorKey.currentState!.context;
   if (context != null) {
     bool startLesson = await showDialog(

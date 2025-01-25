@@ -3,18 +3,18 @@ import 'dart:developer';
 import '../../export/export.dart';
 import '../../export/topic_export.dart';
 
-class TopicsScreen extends StatefulWidget {
+class CourseContentScreen extends StatefulWidget {
   final String? title;
   final String? courseId;
   final String? categoryId;
 
-  const TopicsScreen({super.key, this.title, this.courseId, this.categoryId});
+  const CourseContentScreen({super.key, this.title, this.courseId, this.categoryId});
 
   @override
-  TopicsScreenState createState() => TopicsScreenState();
+  CourseContentScreenState createState() => CourseContentScreenState();
 }
 
-class TopicsScreenState extends State<TopicsScreen>
+class CourseContentScreenState extends State<CourseContentScreen>
     with SingleTickerProviderStateMixin {
   VideoPlayerHelper? _videoPlayerHelper;
   late TabController _tabController;
@@ -43,32 +43,33 @@ class TopicsScreenState extends State<TopicsScreen>
   }
 
   Future<void> _initializeVideoPlayer() async {
-    if (widget.categoryId != null &&
-        widget.courseId != null &&
-        widget.title != null) {
-      try {
-        await lectureProvider.getSections(
-          widget.categoryId ?? '',
-          widget.courseId ?? '',
-        );
+    // Ensure all values are properly converted to String if they could be integers
+    String categoryId = widget.categoryId?.toString() ?? '';
+    String courseId = widget.courseId?.toString() ?? '';
+    String title = widget.title?.toString() ?? '';
 
-        _videoPlayerHelper = VideoPlayerHelper(
+    if (categoryId.isNotEmpty && courseId.isNotEmpty && title.isNotEmpty) {
+      try {
+        await lectureProvider.getSections(categoryId, courseId);
+
+        // Initialize VideoPlayerHelper only after confirming values are not null
+        _videoPlayerHelper ??= VideoPlayerHelper(
           lectureProvider: lectureProvider,
           user: user,
           downloadedVideos: downloadedVideos,
         );
 
-        await _videoPlayerHelper?.initVideoPlayer(
-          widget.categoryId ?? '',
-          widget.courseId!,
+        await _videoPlayerHelper!.initVideoPlayer(
+          categoryId,
+          courseId,
           lectureProvider.sections,
-          () => setState(() {
-      
-          }),
+          () => setState(() {}),
         );
       } catch (e) {
         log('Error initializing video player: $e');
       }
+    } else {
+      log('CategoryId, CourseId, or Title is null');
     }
   }
 
@@ -283,19 +284,25 @@ class TopicsScreenState extends State<TopicsScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    ContentTabWidget(
-                      categoryId: widget.categoryId!,
-                      courseId: widget.courseId!,
-                      playVideoCallback: (videoUrl,
-                          videoTitle,
-                          description,
-                          timestamp,
-                          views,
-                          position,
-                          duration,
-                          courseId,
-                          sectionId,
-                          lectureId) {
+                    TabItemContentWidget(
+                      key: PageStorageKey('content-tab-${widget.courseId}'),
+                      categoryId: widget.categoryId ?? '',
+                      courseId: widget.courseId ?? '',
+                      playVideoCallback: (
+                        String videoUrl,
+                        String videoTitle,
+                        String description,
+                        String timestamp,
+                        num views,
+                        int position,
+                        int duration,
+                        String courseId,
+                        String sectionId,
+                        int sectionIndex,
+                        String lectureId,
+                        int lectureIndex,
+                      ) {
+                        log("Callback triggered: $videoTitle");
                         _videoPlayerHelper!.setupVideoPlayer(
                           videoUrl,
                           videoTitle,
@@ -307,12 +314,15 @@ class TopicsScreenState extends State<TopicsScreen>
                           widget.categoryId ?? '',
                           courseId,
                           sectionId,
+                          sectionIndex,
                           lectureId,
+                          lectureIndex,
                         );
                         setState(() {});
                       },
                     ),
                     QuizTabWidget(
+                      key: PageStorageKey('quiz-tab-${widget.courseId}'),
                       categoryId: widget.categoryId ?? '',
                       courseId: widget.courseId ?? '',
                       title: widget.title ?? '',

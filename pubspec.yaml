@@ -17,7 +17,6 @@ dependencies:
   cloud_firestore: ^5.0.0
   firebase_storage: ^12.0.0
   firebase_core: ^3.0.0
-  file_picker: ^5.2.10
   iconly: ^1.0.1
   flutter_dropdown_search: ^0.0.4
   shimmer: ^3.0.0
@@ -56,7 +55,7 @@ dependencies:
   url_launcher: ^6.3.0
   google_fonts: ^6.2.1
   flutter_local_notifications: ^17.2.1+2
-  carousel_slider: ^4.2.1
+  carousel_slider: ^5.0.0
   awesome_notifications: ^0.9.3+1
   loading_btn: ^1.0.3
   animated_theme_switcher: ^2.0.8
@@ -84,17 +83,14 @@ dependencies:
   tab_indicator_styler: ^2.0.0
   dio: ^5.7.0
   zoom_tap_animation: ^1.1.0
-  preload_page_view: ^0.2.0
-  flutter_bloc: ^8.1.6
-  injectable: ^2.5.0
-  cached_video_player_plus:
-    git:
-      url: https://github.com/rignaneseleo/cached_video_player_plus.git
-  audio_video_progress_bar: ^2.0.3
-  ffmpeg_kit_flutter_min_gpl: ^6.0.3
-  flutter_image_compress: ^2.3.0
-  video_thumbnail: ^0.5.3
   badges: ^3.1.2
+  scrollable_positioned_list: ^0.3.8
+  scroll_to_index: ^3.0.1
+  flutter_bakong_khqr: ^0.0.3
+  flutter_image_compress: ^2.3.0
+  flutter_blurhash: ^0.8.2
+  extended_tabs: ^4.2.0
+  extended_nested_scroll_view: ^6.2.1
   
 
 

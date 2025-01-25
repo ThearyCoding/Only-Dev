@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
 import '../export/export.dart';
-import '../utils/show_error_utils.dart';
 
 class AdminProvider extends ChangeNotifier {
   List<AdminModel> admins = [];
@@ -14,23 +13,20 @@ class AdminProvider extends ChangeNotifier {
     fetchAdmins();
   }
 
-  // Method to fetch admin by ID
   Future<void> fetchAdminById(String adminId) async {
     try {
-      // Fetch the admin document from Firestore
       DocumentSnapshot doc =
           await _firestore.collection('admins').doc(adminId).get();
 
-      // If the document exists, update the admin variable
       if (doc.exists) {
         _admin = AdminModel.fromJson(doc.data() as Map<String, dynamic>);
       } else {
-        _admin = null; // No admin found
+        _admin = null;
       }
       notifyListeners();
     } catch (e) {
       log('Error fetching admin by ID: $e');
-      _admin = null; // Handle error
+      _admin = null;
       notifyListeners();
     }
   }

@@ -31,6 +31,7 @@ class FirebaseApiCourses {
   Stream<List<CourseModel>> fetchCourses() {
     return FirebaseFirestore.instance
         .collectionGroup('courses')
+         .where('status', whereIn: ['active', 'inactive']) 
         .limit(10)
         .snapshots()
         .map((snapshot) {
@@ -56,22 +57,17 @@ class FirebaseApiCourses {
           .then((snapshot) => snapshot.docs.first);
 
       if (courseDoc != null && courseDoc.exists) {
-        // Parse course data
         CourseModel course =
             CourseModel.fromMap(courseDoc.data() as Map<String, dynamic>);
 
-        // Fetch the associated admin using the adminId from the course
         String adminId = course.adminId;
         DocumentSnapshot adminDoc =
             await _firestore.collection('admins').doc(adminId).get();
 
         AdminModel? admin;
         if (adminDoc.exists) {
-          // Parse admin data
           admin = AdminModel.fromJson(adminDoc.data() as Map<String, dynamic>);
         }
-
-        // Return the course and admin as a Map
         return {
           'course': course,
           'admin': admin,

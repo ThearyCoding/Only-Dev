@@ -16,7 +16,7 @@ class Section {
     required this.courseId,
   });
 
-  factory Section.emtpy() {
+  factory Section.empty() {
     return Section(
         id: '', title: '', learningObjective: '', lectures: [], courseId: '');
   }

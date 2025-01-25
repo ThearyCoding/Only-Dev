@@ -1,13 +1,31 @@
 import 'dart:developer';
-
-import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:e_leaningapp/export/curriculum_export.dart';
 
 class FirebaseApiLecture{
 
   final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
 
+ Future<int> getTotalLectures(String categoryId, String courseId) async {
+    int totalLectures = 0;
+    try {
+      QuerySnapshot sectionsSnapshot = await _firestore
+          .collection('categories')
+          .doc(categoryId)
+          .collection('courses')
+          .doc(courseId)
+          .collection('sections')
+          .get();
 
+      for (var sectionDoc in sectionsSnapshot.docs) {
+        Map<String, dynamic> sectionData =
+            sectionDoc.data() as Map<String, dynamic>;
+        totalLectures += (sectionData['lectures'] as List).length;
+      }
+    } catch (e) {
+      log('Error fetching total lectures: $e');
+    }
+    return totalLectures;
+  }
  Future<String?> fetchFirstVideoUrl(
     String categoryId, String courseId) async {
   final courseRef = _firestore

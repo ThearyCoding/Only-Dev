@@ -81,7 +81,7 @@ class LogOutDialog extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey[300]!.withOpacity(.4)
+              color: Colors.grey[300]!.withValues(alpha: .4)
             ),
              child: Icon(
                icon,

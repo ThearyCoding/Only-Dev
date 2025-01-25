@@ -1,4 +1,3 @@
-import 'package:e_leaningapp/messaging/awesome_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import '../export/export.dart';

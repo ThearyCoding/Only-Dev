@@ -1,8 +1,6 @@
 import '../../export/export.dart';
 import '../../providers/lecture_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 class QuizTabWidget extends StatelessWidget {
   final String categoryId;
@@ -19,11 +17,10 @@ class QuizTabWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      key: const PageStorageKey<String>('tab-quiz'),
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
       child: Consumer<LectureProvider>(
         builder: (context, courseProvider, child) {
-          if (courseProvider.loadingquestion) {
+          if (courseProvider.loadingQuestions) {
             return const Center(
               child: CircularProgressIndicator(),
             );

@@ -1,7 +1,6 @@
-import 'package:e_leaningapp/core/constants.dart';
+import 'dart:developer';
+import 'package:e_leaningapp/service/firebase/firebase_api_lecture.dart';
 import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
-import '../di/dependency_injection.dart';
 import '../export/export.dart';
 import '../model/notification_model.dart';
 import '../service/firebase/firebase_api_notifications.dart';
@@ -10,6 +9,7 @@ class RegistrationProvider extends ChangeNotifier {
   final FirebaseApiRegistration _courseRegistrationService =
       locator<FirebaseApiRegistration>();
   final UserService userService = locator<UserService>();
+  final FirebaseApiLecture _apiLecture = locator<FirebaseApiLecture>();
   List<RegistrationModel> registeredCourses = [];
   final FirebaseApiNotifications _apiNotifications =
       locator<FirebaseApiNotifications>();
@@ -42,7 +42,7 @@ class RegistrationProvider extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to fetch registrations: $e');
+      log('Failed to fetch registrations: $e');
       notifyListeners();
     }
   }
@@ -50,7 +50,7 @@ class RegistrationProvider extends ChangeNotifier {
   Future<void> registerUser(
       String userId, String courseId, String categoryId, String title) async {
     if (isCancelled) {
-      debugPrint('Registration cancelled.');
+      log('Registration cancelled.');
       return;
     }
     String registerId = const Uuid().v1();
@@ -89,28 +89,39 @@ class RegistrationProvider extends ChangeNotifier {
   Future<void> _sendPushNotification(String userId, String title, String body,
       String courseId, String categoryId) async {
     try {
-      final response = await http.post(
-        Uri.parse('$renderUrl/api/notifications/send-notification'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'uid': userId,
-          'title': title,
-          'body': body,
-          'courseId': courseId,
-          'categoryId': categoryId,
-        }),
-      );
+      // final response = await http.post(
+      //   Uri.parse('$baseUrl/api/notifications/send-notification'),
+      //   headers: <String, String>{
+      //     'Content-Type': 'application/json; charset=UTF-8',
+      //   },
+      //   body: jsonEncode(<String, String>{
+      //     'uid': userId,
+      //     'title': title,
+      //     'body': body,
+      //     'courseId': courseId,
+      //     'categoryId': categoryId,
+      //   }),
+      // );
 
-      if (response.statusCode == 200) {
-        debugPrint('Notification sent successfully');
-      } else {
-        debugPrint('Failed to send notification');
-        debugPrint('Response body: ${response.body}');
-      }
+      // if (response.statusCode == 200) {
+      //   log('Notification sent successfully');
+      // } else {
+      //   log('Failed to send notification');
+      //   log('Response body: ${response.body}');
+      // }
+
+      final payload = {
+        'uid': userId,
+        'title': title,
+        'body': body,
+        'courseId': courseId,
+        'categoryId': categoryId,
+      };
+
+      await AwesomeNotificationService.showNotification(
+          title: title, body: body, payload: payload);
     } catch (e) {
-      debugPrint('Failed to send notification: $e');
+      log('Failed to send notification: $e');
     }
   }
 
@@ -123,7 +134,7 @@ class RegistrationProvider extends ChangeNotifier {
     List<Future<void>> fetchTasks = [];
     for (var course in registeredCourses) {
       fetchTasks.add(
-        userService
+        _apiLecture
             .getTotalLectures(course.categoryId, course.courseId)
             .then((lectures) {
           totalLectures[course.courseId] = lectures;

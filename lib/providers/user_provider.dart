@@ -46,13 +46,10 @@ class UserProvider with ChangeNotifier {
         notifyListeners();
 
         DocumentReference userRef = _firestore.collection('users').doc(uid);
-
-        // Start listening to changes in the user's document
         _userDocSubscription = userRef.snapshots().listen((userDoc) async {
           if (userDoc.exists) {
             _user = UserModel.fromMap(userDoc.data() as Map<String, dynamic>);
           } else {
-            // If the user document is deleted, log out the user
             if (context != null) {
               await handleUserLogout();
             }

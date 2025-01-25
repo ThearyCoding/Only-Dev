@@ -8,7 +8,7 @@ const String secretkey =
     "sk_test_51PBHJqRt0f9BAsbbY9tGwO8xLFUsWRHOzIbdLtLxqqelqnumwlQ5CeqHdLynhRn27YSHQWZ5Sbd0JwapjgE9FWU100i9eBxCRQ";
 
 // backend url
-const baseUrl = "http://172.20.10.2:3000";
+const baseUrl = "http://54.252.157.182";
 const renderUrl = "https://e-learning-pwbu.onrender.com";
 
 // Customize

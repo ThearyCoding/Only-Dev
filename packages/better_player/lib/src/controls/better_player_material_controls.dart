@@ -193,7 +193,7 @@ class _BetterPlayerMaterialControlsState
           margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: .5),
           ),
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -334,7 +334,7 @@ class _BetterPlayerMaterialControlsState
         child: Container(
           padding: EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: .5),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -616,7 +616,7 @@ class _BetterPlayerMaterialControlsState
       {Widget? icon, required void Function() onClicked}) {
     return Container(
       child: BetterPlayerMaterialClickableWidget(
-        backgroundColor: Colors.black.withOpacity(.5),
+        backgroundColor: Colors.black.withValues(alpha: .5),
         onTap: onClicked,
         child: Container(
           decoration: BoxDecoration(

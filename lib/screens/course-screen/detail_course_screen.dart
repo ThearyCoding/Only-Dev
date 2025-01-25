@@ -1,3 +1,9 @@
+import 'dart:developer';
+
+import 'package:e_leaningapp/export/app_routes_export.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+
 import '../../export/detail_export.dart';
 import '../../widgets/course-widget/build_course_curriculum.dart';
 
@@ -127,7 +133,23 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
     );
   }
 
+  bool _showTitleInAppBar = false;
+   final GlobalKey _detailsTitleKey = GlobalKey();
   void _scrollListener() {
+    if (_detailsTitleKey.currentContext != null) {
+      final RenderBox renderBox =
+          _detailsTitleKey.currentContext!.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero);
+      if (position.dy <= kToolbarHeight && !_showTitleInAppBar) {
+        setState(() {
+          _showTitleInAppBar = true;
+        });
+      } else if (position.dy > kToolbarHeight && _showTitleInAppBar) {
+        setState(() {
+          _showTitleInAppBar = false;
+        });
+      }
+    }
     if (_scrollController.position.userScrollDirection ==
         ScrollDirection.reverse) {
       if (_isBottomSheetVisible) {
@@ -182,6 +204,8 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                   controller: _scrollController,
                   slivers: [
                     SliverAppBar(
+                    
+                      pinned: true,
                       backgroundColor:
                           Theme.of(context).scaffoldBackgroundColor,
                       leading: InkWell(
@@ -205,12 +229,21 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: dominantColor.withOpacity(0.6),
+                            color: dominantColor.withValues(alpha: 0.6),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.arrow_back_ios, size: 16),
                         ),
                       ),
+                      title: _showTitleInAppBar
+                          ? Text(
+                              course.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            )
+                          : null,
                       expandedHeight: converheight,
                       flexibleSpace:
                           buildFlexibleSpaceBar(context, courseProvider),
@@ -225,40 +258,6 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
     );
   }
 
-  FlexibleSpaceBar buildFlexibleSpaceBar(
-      BuildContext context, CourseProvider courseProvider) {
-    return FlexibleSpaceBar(
-      collapseMode: CollapseMode.parallax,
-      background: _buildBackgroundWidget(),
-    );
-  }
-
-  Widget _buildBackgroundWidget() {
-    if (courseProvider.firstVideoUrl != null) {
-      return betterPlayerController != null
-          ? BetterPlayer(controller: betterPlayerController!)
-          : const SizedBox.shrink();
-    } else if (courseProvider.course?.imageUrl != null &&
-        courseProvider.course!.imageUrl.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: courseProvider.course!.imageUrl,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey[300] ?? Colors.grey,
-          highlightColor: Colors.grey[100] ?? Colors.grey,
-          child: Container(
-            color: Colors.white,
-          ),
-        ),
-        errorWidget: (context, url, error) => const Icon(Icons.error),
-      );
-    } else {
-      return Container(
-        color: Colors.grey,
-      );
-    }
-  }
-
   SliverToBoxAdapter _buildDetails(
       AppLocalizations localization, CourseModel course, AdminModel admin) {
     return SliverToBoxAdapter(
@@ -271,6 +270,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
               children: [
                 Flexible(
                   child: Text(
+                      key: _detailsTitleKey, 
                     course.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
@@ -341,6 +341,42 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
     );
   }
 
+  FlexibleSpaceBar buildFlexibleSpaceBar(
+      BuildContext context, CourseProvider courseProvider) {
+    return FlexibleSpaceBar(
+      collapseMode: CollapseMode.parallax,
+      background: _buildBackgroundWidget(),
+    );
+  }
+
+  Widget _buildBackgroundWidget() {
+    if (courseProvider.firstVideoUrl != null) {
+      return betterPlayerController != null
+          ? BetterPlayer(controller: betterPlayerController!)
+          : const SizedBox.shrink();
+    } else if (courseProvider.course?.imageUrl != null &&
+        courseProvider.course!.imageUrl.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: courseProvider.course!.imageUrl,
+        fit: BoxFit.cover,
+        // placeholder: (context, url) => Shimmer.fromColors(
+        //   baseColor: Colors.grey[300] ?? Colors.grey,
+        //   highlightColor: Colors.grey[100] ?? Colors.grey,
+        //   child: Container(
+        //     color: Colors.white,
+        //   ),
+        // ),
+        placeholder: (context, url) =>
+            BlurHash(hash: courseProvider.course?.blurHash ?? ''),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+      );
+    } else {
+      return Container(
+        color: Colors.grey,
+      );
+    }
+  }
+
   Widget _buildBottomSheet(AppLocalizations localization, bool isDarkMode) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -391,7 +427,7 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                                     : 'Add to cart',
                                 onTap: (startLoading, stopLoading,
                                     btnState) async {
-                                  await _registrationLogic(
+                                  await _paymentEntrollLogic(
                                       btnState,
                                       startLoading,
                                       registrationProvider,
@@ -428,44 +464,21 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
                           children: [
                             Expanded(
                               child: CustomBtnLoadingWidget(
-                                  btnText: registrationProvider
-                                          .isUserRegisteredForCourse(
-                                              widget.courseId)
-                                      ? 'Start Course'
-                                      : localization.enrollnow,
-                                  onTap: (startLoading, stopLoading,
-                                      btnState) async {
-                                    if (btnState == ButtonState.idle) {
-                                      startLoading();
-                                      await registrationProvider.registerUser(
-                                        user!.uid,
-                                        widget.courseId,
-                                        widget.categoryId,
-                                        course.title,
-                                      );
-
-                                      if (registrationProvider
-                                          .isUserRegisteredForCourse(
-                                              widget.courseId)) {
-                                        if (!registrationProvider
-                                            .hasShownDialog) {
-                                          bool isWatch =
-                                              await showDialogRegisterSuccess(
-                                            course.title,
-                                          );
-                                          if (isWatch) {
-                                            navigatorToTopicscreen(
-                                                course.title);
-                                          }
-                                        }
-                                      } else {
-                                        navigatorToTopicscreen(course.title);
-                                      }
-                                    } else {
-                                      navigatorToTopicscreen(course.title);
-                                    }
-                                    stopLoading();
-                                  }),
+                                btnText: registrationProvider
+                                        .isUserRegisteredForCourse(
+                                            widget.courseId)
+                                    ? 'Start Course'
+                                    : localization.enrollnow,
+                                onTap: (startLoading, stopLoading,
+                                    btnState) async {
+                                  await _freeCourseEnrollLogic(
+                                      btnState,
+                                      startLoading,
+                                      stopLoading,
+                                      registrationProvider,
+                                      course);
+                                },
+                              ),
                             ),
                             SizedBox(
                               height: 48,
@@ -496,22 +509,76 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
     );
   }
 
-  Future<void> _registrationLogic(
-      ButtonState btnState,
-      Function startLoading,
-      RegistrationProvider registrationProvider,
-      CourseModel course,
-      Function stopLoading) async {
+  Future<void> _freeCourseEnrollLogic(
+    ButtonState btnState,
+    Function startLoading,
+    Function stopLoading,
+    RegistrationProvider registrationProvider,
+    CourseModel course,
+  ) async {
     if (btnState == ButtonState.idle) {
       startLoading();
-      if (!registrationProvider.isUserRegisteredForCourse(widget.courseId)) {
-        String amount = '${(double.parse("${course.price}") * 100).toDouble()}';
-        await StripeService.instance.createPaymentIntent(amount, 'usd');
-        await registrationProvider.registerUser(
-          user!.uid,
+
+      try {
+        if (!registrationProvider.isUserRegisteredForCourse(course.id)) {
+          if (course.price == 0 || course.price == null) {
+            await registrationProvider.registerUser(
+              user!.uid,
+              course.id,
+              course.categoryId,
+              course.title,
+            );
+            if (registrationProvider.isUserRegisteredForCourse(course.id)) {
+              showSnackbar('You have successfully enrolled in the course!');
+              bool isWatch = await showDialogRegisterSuccess(course.title);
+              if (isWatch) {
+                navigatorToTopicscreen(course.title);
+              }
+            } else {
+              throw Exception('Failed to register for the course.');
+            }
+          } else {
+            showSnackbar('This course requires payment to enroll.');
+          }
+        } else {
+          navigatorToTopicscreen(course.title);
+        }
+      } catch (e) {
+        log('Error during course registration: $e');
+        showSnackbar('Something went wrong. Please try again.');
+      } finally {
+        stopLoading();
+      }
+    }
+  }
+
+  Future<void> _paymentEntrollLogic(
+    ButtonState btnState,
+    Function startLoading,
+    RegistrationProvider registrationProvider,
+    CourseModel course,
+    Function stopLoading,
+  ) async {
+    if (btnState == ButtonState.idle) {
+      startLoading();
+      try {
+        // Check if the user is already registered
+        if (registrationProvider.isUserRegisteredForCourse(widget.courseId)) {
+          showSnackbar('You are already registered for this course.');
+          return;
+        }
+
+        // Calculate payment amount (convert to cents)
+        final amount = '${(double.parse("${course.price}") * 100).toInt()}';
+
+        // Create payment intent and handle payment flow
+        await StripeService.instance.createPaymentIntent(
+          amount,
+          'usd',
           widget.courseId,
           widget.categoryId,
           course.title,
+          registrationProvider,
         );
 
         if (registrationProvider.isUserRegisteredForCourse(widget.courseId)) {
@@ -521,13 +588,17 @@ class _DetailCourseScreenState extends State<DetailCourseScreen> {
               navigatorToTopicscreen(course.title);
             }
           }
-        } else {
-          navigatorToTopicscreen(course.title);
         }
-      } else {
-        navigatorToTopicscreen(course.title);
+      } catch (e) {
+        if (e is StripeException && e.error.code == FailureCode.Canceled) {
+          showSnackbar('Payment was canceled.');
+        } else {
+          log('Error in registration logic: $e');
+          showSnackbar('Something went wrong. Please try again.');
+        }
+      } finally {
+        stopLoading();
       }
-      stopLoading();
     }
   }
 

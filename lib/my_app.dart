@@ -1,18 +1,8 @@
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
-import '../../export/curriculum_export.dart';
-import '../../generated/l10n.dart';
-import '../../messaging/awesome_notification_service.dart';
-import '../../messaging/firebase_messaging_service.dart';
-import '../../providers/theme_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'core/global_navigation.dart';
-import 'providers/internet_connection_provider.dart';
-import 'providers/language_provider.dart';
-import 'utils/toast_utils.dart';
+import 'export/export.dart';
+import 'export/provider_export.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -44,7 +34,7 @@ class MyAppState extends State<MyApp> {
           .loadTheme(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CupertinoActivityIndicator());
         }
 
         final CustomizeThemeProvider themeProvider =

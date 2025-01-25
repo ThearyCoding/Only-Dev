@@ -40,6 +40,7 @@ class BetterPlayerAsmsTrack {
   int get hashCode => super.hashCode;
 
   @override
+  // ignore: non_nullable_equals_parameter
   bool operator ==(dynamic other) {
     return other is BetterPlayerAsmsTrack &&
         width == other.width &&

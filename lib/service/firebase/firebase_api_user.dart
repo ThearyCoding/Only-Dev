@@ -1,9 +1,7 @@
 import 'dart:developer';
-import 'package:e_leaningapp/di/dependency_injection.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../../export/curriculum_export.dart';
-import '../../utils/show_error_utils.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
@@ -136,27 +134,7 @@ class UserService {
     }
   }
 
-  Future<int> getTotalLectures(String categoryId, String courseId) async {
-    int totalLectures = 0;
-    try {
-      QuerySnapshot sectionsSnapshot = await _firestore
-          .collection('categories')
-          .doc(categoryId)
-          .collection('courses')
-          .doc(courseId)
-          .collection('sections')
-          .get();
-
-      for (var sectionDoc in sectionsSnapshot.docs) {
-        Map<String, dynamic> sectionData =
-            sectionDoc.data() as Map<String, dynamic>;
-        totalLectures += (sectionData['lectures'] as List).length;
-      }
-    } catch (e) {
-      log('Error fetching total lectures: $e');
-    }
-    return totalLectures;
-  }
+ 
 
   Future<void> updateUser({
     String? uid,

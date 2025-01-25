@@ -87,7 +87,7 @@ class NetworkPainter extends CustomPainter {
       for (int j = i + 1; j < points.length; j++) {
         final distance = (points[i] - points[j]).distance;
         if (distance < 100) {
-          paint.color = Colors.white.withOpacity(1 - (distance / 100));
+          paint.color = Colors.white.withValues(alpha: 1 - (distance / 100));
           canvas.drawLine(points[i], points[j], paint);
         }
       }

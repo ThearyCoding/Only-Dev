@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/other-widget/custom_dotted_border.dart';
@@ -44,22 +44,20 @@ class CourseCardV2State extends State<CourseCardV2>
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDarkMode ? Colors.grey.withOpacity(.1) : Colors.white;
+    final cardColor = isDarkMode ? Colors.grey.withValues(alpha: .1) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final secondaryTextColor = isDarkMode ? Colors.white70 : Colors.black87;
     final borderColor = _isTapped ? Colors.green : Colors.transparent;
     final localization = AppLocalizations.of(context);
 
     return ZoomTapAnimation(
-      onTap: (){
-       
+      onTap: () {
         navigation(localization);
         setState(() {
-           _isTapped = true;
+          _isTapped = true;
         });
       },
       child: Card(
@@ -82,21 +80,22 @@ class CourseCardV2State extends State<CourseCardV2>
                       width: double.infinity,
                       height: 120,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? Colors.grey[800]!
-                                : Colors.grey[300]!,
-                        highlightColor:
-                            Theme.of(context).brightness == Brightness.dark
-                                ? Colors.grey[600]!
-                                : Colors.grey[100]!,
-                        child: Container(
-                          width: double.infinity,
-                          height: 120,
-                          color: Colors.white,
-                        ),
-                      ),
+                      // placeholder: (context, url) => Shimmer.fromColors(
+                      //   baseColor:
+                      //       Theme.of(context).brightness == Brightness.dark
+                      //           ? Colors.grey[800]!
+                      //           : Colors.grey[300]!,
+                      //   highlightColor:
+                      //       Theme.of(context).brightness == Brightness.dark
+                      //           ? Colors.grey[600]!
+                      //           : Colors.grey[100]!,
+                      //   child: Container(
+                      //     width: double.infinity,
+                      //     height: 120,
+                      //     color: Colors.white,
+                      //   ),
+                      // ),
+                      placeholder: (context, url) => BlurHash(hash: widget.course.blurHash ?? ''),
                       errorWidget: (context, url, error) => const Center(
                         child: Icon(
                           Icons.error,
@@ -106,8 +105,7 @@ class CourseCardV2State extends State<CourseCardV2>
                       ),
                     ),
                   ),
-                if (TimeUtils.isNew(
-                    widget.course.timestamp, 4, TimeUnit.days))
+                if (TimeUtils.isNew(widget.course.timestamp, 4, TimeUnit.days))
                   Positioned(
                     left: 8,
                     top: 8,
@@ -132,25 +130,24 @@ class CourseCardV2State extends State<CourseCardV2>
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: widget.course.price == 0 &&
-                              widget.course.status == true
+                              widget.course.status == "active"
                           ? Colors.green
-                          : widget.course.status == true
+                          : widget.course.status == "active"
                               ? Colors.green
                               : Colors.blueAccent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      widget.course.price == 0 && widget.course.status == true
-                          ? localization.Free
-                          : widget.course.status == true
-                              ? '\$${widget.course.price!.toStringAsFixed(2)}'
-                              : localization.Comingsoon,
-                      style:
-                          const TextStyle(color: Colors.white, fontSize: 16),
+                      widget.course.status == "active"
+                          ? (widget.course.price == 0
+                              ? localization.Free
+                              : '\$${widget.course.price!.toStringAsFixed(2)}')
+                          : localization.Comingsoon,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ),
@@ -187,16 +184,16 @@ class CourseCardV2State extends State<CourseCardV2>
                         widget.course.registerCounts != null
                             ? '${widget.course.registerCounts} ${localization.students}'
                             : '0 ${localization.students}',
-                        style: TextStyle(
-                            color: secondaryTextColor, fontSize: 14),
+                        style:
+                            TextStyle(color: secondaryTextColor, fontSize: 14),
                       ),
                       const SizedBox(width: 16),
                       Icon(Icons.video_library, color: secondaryTextColor),
                       const SizedBox(width: 4),
                       Text(
                         '${widget.totalLectures} ${localization.lectures}',
-                        style: TextStyle(
-                            color: secondaryTextColor, fontSize: 14),
+                        style:
+                            TextStyle(color: secondaryTextColor, fontSize: 14),
                       ),
                     ],
                   ),
@@ -240,7 +237,7 @@ class CourseCardV2State extends State<CourseCardV2>
     );
   }
 
-  navigation(AppLocalizations localization) {
+  void navigation(AppLocalizations localization) {
     if (widget.isRegistered) {
       context.push(
         RoutesPath.topicScreen,
@@ -250,9 +247,8 @@ class CourseCardV2State extends State<CourseCardV2>
           'title': widget.course.title,
         },
       );
-    } else if (widget.course.status == false) {
+    } else if (widget.course.status != "active") {
       showSnackbar(localization.Thiscoursewillbeavailableshortly);
-      return;
     } else {
       context.push(
         RoutesPath.detailCourseScreen,

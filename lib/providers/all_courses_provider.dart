@@ -1,10 +1,7 @@
 import 'dart:math';
 import 'package:e_leaningapp/service/firebase/firebase_api_categories.dart';
 import 'package:flutter/material.dart';
-import '../di/dependency_injection.dart';
 import '../export/export.dart';
-import '../service/firebase/firebase_api_quiz.dart';
-import '../utils/show_error_utils.dart';
 
 class AllCoursesProvider with ChangeNotifier {
   final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
@@ -21,7 +18,7 @@ class AllCoursesProvider with ChangeNotifier {
   Map<String, AdminModel> adminMap = {};
   Map<String, int> quizCounts = {};
   Map<String, bool> categoryLoadingMap =
-      {}; // Map for each category's loading status
+      {};
   List<CourseModel> courseByCategoryId = [];
   User? user = locator<FirebaseAuth>().currentUser;
   List<CategoryModel> categories = [];
@@ -174,6 +171,7 @@ class AllCoursesProvider with ChangeNotifier {
   }) {
     Query<Map<String, dynamic>> query = _firestore
         .collectionGroup('courses')
+         .where('status', whereIn: ['active', 'inactive']) 
         .orderBy('timestamp', descending: true)
         .limit(limit);
 

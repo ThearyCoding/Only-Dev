@@ -14,6 +14,7 @@ class ListItem extends StatefulWidget {
   final bool isWatched;
   final LectureProvider provider;
   final void Function()? onTap;
+
   const ListItem({
     Key? key,
     required this.lecture,
@@ -23,7 +24,9 @@ class ListItem extends StatefulWidget {
     required this.onTap,
     required this.isWatched,
     required this.provider,
-  }) : super(key: key);
+  }) : super(
+          key: key,
+        );
 
   @override
   State<ListItem> createState() => _ListItemState();
@@ -31,6 +34,7 @@ class ListItem extends StatefulWidget {
 
 class _ListItemState extends State<ListItem> {
   double _downloadProgress = 0.0;
+
   var savedDir = "";
   @override
   void initState() {
@@ -67,6 +71,7 @@ class _ListItemState extends State<ListItem> {
   @override
   Widget build(BuildContext context) {
     return Padding(
+      key: widget.key,
       padding: const EdgeInsets.all(8.0),
       child: ListTile(
         onTap: widget.onTap,
@@ -158,6 +163,7 @@ class _ListItemState extends State<ListItem> {
                 },
               )
             : IconButton(
+                splashRadius: 25,
                 onPressed: () {
                   widget.onDownloadPlayPausedPressed(widget.lecture.videoUrl);
                   setState(() {});

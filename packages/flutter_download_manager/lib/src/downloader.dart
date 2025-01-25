@@ -19,7 +19,7 @@ class DownloadManager {
   int maxConcurrentTasks = 2;
   int runningTasks = 0;
 
-  static final DownloadManager _dm = new DownloadManager._internal();
+  static final DownloadManager _dm = DownloadManager._internal();
 
   DownloadManager._internal();
 
@@ -250,9 +250,9 @@ class DownloadManager {
 
   // Batch Download Mechanism
   Future<void> addBatchDownloads(List<String> urls, String savedDir) async {
-    urls.forEach((url) {
+    for (var url in urls) {
       addDownload(url, savedDir);
-    });
+    }
   }
 
   List<DownloadTask?> getBatchDownloads(List<String> urls) {
@@ -260,21 +260,21 @@ class DownloadManager {
   }
 
   Future<void> pauseBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       pauseDownload(element);
-    });
+    }
   }
 
   Future<void> cancelBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       cancelDownload(element);
-    });
+    }
   }
 
   Future<void> resumeBatchDownloads(List<String> urls) async {
-    urls.forEach((element) {
+    for (var element in urls) {
       resumeDownload(element);
-    });
+    }
   }
 
   ValueNotifier<double> getBatchDownloadProgress(List<String> urls) {
@@ -289,9 +289,10 @@ class DownloadManager {
       return getDownload(urls.first)?.progress ?? progress;
     }
 
+    // ignore: prefer_collection_literals
     var progressMap = Map<String, double>();
 
-    urls.forEach((url) {
+    for (var url in urls) {
       DownloadTask? task = getDownload(url);
 
       if (task != null) {
@@ -324,7 +325,7 @@ class DownloadManager {
       } else {
         total--;
       }
-    });
+    }
 
     return progress;
   }
@@ -388,7 +389,7 @@ class DownloadManager {
       download(
           currentRequest.url, currentRequest.path, currentRequest.cancelToken);
 
-      await Future.delayed(Duration(milliseconds: 500), null);
+      await Future.delayed(const Duration(milliseconds: 500), null);
     }
   }
 

@@ -1,6 +1,4 @@
 import 'package:e_leaningapp/providers/categories_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../export/export.dart';
 
 class CategoryWidget extends StatefulWidget {
@@ -126,8 +124,8 @@ class CategoryWidgetState extends State<CategoryWidget> {
                             });
                           },
                           child: CategoryCard(
-                            imageUrl: category.imageUrl,
-                            title: category.title,
+                            category: category,
+                         
                             widgetWidth: widgetWidth,
                             fontSize: fontSize,
                           ),

@@ -1,4 +1,5 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "cmake.sourceDirectory": "C:/Users/MSI/Desktop/firebasestore/e_leaningapp/linux"
+    "cmake.sourceDirectory": "C:/Users/MSI/Desktop/firebasestore/e_leaningapp/linux",
+    "liveServer.settings.port": 5501
 }

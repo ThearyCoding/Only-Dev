@@ -52,6 +52,11 @@ class NotificationProvider extends ChangeNotifier {
     });
   }
 
+  Future<void> deleteNotification(String notificationId) async{
+    await _apiNotifications.deleteNotification(notificationId);
+    _notifications.removeWhere((notification) => notification.id == notificationId);
+  }
+
   Future<void> markAllAsRead() async {
     final userId = user?.uid;
     if (userId != null) {

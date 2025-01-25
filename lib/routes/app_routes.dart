@@ -199,7 +199,7 @@ class AppRoutes {
             final courseTitle = args?['title'] as String?;
             final courseId = args?['courseId'] as String?;
             final categoryId = args?['categoryId'] as String?;
-            return TopicsScreen(
+            return CourseContentScreen(
               title: courseTitle,
               courseId: courseId,
               categoryId: categoryId,

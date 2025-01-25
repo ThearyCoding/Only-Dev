@@ -5,7 +5,6 @@ class VideoPlayerProvider extends ChangeNotifier {
   BetterPlayerController? _betterPlayerController;
   String? _currentVideoUrl;
   bool _isPlaying = false;
-  bool _isDisposed = false;
 
   BetterPlayerController? get betterPlayerController => _betterPlayerController;
   String? get currentVideoUrl => _currentVideoUrl;
@@ -35,7 +34,6 @@ class VideoPlayerProvider extends ChangeNotifier {
 
   void disposePlayer() {
     _betterPlayerController?.dispose();
-    _isDisposed = true;
     notifyListeners();
   }
 }

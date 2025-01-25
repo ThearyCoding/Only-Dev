@@ -1,7 +1,6 @@
-import 'package:e_leaningapp/di/dependency_injection.dart';
+import 'dart:developer';
 
 import '../export/export.dart';
-
 class BannersProvider extends ChangeNotifier {
   final FirebaseService _firebaseService = locator<FirebaseService>();
   List<BannerModel> _banners = [];
@@ -26,7 +25,7 @@ class BannersProvider extends ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      debugPrint('Error fetching banners: $e');
+      log('Error fetching banners: $e');
       _isLoading = false;
       notifyListeners();
     }

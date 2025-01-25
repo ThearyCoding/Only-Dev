@@ -1,4 +1,3 @@
-import '../../../di/dependency_injection.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../screens/user-screens/user_information_screen.dart';
 import '../../../widgets/check-box-widget/custom_check_box_widget_02.dart';
@@ -10,10 +9,8 @@ import '../../utils/image_picker_utils.dart';
 import '../../widgets/buttons/custom_btn_loading_widget.dart';
 import '../../widgets/other-widget/custom_date_picker_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_btn/loading_btn.dart';
-import 'package:provider/provider.dart';
 import 'package:random_avatar/random_avatar.dart';
 import 'dart:developer';
 import 'dart:io';
@@ -53,10 +50,8 @@ class _CompleteInformationsState extends State<CompleteInformations> {
   @override
   void initState() {
     super.initState();
-    // Initialize your controllers and set up listeners
     txtfirstname.addListener(_checkFormValidity);
     txtlastname.addListener(_checkFormValidity);
-    // Deferring context-dependent operations until the first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       authenticationProvider =
           Provider.of<AuthenticationProvider>(context, listen: false);
@@ -67,7 +62,6 @@ class _CompleteInformationsState extends State<CompleteInformations> {
   }
 
   void _checkFormValidity() {
-    // This function checks if all fields are filled out correctly
     final isFormValid = txtfirstname.text.isNotEmpty &&
         txtlastname.text.isNotEmpty &&
         selectedGender != null;
@@ -128,7 +122,6 @@ class _CompleteInformationsState extends State<CompleteInformations> {
           'https://graph.facebook.com/v2.12/me?fields=name,picture.width(800).height(800),first_name,last_name,email&access_token=${accessToken.token}'));
       if (graphResponse.statusCode == 200) {
         final profileData = jsonDecode(graphResponse.body);
-
         setState(() {
           displayName = profileData['name'];
           email = profileData['email'];
@@ -234,7 +227,7 @@ class _CompleteInformationsState extends State<CompleteInformations> {
                           fontSize: 16,
                         ),
                       )
-                    : Container(),
+                    : const SizedBox.shrink(),
                 const Text(
                   "You're applying for E-Learning Platform",
                   style: TextStyle(
@@ -428,7 +421,7 @@ class _CompleteInformationsState extends State<CompleteInformations> {
                                     );
                                     authenticationProvider
                                         .saveUserLoginStatus(true);
-                                    // ignore: use_build_context_synchronously
+                                    if(!context.mounted)return;
                                     context.push(RoutesPath.home);
                                   }
                                   stopLoading();

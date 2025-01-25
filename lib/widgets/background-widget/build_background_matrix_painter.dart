@@ -9,7 +9,7 @@ class MatrixBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final color = colorScheme.brightness == Brightness.dark
-        ? Colors.black.withOpacity(.5)
+        ? Colors.black.withValues(alpha: .5)
         : Colors.black26;
     return CustomPaint(
       painter: MatrixPainter(context),
