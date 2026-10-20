@@ -20,9 +20,9 @@ class LocalNotificationService {
 
     const DarwinInitializationSettings darwinInitializationSettings =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const InitializationSettings initializationSettings =

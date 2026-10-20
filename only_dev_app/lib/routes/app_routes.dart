@@ -31,11 +31,10 @@ part 'routes_path.dart';
 part 'route_name.dart';
 
 class AppRoutes {
-  static GoRouter getRouter() {
-    return GoRouter(
-      initialLocation: RoutesPath.home,
-      navigatorKey: navigatorKey,
-      routes: [
+  static final GoRouter router = GoRouter(
+    initialLocation: RoutesPath.home,
+    navigatorKey: navigatorKey,
+    routes: [
         GoRoute(
           path: RoutesPath.khqrpaymentScreen,
           pageBuilder: (context, state) {
@@ -241,6 +240,7 @@ class AppRoutes {
             }),
       ],
       errorBuilder: (context, state) => ErrorScreen(message: state.name ?? ""),
-    );
-  }
+  );
+
+  static GoRouter getRouter() => router;
 }

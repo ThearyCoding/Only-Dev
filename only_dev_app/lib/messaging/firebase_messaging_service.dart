@@ -23,12 +23,10 @@ class FirebaseMessagingService {
         provisional: false,
         sound: true,
       );
-      final router = AppRoutes.getRouter();
-      LocalNotificationService.initNotification();
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      LocalNotificationService.initialize(router);
+      LocalNotificationService.initialize(AppRoutes.router);
       final message = await FirebaseMessaging.instance.getInitialMessage();
-      if (message != null) {
+      if (message != null && message.data.isNotEmpty) {
         Future.delayed(const Duration(seconds: 1), () {
           LocalNotificationService.handleNotificationTap(
               jsonEncode(message.data));

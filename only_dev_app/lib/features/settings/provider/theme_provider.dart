@@ -6,21 +6,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:only_dev_app/theme/custom_theme.dart';
 
 class CustomizeThemeProvider extends ChangeNotifier {
-  ThemeMode _currentTheme = ThemeMode.system;
+  ThemeMode _currentTheme = ThemeMode.dark;
   final String _storageKey = 'isdarkMode';
   SharedPreferences? _prefs;
 
   ThemeMode get currentTheme => _currentTheme;
 
   CustomizeThemeProvider() {
-    loadTheme();
+    _initTheme();
+  }
+
+  void _initTheme() {
+    try {
+      _prefs = locator<SharedPreferences>();
+      _currentTheme = getThemeModeFromStorage();
+    } catch (_) {
+      _currentTheme = ThemeMode.dark;
+    }
   }
 
   Future<void> loadTheme() async {
-    // ignore: await_only_futures
-    _prefs = await locator<SharedPreferences>();
-    _currentTheme = getThemeModeFromStorage();
-    notifyListeners();
+    _initTheme();
   }
 
   void switchTheme(BuildContext context) {
@@ -36,7 +42,7 @@ class CustomizeThemeProvider extends ChangeNotifier {
       isReversed: _currentTheme == ThemeMode.light,
     );
 
-    //  notifyListeners();
+    notifyListeners();
   }
 
   ThemeMode getThemeModeFromStorage() {
