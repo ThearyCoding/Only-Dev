@@ -106,22 +106,149 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
         final course = model.course;
         if (course == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Course Details')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    model.errorMessage ?? 'Failed to load course details',
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                  size: 20,
+                ),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(RoutesPath.home);
+                  }
+                },
+              ),
+              title: Text(
+                'Course Details',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              centerTitle: true,
+            ),
+            body: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          border: Border.all(
+                            color:
+                                const Color(0xFFEF4444).withValues(alpha: 0.25),
+                            width: 2,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.cloud_off_rounded,
+                            size: 44,
+                            color: Color(0xFFEF4444),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Unable to Load Course',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        model.errorMessage ??
+                            'We encountered an issue fetching this course. Please verify your connection or try again.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () => model.init(widget.courseId),
+                          icon: const Icon(Icons.refresh_rounded, size: 20),
+                          label: const Text(
+                            'Try Again',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3B82F6),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go(RoutesPath.home);
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : Colors.grey.shade300,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Go Back',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => model.init(widget.courseId),
-                    child: const Text('Retry'),
-                  ),
-                ],
+                ),
               ),
             ),
           );

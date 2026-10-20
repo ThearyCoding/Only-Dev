@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../service/api/api_endpoints.dart';
 import '../../service/api/dio_client.dart';
 import '../models/models.dart';
@@ -28,12 +29,23 @@ class EnrollmentRemoteDataSourceImpl implements EnrollmentRemoteDataSource {
 
   @override
   Future<bool> checkEnrollment(String courseId) async {
-    final response = await _dioClient.get(ApiEndpoints.checkEnrollment(courseId));
-    if (response.data != null && response.data['data'] != null) {
-      final data = response.data['data'];
-      return (data['is_enrolled'] ?? data['isEnrolled'] ?? data['is_registered'] ?? data['isRegistered'] ?? false) as bool;
+    try {
+      final response = await _dioClient.get(
+        ApiEndpoints.checkEnrollment(courseId),
+        options: Options(extra: {'silent': true}),
+      );
+      if (response.data != null && response.data['data'] != null) {
+        final data = response.data['data'];
+        return (data['is_enrolled'] ??
+                data['isEnrolled'] ??
+                data['is_registered'] ??
+                data['isRegistered'] ??
+                false) as bool;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
-    return false;
   }
 
   @override

@@ -8,9 +8,17 @@ import 'package:only_dev_app/service/api/dio_client.dart';
 class AuthGuard {
   /// Checks whether a user has an active session (JWT access token or Firebase auth).
   static bool isAuthenticated() {
-    final token = locator<DioClient>().authInterceptor.token;
-    final firebaseUser = locator<FirebaseAuth>().currentUser;
-    return (token != null && token.isNotEmpty) || firebaseUser != null;
+    try {
+      final token = locator.isRegistered<DioClient>()
+          ? locator<DioClient>().authInterceptor.token
+          : null;
+      final firebaseUser = locator.isRegistered<FirebaseAuth>()
+          ? locator<FirebaseAuth>().currentUser
+          : null;
+      return (token != null && token.isNotEmpty) || firebaseUser != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Prompts the user to sign in if they are currently a guest.

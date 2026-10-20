@@ -4,6 +4,7 @@ import 'package:only_dev_app/core/viewmodel/base_viewmodel.dart';
 import 'package:only_dev_app/data/models/models.dart';
 import 'package:only_dev_app/data/repositories/course_repository.dart';
 import 'package:only_dev_app/data/repositories/enrollment_repository.dart';
+import 'package:only_dev_app/service/api/api_error_interceptor.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
 
@@ -47,14 +48,17 @@ class CourseDetailViewModel extends BaseViewModel {
 
     setBusy(true);
     try {
-      final futures = await Future.wait([
-        _courseRepository.getCourseById(courseId),
-        _enrollmentRepository.checkEnrollment(courseId),
-      ]);
+      _course = await _courseRepository.getCourseById(courseId);
 
-      _course = futures[0] as CourseModel;
-      final bool checkResult = futures[1] as bool;
-      _isEnrolled = (_course?.isEnrolled ?? false) || checkResult;
+      bool isEnrolled = _course?.isEnrolled ?? false;
+      if (!isEnrolled) {
+        try {
+          isEnrolled = await _enrollmentRepository.checkEnrollment(courseId);
+        } catch (_) {
+          isEnrolled = false;
+        }
+      }
+      _isEnrolled = isEnrolled;
 
       if (_course != null) {
         _totalLectures = _course!.totalLessons ?? 0;
@@ -71,7 +75,7 @@ class CourseDetailViewModel extends BaseViewModel {
       }
       setViewState(ViewState.success);
     } catch (e) {
-      setError(e.toString());
+      setError(ApiErrorInterceptor.extractErrorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -117,7 +121,7 @@ class CourseDetailViewModel extends BaseViewModel {
       notifyListeners();
       return true;
     } catch (e) {
-      setError(e.toString());
+      setError(ApiErrorInterceptor.extractErrorMessage(e));
       return false;
     } finally {
       setBusy(false);
