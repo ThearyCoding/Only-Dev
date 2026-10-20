@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:only_dev_app/core/global_navigation.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
 import 'package:only_dev_app/service/api/dio_client.dart';
@@ -128,10 +129,6 @@ class UserProvider with ChangeNotifier {
       _userModel = null;
       _isLoading = false;
       notifyListeners();
-
-      if (context != null) {
-        context.go('/');
-      }
     }
   }
 
@@ -147,7 +144,7 @@ class UserProvider with ChangeNotifier {
     _userModel = null;
     notifyListeners();
     if (context != null && context.mounted) {
-      context.go('/');
+      context.go(RoutesPath.home);
     }
   }
 }

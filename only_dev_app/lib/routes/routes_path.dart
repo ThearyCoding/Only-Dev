@@ -1,8 +1,8 @@
 part of 'app_routes.dart';
 
 class RoutesPath {
-  static const String login = '/';
-  static const String home = '/home';
+  static const String home = '/';
+  static const String login = '/login';
   static const String quizscreen = '/quiz';
   static const String completeInfo = '/complete-info';
   static const String topicScreen = '/topics';

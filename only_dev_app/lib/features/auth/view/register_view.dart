@@ -166,7 +166,11 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                                   .read(authNotifierProvider)
                                   .saveUserLoginStatus(true);
                               if (context.mounted) {
-                                context.go(RoutesPath.home);
+                                if (context.canPop()) {
+                                  context.pop(true);
+                                } else {
+                                  context.go(RoutesPath.home);
+                                }
                               }
                             }
                           }

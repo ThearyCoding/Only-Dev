@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 import '../../routes/app_routes.dart';
 
 class QuizTabWidget extends ConsumerWidget {
@@ -102,7 +103,15 @@ class QuizTabWidget extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final authenticated = await AuthGuard.requireAuth(
+                          context,
+                          title: 'Sign In to Start Quiz',
+                          message:
+                              'Please log in or create an account to test your skills and save your quiz progress.',
+                        );
+                        if (!authenticated || !context.mounted) return;
+
                         if (categoryId.isNotEmpty &&
                             courseId.isNotEmpty &&
                             title.isNotEmpty) {

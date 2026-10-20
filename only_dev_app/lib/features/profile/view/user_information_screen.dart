@@ -16,6 +16,7 @@ import 'package:only_dev_app/features/settings/provider/theme_provider.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 import 'package:only_dev_app/utils/compress_image_util.dart';
 import 'package:only_dev_app/utils/image_picker_utils.dart';
 import 'package:only_dev_app/utils/show_dialog_sign_out_utils.dart';
@@ -228,11 +229,20 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
           IconButton(
             tooltip: localization.editProfile,
             icon: const Icon(IconlyLight.edit, size: 20),
-            onPressed: () {
+            onPressed: () async {
               if (currentUser != null) {
                 userProviderState.setUserData(currentUser);
+                context.push(RoutesPath.editProfileInformation);
+              } else {
+                final loggedIn = await AuthGuard.requireAuth(
+                  context,
+                  title: 'Sign In to Edit Profile',
+                  message: 'Please sign in to update your profile details and preferences.',
+                );
+                if (loggedIn && context.mounted) {
+                  context.push(RoutesPath.editProfileInformation);
+                }
               }
-              context.push(RoutesPath.editProfileInformation);
             },
           ),
           const SizedBox(width: 4),
@@ -240,12 +250,20 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        child: profileState.isLoading && currentUser == null
+        child: profileState.isLoading && currentUser == null && AuthGuard.isAuthenticated()
             ? const Center(
                 child: CircularProgressIndicator(),
               )
             : currentUser == null
-                ? _buildEmptyState(isDark)
+                ? (!AuthGuard.isAuthenticated()
+                    ? _buildGuestContent(
+                        context,
+                        isDark: isDark,
+                        localization: localization,
+                        themeProvider: themeProvider,
+                        languageProvider: languageProvider,
+                      )
+                    : _buildEmptyState(isDark))
                 : _buildProfileContent(
                     context,
                     user: currentUser,
@@ -288,6 +306,226 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGuestContent(
+    BuildContext context, {
+    required bool isDark,
+    required AppLocalizations localization,
+    required CustomizeThemeProvider themeProvider,
+    required LanguageProvider languageProvider,
+  }) {
+    return ListView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: [
+        // Guest Welcome Card
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                  : [const Color(0xFFEFF6FF), Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.person_outline_rounded,
+                  size: 40,
+                  color: Color(0xFF3B82F6),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Welcome to Only Dev',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sign in to access your enrolled courses, track your learning progress, and customize your profile.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push(RoutesPath.login),
+                  icon: const Icon(Icons.login_rounded, size: 20),
+                  label: const Text(
+                    'Sign In / Register',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Protected Account Actions
+        ProfileMenuGroup(
+          title: localization.yourAccount,
+          items: [
+            ProfileMenuItem(
+              icon: IconlyLight.profile,
+              iconColor: const Color(0xFF3B82F6),
+              title: localization.editProfile,
+              subtitle: 'Update your name, headline and bio',
+              onTap: () async {
+                final loggedIn = await AuthGuard.requireAuth(
+                  context,
+                  title: 'Sign In to Edit Profile',
+                  message: 'Please sign in to update your profile details and preferences.',
+                );
+                if (loggedIn && context.mounted) {
+                  context.push(RoutesPath.editProfileInformation);
+                }
+              },
+            ),
+            ProfileMenuItem(
+              icon: Icons.video_library_outlined,
+              iconColor: const Color(0xFF8B5CF6),
+              title: localization.myCourses,
+              subtitle: 'Access your enrolled courses and progress',
+              onTap: () async {
+                final loggedIn = await AuthGuard.requireAuth(
+                  context,
+                  title: 'Sign In for My Courses',
+                  message: 'Please sign in to see your enrolled courses and learning progress.',
+                );
+                if (loggedIn && context.mounted) {
+                  context.push(RoutesPath.myCoursesScreen);
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // App Preferences
+        ProfileMenuGroup(
+          title: localization.appSettings,
+          items: [
+            ThemeSwitcher(
+              builder: (context) {
+                return ProfileMenuItem(
+                  icon: isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  iconColor: const Color(0xFFF59E0B),
+                  title: 'Dark Mode',
+                  subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
+                  trailing: Switch.adaptive(
+                    value: isDark,
+                    activeTrackColor: const Color(0xFFF59E0B),
+                    onChanged: (value) {
+                      themeProvider.switchTheme(context);
+                    },
+                  ),
+                  onTap: () {
+                    themeProvider.switchTheme(context);
+                  },
+                );
+              },
+            ),
+            ProfileMenuItem(
+              icon: Icons.translate_rounded,
+              iconColor: const Color(0xFF06B6D4),
+              title: localization.chooseLanguage,
+              subtitle: 'Selected: ${languageProvider.locale.languageCode == 'km' ? localization.khmer : localization.english}',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      languageProvider.locale.languageCode.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF06B6D4),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: isDark ? Colors.white30 : Colors.grey.shade400,
+                  ),
+                ],
+              ),
+              onTap: () =>
+                  context.pushNamed(RoutesPath.languageSelectionScreen),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Support & Legal
+        ProfileMenuGroup(
+          title: 'Support & Legal',
+          items: [
+            ProfileMenuItem(
+              icon: Icons.info_outline_rounded,
+              iconColor: const Color(0xFF6366F1),
+              title: 'About Only Dev',
+              subtitle: 'Version 1.0.0 (Build 2026)',
+              onTap: () => _showAboutDialog(context, isDark),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 

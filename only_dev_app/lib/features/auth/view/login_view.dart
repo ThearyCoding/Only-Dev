@@ -134,7 +134,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   .read(authNotifierProvider)
                                   .saveUserLoginStatus(true);
                               if (context.mounted) {
-                                context.go(RoutesPath.home);
+                                if (context.canPop()) {
+                                  context.pop(true);
+                                } else {
+                                  context.go(RoutesPath.home);
+                                }
                               }
                             }
                           }

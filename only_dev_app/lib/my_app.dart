@@ -31,9 +31,11 @@ class MyAppState extends ConsumerState<MyApp> {
     FirebaseMessagingService.configureMessageHandlers();
     LocalNotificationService.initialize(_router);
 
-    // Initialize internet connection watcher
+    // Initialize internet connection watcher & restore auth session
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(internetConnectionNotifierProvider);
+      ref.read(authNotifierProvider).loadUserLoginStatus();
+      ref.read(userProfileProvider.notifier).loadProfile();
     });
   }
 

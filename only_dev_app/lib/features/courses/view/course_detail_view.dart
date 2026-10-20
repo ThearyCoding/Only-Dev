@@ -11,6 +11,7 @@ import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 import 'package:only_dev_app/utils/show_dialog_infor_utils.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/course-widget/build_course_curriculum.dart';
@@ -352,6 +353,15 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
                         if (model.isEnrolled) {
                           _navigateToTopicScreen(context, course.title, model);
                           return;
+                        }
+
+                        if (!AuthGuard.isAuthenticated()) {
+                          final loggedIn = await AuthGuard.requireAuth(
+                            context,
+                            title: 'Sign In to Enroll',
+                            message: 'Please sign in to enroll in this course and track your learning progress.',
+                          );
+                          if (!loggedIn) return;
                         }
 
                         startLoading();

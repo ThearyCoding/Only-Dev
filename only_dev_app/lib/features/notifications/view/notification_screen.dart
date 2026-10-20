@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
@@ -82,6 +85,69 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
       body: Builder(
         builder: (context) {
+          if (!AuthGuard.isAuthenticated()) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 42,
+                        color: Color(0xFF3B82F6),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Stay in the Loop',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Sign in to receive updates about your enrolled courses, new lectures, and quiz results.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: 200,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push(RoutesPath.login),
+                        icon: const Icon(Icons.login_rounded, size: 18),
+                        label: const Text('Sign In'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3B82F6),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           final provider = ref.watch(notificationNotifierProvider);
           _provider = provider;
 

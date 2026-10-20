@@ -7,6 +7,8 @@ import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
 import 'package:only_dev_app/data/models/models.dart';
 import 'package:only_dev_app/generated/l10n.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 import 'package:only_dev_app/widgets/cards/course_card_registered.dart';
 import '../viewmodel/enrollments_viewmodel.dart';
 
@@ -112,7 +114,68 @@ class _MyCoursesViewState extends State<MyCoursesView>
           ],
         ),
       ),
-      body: BaseView<EnrollmentsViewModel>(
+      body: !AuthGuard.isAuthenticated()
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.video_library_outlined,
+                        size: 40,
+                        color: Color(0xFF8B5CF6),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Track Your Learning',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Sign in to access your enrolled courses, continue where you left off, and view your progress.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: 220,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push(RoutesPath.login),
+                        icon: const Icon(Icons.login_rounded, size: 18),
+                        label: const Text('Sign In / Register'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B5CF6),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : BaseView<EnrollmentsViewModel>(
         onModelReady: (model) => model.fetchMyEnrollments(),
         builder: (context, model, child) {
           return TabBarView(

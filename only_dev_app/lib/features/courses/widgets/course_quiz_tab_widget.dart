@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
+import 'package:only_dev_app/utils/auth_guard_utils.dart';
 
 class CourseQuizTabWidget extends ConsumerWidget {
   final CourseContentParams params;
@@ -78,7 +79,16 @@ class CourseQuizTabWidget extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              if (!AuthGuard.isAuthenticated()) {
+                final loggedIn = await AuthGuard.requireAuth(
+                  context,
+                  title: 'Sign In to Start Quiz',
+                  message: 'Please sign in to take quizzes and track your test scores.',
+                );
+                if (!loggedIn || !context.mounted) return;
+              }
+
               if (params.categoryId.isNotEmpty &&
                   params.courseId.isNotEmpty &&
                   title.isNotEmpty) {

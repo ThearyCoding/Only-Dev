@@ -136,7 +136,24 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                 if (user != null) {
                   return ProfileImage(onTap: widget.onProfileImageTapped!);
                 } else {
-                  return const SizedBox();
+                  return TextButton(
+                    onPressed: () => context.push(RoutesPath.login),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      'Log In',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  );
                 }
               })),
         ],

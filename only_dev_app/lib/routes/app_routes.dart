@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -26,7 +25,7 @@ import 'package:only_dev_app/features/settings/view/language_selection_screen.da
 import 'package:only_dev_app/features/settings/view/setting_screen.dart';
 import 'package:only_dev_app/features/profile/view/complete_info_screen.dart';
 import 'package:only_dev_app/features/profile/view/update_profile_screen.dart';
-import '../service/firebase/auth_state_handler.dart';
+import 'package:only_dev_app/features/auth/view/login_with_social_media_or_sign_up_with_email.dart';
 
 part 'routes_path.dart';
 part 'route_name.dart';
@@ -34,7 +33,7 @@ part 'route_name.dart';
 class AppRoutes {
   static GoRouter getRouter() {
     return GoRouter(
-      initialLocation: RoutesPath.login,
+      initialLocation: RoutesPath.home,
       navigatorKey: navigatorKey,
       routes: [
         GoRoute(
@@ -186,8 +185,12 @@ class AppRoutes {
                   categoryId: categoryId ?? '', title: title ?? '');
             }),
         GoRoute(
+          path: RoutesPath.home,
+          builder: (context, state) => const MainPage(),
+        ),
+        GoRoute(
           path: RoutesPath.login,
-          builder: (context, state) => const AuthStateHandler(),
+          builder: (context, state) => const LoginwithSocialMediaOrSignUpWithEmail(),
         ),
         GoRoute(
           path: RoutesPath.completeInfo,
@@ -196,13 +199,9 @@ class AppRoutes {
             if (user != null) {
               return CompleteInformations(user: user);
             } else {
-              return const AuthStateHandler();
+              return const LoginwithSocialMediaOrSignUpWithEmail();
             }
           },
-        ),
-        GoRoute(
-          path: RoutesPath.home,
-          builder: (context, state) => const MainPage(),
         ),
         GoRoute(
           path: RoutesPath.detailCourseScreen,

@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../service/api/dio_client.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/course_repository.dart';
@@ -102,6 +104,12 @@ class UserProfileNotifier extends StateNotifier<UserProfileState> {
   }
 
   Future<void> loadProfile() async {
+    final token = locator<DioClient>().authInterceptor.token;
+    final firebaseUser = locator<FirebaseAuth>().currentUser;
+    if ((token == null || token.isEmpty) && firebaseUser == null) {
+      state = state.copyWith(user: null, isLoading: false, error: null);
+      return;
+    }
     state = state.copyWith(isLoading: true, error: null);
     try {
       final profile = await _userRepo.getMyProfile();

@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/widgets/buttons/custom_button_login_widget.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_text_animation_widget.dart';
 
@@ -116,6 +118,14 @@ class MainLoginScreen extends ConsumerWidget {
                                     final user = await authProvider.signInWithGoogle();
                                     if (user != null) {
                                       log('Signed in as: ${user.displayName}');
+                                      await authProvider.saveUserLoginStatus(true);
+                                      if (context.mounted) {
+                                        if (context.canPop()) {
+                                          context.pop(true);
+                                        } else {
+                                          context.go(RoutesPath.home);
+                                        }
+                                      }
                                     } else {
                                       log('Sign-in failed.');
                                     }
