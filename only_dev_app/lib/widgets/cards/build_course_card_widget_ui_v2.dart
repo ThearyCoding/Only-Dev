@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:only_dev_app/core/app_style.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import '../app_widgets/app_image_widget.dart';
 import '../../routes/app_routes.dart';
@@ -58,7 +59,7 @@ class CourseCardV2 extends StatelessWidget {
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final secondaryTextColor = isDarkMode ? Colors.white70 : Colors.black87;
     final localization = AppLocalizations.of(context);
-    const buttonColor = Colors.green;
+    const buttonColor = AppStyle.primaryColor;
 
     return ZoomTapAnimation(
       onTap: () => _navigation(context, localization),
@@ -117,11 +118,11 @@ class CourseCardV2 extends StatelessWidget {
                       color: (course.price == 0 || course.price == null) &&
                               (course.status == "active" ||
                                   course.status == "published")
-                          ? Colors.green
+                          ? AppStyle.primaryColor
                           : (course.status == "active" ||
                                   course.status == "published")
-                              ? Colors.green
-                              : Colors.blueAccent,
+                              ? AppStyle.primaryColor
+                              : AppStyle.secondaryColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

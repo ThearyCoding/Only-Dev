@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/app_style.dart';
 
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/courses/provider/categories_provider.dart';
@@ -140,7 +141,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                     onPressed: () => context.push(RoutesPath.login),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
+                      backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -148,7 +149,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                     child: const Text(
                       'Log In',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppStyle.primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -275,7 +276,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                                   bottomLeftRadius: 5,
                                   bottomRightRadius: 5,
                                   horizontalPadding: 10,
-                                  color: Colors.blue.shade300,
+                                  color: AppStyle.primaryLight,
                                   verticalPadding:
                                       AppLocalizations.of(context).khmer ==
                                               'ខ្មែរ'
@@ -283,7 +284,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                                           : 10,
                                   tabPosition: TabPosition.bottom,
                                 ),
-                                indicatorColor: Colors.blueAccent[500],
+                                indicatorColor: AppStyle.primaryColor,
                                 isScrollable: true,
                                 tabs: [
                                   TabItem(

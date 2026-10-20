@@ -1,59 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:only_dev_app/core/app_style.dart';
 
 class CustomThemes {
   static final lightTheme = ThemeData(
-    primaryColor: Colors.blue,
+    primaryColor: AppStyle.primaryColor,
     useMaterial3: false,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: Colors.white,
-    colorScheme: ColorScheme.light(
-      surface: const Color(0xffECECEC),
-      secondary: Colors.grey[300]!,
-      primaryContainer: Colors.blueAccent,
+    scaffoldBackgroundColor: AppStyle.lightBackground,
+    colorScheme: const ColorScheme.light(
+      primary: AppStyle.primaryColor,
+      surface: AppStyle.lightSurface,
+      secondary: Color(0xffE0E0E0),
+      primaryContainer: AppStyle.primaryColor,
     ),
-     
     appBarTheme: const AppBarTheme(
-      
-      backgroundColor: Colors.blue,
-      iconTheme: IconThemeData(color: Colors.grey),
+      backgroundColor: AppStyle.primaryColor,
+      iconTheme: IconThemeData(color: Colors.white),
       titleTextStyle: TextStyle(
-        color: Colors.black,
+        color: Colors.white,
         fontSize: 20,
-        fontFamily: 'NotoSansKhmer'
-      )
+        fontFamily: 'NotoSansKhmer',
+      ),
     ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black), 
       bodyMedium: TextStyle(color: Colors.black87),
       displayLarge: TextStyle(color: Colors.black),
-
     ),
     primaryTextTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black),
       bodyMedium: TextStyle(color: Colors.black87), 
       displayLarge: TextStyle(color: Colors.black),
-
     ),
-    
     iconTheme: const IconThemeData(color: Colors.black), 
     primaryIconTheme: const IconThemeData(color: Colors.grey),
   );
 
   static final darkTheme = ThemeData(
-    primaryColor: Colors.blueGrey,
+    primaryColor: AppStyle.primaryColor,
     useMaterial3: false,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xff171717),
+    scaffoldBackgroundColor: AppStyle.darkBackground,
     colorScheme: ColorScheme.dark(
-      surface: const Color(0xff212121),
+      primary: AppStyle.primaryColor,
+      surface: AppStyle.darkSurface,
       secondary: Colors.grey[800]!,
-      primaryContainer: Colors.blueAccent,
-    
+      primaryContainer: AppStyle.primaryColor,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.blueGrey,
+      backgroundColor: AppStyle.darkBackground,
       iconTheme: IconThemeData(color: Colors.white),
-
     ),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white), 
@@ -64,7 +60,6 @@ class CustomThemes {
       bodyLarge: TextStyle(color: Colors.white),
       bodyMedium: TextStyle(color: Colors.white70),
       displayLarge: TextStyle(color: Colors.white),
-     
     ),
     iconTheme: const IconThemeData(
         color: Colors.grey),

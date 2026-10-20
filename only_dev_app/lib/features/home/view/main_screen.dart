@@ -3,6 +3,7 @@ import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconly/iconly.dart';
+import 'package:only_dev_app/core/app_style.dart';
 
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/courses/view/course_list_screen.dart';
@@ -36,13 +37,13 @@ class MainPageState extends ConsumerState<MainPage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isSelected
-                ? Colors.blue.withValues(alpha: .2)
+                ? AppStyle.primaryColor.withValues(alpha: .18)
                 : Colors.transparent,
           ),
           padding: const EdgeInsets.all(8),
           child: Icon(
             icon,
-            color: isSelected ? Colors.blue : Colors.grey,
+            color: isSelected ? AppStyle.primaryColor : Colors.grey,
           ),
         ),
         if (badgeCount != null && badgeCount > 0)
@@ -128,13 +129,13 @@ class MainPageState extends ConsumerState<MainPage> {
               icon: _buildIcon(IconlyBold.profile, _selectedIndex == 3),
             ),
           ],
-          dotIndicatorColor: Colors.blue,
+          dotIndicatorColor: AppStyle.primaryColor,
           backgroundColor:
               isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
           enablePaddingAnimation: false,
           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           paddingR: const EdgeInsets.all(8),
-          selectedItemColor: Colors.blue,
+          selectedItemColor: AppStyle.primaryColor,
           unselectedItemColor: Colors.grey,
         ),
       ),

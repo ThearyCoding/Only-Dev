@@ -1,5 +1,6 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:only_dev_app/core/app_style.dart';
 import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
 import 'package:only_dev_app/model/section_model.dart';
 import '../../utils/time_utils.dart';
@@ -17,7 +18,7 @@ class BuildCourseCurriculum extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
+    const primaryColor = AppStyle.primaryColor;
     final effectiveSections = sections ?? lectureProvider?.sections ?? [];
 
     if (effectiveSections.isEmpty) {
@@ -113,7 +114,7 @@ class BuildCourseCurriculum extends StatelessWidget {
                             child: Center(
                               child: Text(
                                 '${index + 1}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                   color: primaryColor,
@@ -239,7 +240,7 @@ class BuildCourseCurriculum extends StatelessWidget {
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           'Preview',
                                           style: TextStyle(
                                             fontSize: 10,

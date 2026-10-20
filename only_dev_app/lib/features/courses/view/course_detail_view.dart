@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/app_style.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
 import 'package:go_router/go_router.dart';
@@ -241,7 +242,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
           );
         }
 
-        final primaryColor = Theme.of(context).primaryColor;
+        const primaryColor = AppStyle.primaryColor;
 
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -364,7 +365,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
       lectureProvider = ref.watch(lectureNotifierProvider);
     } catch (_) {}
 
-    final primaryColor = Theme.of(context).primaryColor;
+    const primaryColor = AppStyle.primaryColor;
     final totalLectures = model.totalLectures > 0
         ? model.totalLectures
         : (course.totalLessons ?? 0);
@@ -390,7 +391,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
                     ),
                     child: Text(
                       course.categoryId.replaceAll('-', ' ').toUpperCase(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -399,7 +400,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
                     ),
                   ),
                 if (course.ratingAvg != null && course.ratingAvg! > 0) ...[
-                  Icon(
+                  const Icon(
                     Icons.star_rounded,
                     size: 16,
                     color: primaryColor,
@@ -578,7 +579,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
     required String label,
     required bool isDarkMode,
   }) {
-    final primaryColor = Theme.of(context).primaryColor;
+    const primaryColor = AppStyle.primaryColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
