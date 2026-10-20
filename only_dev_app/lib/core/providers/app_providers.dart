@@ -474,7 +474,7 @@ final authNotifierProvider =
 });
 
 final userNotifierProvider = ChangeNotifierProvider<UserProvider>((ref) {
-  return UserProvider(ref.watch(authNotifierProvider));
+  return UserProvider(ref.read(authNotifierProvider));
 });
 
 final themeNotifierProvider =

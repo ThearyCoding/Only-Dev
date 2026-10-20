@@ -7,7 +7,6 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/courses/provider/categories_provider.dart';
 import 'package:only_dev_app/features/courses/provider/course_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
-import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/widgets/tabs-widget/custom_tap_material_indicator.dart';
 import 'package:only_dev_app/widgets/tabs-widget/tab_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,7 +45,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
   final ScrollController _scrollController = ScrollController();
   late CourseProvider courseController;
   late RegistrationProvider registrationController;
-  late UserProvider userProvider;
   late CategoriesProvider categoriesProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
   late final TabController _tabController;
@@ -57,7 +55,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
   void initState() {
     super.initState();
 
-    userProvider = ref.read(userNotifierProvider);
     courseController = ref.read(courseNotifierProvider);
     categoriesProvider = ref.read(categoriesNotifierProvider);
     registrationController = ref.read(registrationNotifierProvider);

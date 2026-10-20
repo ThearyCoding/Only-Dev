@@ -91,9 +91,12 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
 
     if (confirm == true && mounted) {
       EasyLoading.show(status: 'Signing out...');
-      final userProvider = ref.read(userNotifierProvider);
-      await userProvider.handleUserLogout();
-      EasyLoading.dismiss();
+      try {
+        final userProvider = ref.read(userNotifierProvider);
+        await userProvider.handleUserLogout();
+      } finally {
+        EasyLoading.dismiss();
+      }
     }
   }
 

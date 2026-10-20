@@ -14,8 +14,20 @@ import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
 import 'package:only_dev_app/service/api/dio_client.dart';
 
 class UserProvider with ChangeNotifier {
-  final FirebaseAuth _auth = locator<FirebaseAuth>();
-  final UserRepository _userRepository = locator<UserRepository>();
+  final FirebaseAuth? _customAuth;
+  final UserRepository? _customUserRepository;
+
+  FirebaseAuth get _auth =>
+      _customAuth ??
+      (locator.isRegistered<FirebaseAuth>()
+          ? locator<FirebaseAuth>()
+          : FirebaseAuth.instance);
+
+  UserRepository? get _userRepository =>
+      _customUserRepository ??
+      (locator.isRegistered<UserRepository>()
+          ? locator<UserRepository>()
+          : null);
 
   UserModel? _user;
   UserModel? get user => _user;
@@ -28,8 +40,33 @@ class UserProvider with ChangeNotifier {
   UserModel? _userModel;
   UserModel? get userModel => _userModel ?? _user;
 
-  UserProvider(this.authProvider) {
-    _checkAuthState();
+  bool _isDisposed = false;
+  bool get isDisposed => _isDisposed;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+
+  UserProvider(
+    this.authProvider, {
+    FirebaseAuth? auth,
+    UserRepository? userRepository,
+    bool checkAuthImmediately = true,
+  })  : _customAuth = auth,
+        _customUserRepository = userRepository {
+    if (checkAuthImmediately &&
+        (locator.isRegistered<FirebaseAuth>() || auth != null)) {
+      _checkAuthState();
+    }
   }
 
   void setUserData(UserModel userModel) {
@@ -42,9 +79,11 @@ class UserProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final profile = await _userRepository.getMyProfile();
-      _user = profile;
-      _userModel = profile;
+      if (_userRepository != null) {
+        final profile = await _userRepository!.getMyProfile();
+        _user = profile;
+        _userModel = profile;
+      }
     } catch (e) {
       log('Error fetching user profile from REST API: $e');
     } finally {
@@ -72,7 +111,10 @@ class UserProvider with ChangeNotifier {
               ? '$firstName $lastName'.trim()
               : firstName ?? lastName);
 
-      final updated = await _userRepository.updateProfile(
+      if (_userRepository == null) {
+        throw StateError('UserRepository is not registered or provided.');
+      }
+      final updated = await _userRepository!.updateProfile(
         fullName: computedFullName,
         avatarUrl: avatarUrl,
         headline: headline,
@@ -109,8 +151,11 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> _checkAuthState() async {
-    final User? firebaseUser = _auth.currentUser;
-    final token = locator<DioClient>().authInterceptor.token;
+    final User? firebaseUser =
+        locator.isRegistered<FirebaseAuth>() ? _auth.currentUser : null;
+    final token = locator.isRegistered<DioClient>()
+        ? locator<DioClient>().authInterceptor.token
+        : null;
     final hasBackendToken = token != null && token.isNotEmpty;
     final context = navigatorKey.currentContext;
 
@@ -135,14 +180,38 @@ class UserProvider with ChangeNotifier {
   Future<void> handleUserLogout() async {
     final context = navigatorKey.currentContext;
     log('Handling user logout');
-    if (authProvider != null) {
-      await authProvider!.logoutUser();
-    }
-    await locator<DioClient>().authInterceptor.clearTokens();
-    await _auth.signOut();
+
+    // Reset local user state and notify listeners
     _user = null;
     _userModel = null;
+    _isLoading = false;
     notifyListeners();
+
+    // Clear backend JWT tokens
+    try {
+      await locator<DioClient>().authInterceptor.clearTokens();
+    } catch (e) {
+      log('Error clearing tokens: $e');
+    }
+
+    // Sign out from Firebase Auth
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      log('Error signing out of Firebase: $e');
+    }
+
+    // Clear auth login status
+    if (authProvider != null) {
+      try {
+        await authProvider!.logoutUser();
+      } catch (e) {
+        log('Error in authProvider.logoutUser: $e');
+      }
+    }
+
+    notifyListeners();
+
     if (context != null && context.mounted) {
       context.go(RoutesPath.home);
     }

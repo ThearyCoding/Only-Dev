@@ -9,12 +9,44 @@ import 'package:only_dev_app/utils/app_toast_utils.dart';
 class AuthenticationProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   bool get isLoggedIn => _isLoggedIn;
-  final FirebaseAuth _auth = locator<FirebaseAuth>();
-  final AuthServiceGoogle _authServiceGoogle = locator<AuthServiceGoogle>();
+  final FirebaseAuth? _customAuth;
+  final AuthServiceGoogle? _customGoogleAuth;
+
+  FirebaseAuth get _auth =>
+      _customAuth ??
+      (locator.isRegistered<FirebaseAuth>()
+          ? locator<FirebaseAuth>()
+          : FirebaseAuth.instance);
+
+  AuthServiceGoogle get _authServiceGoogle =>
+      _customGoogleAuth ??
+      (locator.isRegistered<AuthServiceGoogle>()
+          ? locator<AuthServiceGoogle>()
+          : AuthServiceGoogle());
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _isDisposed = false;
+  bool get isDisposed => _isDisposed;
 
-  AuthenticationProvider() {
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
+
+  AuthenticationProvider({
+    FirebaseAuth? auth,
+    AuthServiceGoogle? authServiceGoogle,
+  })  : _customAuth = auth,
+        _customGoogleAuth = authServiceGoogle {
     loadUserLoginStatus();
   }
 
