@@ -78,6 +78,12 @@ export class Course {
 
   @Prop({ default: 0 })
   totalLessons: number;
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);

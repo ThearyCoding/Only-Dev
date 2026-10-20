@@ -41,7 +41,7 @@ class MessageLookup extends MessageLookupByLibrary {
                 "This course will be available shortly."),
         "allCourses": MessageLookupByLibrary.simpleMessage("All Courses"),
         "appSettings": MessageLookupByLibrary.simpleMessage("App Settings"),
-        "appTitle": MessageLookupByLibrary.simpleMessage("E-Learning"),
+        "appTitle": MessageLookupByLibrary.simpleMessage("Only Dev"),
         "back": MessageLookupByLibrary.simpleMessage("Back"),
         "canLoadingText":
             MessageLookupByLibrary.simpleMessage("Release to load more"),

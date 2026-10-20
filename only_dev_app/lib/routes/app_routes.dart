@@ -7,8 +7,8 @@ import '../core/global_navigation.dart';
 import '../di/dependency_injection.dart';
 import 'package:only_dev_app/features/cart/view/cart_screen.dart';
 import 'package:only_dev_app/features/courses/view/course_content_screen.dart';
-import 'package:only_dev_app/features/courses/view/courses_screent.dart';
-import 'package:only_dev_app/features/courses/view/detail_course_screen.dart';
+import 'package:only_dev_app/features/courses/view/courses_screen.dart';
+import 'package:only_dev_app/features/courses/view/course_detail_screen.dart';
 import 'package:only_dev_app/features/enrollments/view/my_courses_screen.dart';
 import 'package:only_dev_app/features/posts/view/display_post_screen.dart';
 import 'package:only_dev_app/features/common/view/error_screen.dart';
@@ -211,7 +211,7 @@ class AppRoutes {
             final categoryId = args?['categoryId'] as String?;
             final courseId = args?['courseId'] as String?;
             if (categoryId != null && courseId != null) {
-              return DetailCourseScreen(
+              return CourseDetailScreen(
                 categoryId: categoryId,
                 courseId: courseId,
               );

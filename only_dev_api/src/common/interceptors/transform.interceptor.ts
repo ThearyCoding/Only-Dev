@@ -22,7 +22,7 @@ function toSnakeCase(str: string): string {
 
 export function keysToSnakeCase(obj: any): any {
   if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj;
+  if (obj instanceof Date) return obj.toISOString();
   if (Array.isArray(obj)) {
     return obj.map(keysToSnakeCase);
   }

@@ -8,6 +8,7 @@ import mongoose, { Model } from 'mongoose';
 import { Course, CourseDocument } from '../schemas/course.schema.js';
 import { Section, SectionDocument } from '../schemas/section.schema.js';
 import { CreateCourseDto, UpdateCourseDto, CreateSectionDto, CreateLessonDto } from '../dto/course.dto.js';
+import { Enrollment, EnrollmentDocument } from '../../enrollments/schemas/enrollment.schema.js';
 import { RedisService } from '../../../common/redis/redis.service.js';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class CoursesService {
   constructor(
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(Section.name) private sectionModel: Model<SectionDocument>,
+    @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
     private readonly redisService: RedisService,
   ) {}
 
@@ -80,7 +82,11 @@ export class CoursesService {
     return result;
   }
 
-  async findById(courseId: string, includeCurriculum = true): Promise<any> {
+  async findById(courseId: string, includeCurriculum = true, userId?: string): Promise<any> {
+    if (!mongoose.isValidObjectId(courseId)) {
+      throw new NotFoundException('Course not found');
+    }
+
     const course = await this.courseModel
       .findById(courseId)
       .populate('instructorId', 'fullName avatarUrl headline bio')
@@ -100,9 +106,34 @@ export class CoursesService {
         .exec();
     }
 
+    let isEnrolled = false;
+    let enrollmentId: string | undefined;
+    let enrolledAt: Date | undefined;
+
+    if (userId && mongoose.isValidObjectId(userId)) {
+      const enrollment = await this.enrollmentModel
+        .findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          courseId: new mongoose.Types.ObjectId(courseId),
+          status: 'active',
+        })
+        .lean()
+        .exec();
+
+      if (enrollment) {
+        isEnrolled = true;
+        enrollmentId = enrollment._id.toString();
+        enrolledAt = enrollment.enrolledAt;
+      }
+    }
+
     return {
       ...course,
       sections,
+      isEnrolled,
+      isRegistered: isEnrolled,
+      enrollmentId,
+      enrolledAt,
     };
   }
 

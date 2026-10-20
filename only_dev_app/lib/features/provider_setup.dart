@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'auth/provider/auth_provider.dart';
 import 'common/provider/internet_connection_provider.dart';
 import 'courses/provider/admin_provider.dart';
-import 'courses/provider/all_courses_provider.dart';
+import 'courses/provider/course_list_provider.dart';
 import 'courses/provider/banners_provider.dart';
 import 'courses/provider/categories_provider.dart';
 import 'courses/provider/course_provider.dart';
@@ -17,6 +17,8 @@ import 'quizzes/provider/quiz_provider.dart';
 import 'search/provider/search_engine_provider.dart';
 import 'settings/provider/language_provider.dart';
 import 'settings/provider/theme_provider.dart';
+import '../di/dependency_injection.dart';
+import 'home/viewmodel/home_viewmodel.dart';
 import '../my_app.dart';
 
 class ProviderSetup extends StatefulWidget {
@@ -54,7 +56,7 @@ class _ProviderSetupState extends State<ProviderSetup>
         ChangeNotifierProvider(create: (context) => CustomizeThemeProvider()),
         ChangeNotifierProvider(create: (context) => NotificationProvider()),
         ChangeNotifierProvider(
-          create: (context) => AllCoursesProvider(tickerProvider: this),
+          create: (context) => CourseListProvider(tickerProvider: this),
         ),
         ChangeNotifierProvider(create: (context) => SearchEngineProvider()),
         ChangeNotifierProvider(
@@ -62,6 +64,7 @@ class _ProviderSetupState extends State<ProviderSetup>
         ),
         ChangeNotifierProvider(create: (context) => LanguageProvider()),
         ChangeNotifierProvider(create: (context) => QuizProvider()),
+        ChangeNotifierProvider(create: (context) => locator<HomeViewModel>()),
       ],
       child: const MyApp(),
     );

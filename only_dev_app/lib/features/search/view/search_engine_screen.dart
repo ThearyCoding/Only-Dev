@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/model/admin_model.dart';
+import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/features/search/provider/search_engine_provider.dart';
 import 'package:only_dev_app/features/courses/provider/admin_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
@@ -138,11 +138,7 @@ class SearchEnginePageState extends State<SearchEnginePage> {
                                       final admin =
                                           adminProvider.admins.firstWhere(
                                         (admin) => admin.id == course.adminId,
-                                        orElse: () => AdminModel(
-                                            id: '',
-                                            name: 'Unknown',
-                                            email: '',
-                                            imageUrl: ''),
+                                        orElse: () => UserModel.empty(),
                                       );
                                       final isRegistered = registrationProvider
                                           .registeredCourses

@@ -1,4 +1,3 @@
-import 'package:only_dev_app/core/global_navigation.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';

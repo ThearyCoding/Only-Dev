@@ -1,15 +1,27 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
+import 'package:only_dev_app/model/section_model.dart';
 import '../../utils/time_utils.dart';
 
 class BuildCourseCurriculum extends StatelessWidget {
-  final LectureProvider lectureProvider;
-  const BuildCourseCurriculum({super.key, required this.lectureProvider});
+  final LectureProvider? lectureProvider;
+  final List<Section>? sections;
+
+  const BuildCourseCurriculum({
+    super.key,
+    this.lectureProvider,
+    this.sections,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final effectiveSections = sections ?? lectureProvider?.sections ?? [];
+
+    if (effectiveSections.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -25,10 +37,10 @@ class BuildCourseCurriculum extends StatelessWidget {
           const SizedBox(height: 5),
           ListView.builder(
             shrinkWrap: true,
-            itemCount: lectureProvider.sections.length,
+            itemCount: effectiveSections.length,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (ctx, index) {
-              final section = lectureProvider.sections[index];
+              final section = effectiveSections[index];
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 5),
                 child: ExpandablePanel(

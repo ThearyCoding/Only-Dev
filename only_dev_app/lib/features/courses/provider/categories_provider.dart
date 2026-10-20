@@ -1,26 +1,21 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
+import 'package:only_dev_app/features/home/repository/home_repository.dart';
 import 'package:only_dev_app/model/category_model.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_categories.dart';
 
 class CategoriesProvider extends ChangeNotifier {
-  final FirebaseApiCategories _apiCategories = locator<FirebaseApiCategories>();
+  final HomeRepository _homeRepository = locator<HomeRepository>();
 
   List<CategoryModel> _categories = [];
-  late StreamSubscription<List<CategoryModel>> _categorySubscription;
   bool _isLoading = false;
-  bool _categoriesLoaded =
-      false; // Flag to track if categories have been loaded
+  bool _categoriesLoaded = false;
 
-  // Getters
   bool get isLoading => _isLoading;
   List<CategoryModel> get categories => _categories;
 
-  // Fetch categories when initializing
   CategoriesProvider() {
     if (!_categoriesLoaded) {
-      _fetchCategories();
+      fetchCategories();
     }
   }
 
@@ -29,25 +24,16 @@ class CategoriesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _fetchCategories() {
+  Future<void> fetchCategories() async {
     setLoading(true);
-    _categorySubscription = _apiCategories.getCategoriesStream().listen(
-      (categoryList) {
-        _categories = categoryList;
-        setLoading(false);
-        _categoriesLoaded = true; // Update flag when categories are loaded
-        notifyListeners();
-      },
-      onError: (error) {
-        debugPrint('Error fetching categories: $error');
-        setLoading(false);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _categorySubscription.cancel();
-    super.dispose();
+    try {
+      final homeData = await _homeRepository.getHomeScreenData();
+      _categories = homeData.categories;
+      _categoriesLoaded = true;
+    } catch (error) {
+      debugPrint('Error fetching categories from HomeRepository: $error');
+    } finally {
+      setLoading(false);
+    }
   }
 }

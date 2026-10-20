@@ -29,8 +29,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'] as Map<String, dynamic>;
-      final accessToken = data['accessToken']?.toString();
-      final refreshToken = data['refreshToken']?.toString();
+      final accessToken = (data['access_token'] ?? data['accessToken'])?.toString();
+      final refreshToken = (data['refresh_token'] ?? data['refreshToken'])?.toString();
 
       if (accessToken != null) {
         await _dioClient.authInterceptor.saveTokens(
@@ -60,8 +60,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'] as Map<String, dynamic>;
-      final accessToken = data['accessToken']?.toString();
-      final refreshToken = data['refreshToken']?.toString();
+      final accessToken = (data['access_token'] ?? data['accessToken'])?.toString();
+      final refreshToken = (data['refresh_token'] ?? data['refreshToken'])?.toString();
 
       if (accessToken != null) {
         await _dioClient.authInterceptor.saveTokens(
@@ -95,8 +95,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (response.data != null && response.data['data'] != null) {
       final data = response.data['data'] as Map<String, dynamic>;
-      final accessToken = data['accessToken']?.toString();
-      final refreshToken = data['refreshToken']?.toString();
+      final accessToken = (data['access_token'] ?? data['accessToken'])?.toString();
+      final refreshToken = (data['refresh_token'] ?? data['refreshToken'])?.toString();
 
       if (accessToken != null) {
         await _dioClient.authInterceptor.saveTokens(

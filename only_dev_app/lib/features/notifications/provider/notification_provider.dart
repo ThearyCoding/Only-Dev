@@ -1,28 +1,16 @@
-import 'package:only_dev_app/di/dependency_injection.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:async';
-import 'dart:developer';
-import 'package:only_dev_app/model/notification_model.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:only_dev_app/model/notification_model.dart';
 
 class NotificationProvider extends ChangeNotifier {
-  final FirebaseApiNotifications _apiNotifications =
-      locator<FirebaseApiNotifications>();
-  final User? user = locator<FirebaseAuth>().currentUser;
-  final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
-  final unreadCount = ValueNotifier<int>(0);
-  var notificationsEnabled = true;
-  final int notificationsLimit = 7;
-  DocumentSnapshot? lastDocument;
-  bool _hasMoreNotifications = true;
+  final ValueNotifier<int> unreadCount = ValueNotifier<int>(0);
+  bool notificationsEnabled = true;
+  final bool _hasMoreNotifications = false;
   bool _isLoading = false;
   final List<NotificationModel> _notifications = [];
   final Set<String> _notificationIds = {};
-  late StreamSubscription<QuerySnapshot> _notificationSubscription =
-      const Stream<QuerySnapshot>.empty().listen((_) {});
+  static const String _storageKey = 'local_notifications';
 
   NotificationProvider() {
     _initializeProvider();
@@ -32,41 +20,7 @@ class NotificationProvider extends ChangeNotifier {
     await Future.wait([
       _loadPreferences(),
       _fetchInitialNotifications(),
-      _listenToUnreadCount(),
     ]);
-
-    setupNotificationListener();
-  }
-
-  @override
-  void dispose() {
-    _notificationSubscription.cancel();
-    super.dispose();
-  }
-
-  Future<void> _listenToUnreadCount() async {
-    _apiNotifications.getUnreadCount().listen((countNoti) {
-      unreadCount.value = countNoti;
-      log('Unread notifications count: ${unreadCount.value}');
-      notifyListeners();
-    });
-  }
-
-  Future<void> deleteNotification(String notificationId) async{
-    await _apiNotifications.deleteNotification(notificationId);
-    _notifications.removeWhere((notification) => notification.id == notificationId);
-  }
-
-  Future<void> markAllAsRead() async {
-    final userId = user?.uid;
-    if (userId != null) {
-      final snapshots = await _apiNotifications.getUnreadNotifications();
-      for (var doc in snapshots.docs) {
-        doc.reference.update({'isRead': true});
-      }
-      unreadCount.value = 0;
-      notifyListeners();
-    }
   }
 
   Future<void> _loadPreferences() async {
@@ -75,52 +29,11 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateNotificationPreference(bool isEnabled) async {
+  Future<void> updateNotificationPreference(bool isEnabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notificationsEnabled', isEnabled);
     notificationsEnabled = isEnabled;
     notifyListeners();
-
-    await _firestore.collection('users').doc(user!.uid).update({
-      'notificationsEnabled': isEnabled,
-    });
-  }
-
-  void setupNotificationListener() {
-    _notificationSubscription = _firestore
-        .collection('users')
-        .doc(user!.uid)
-        .collection('notifications')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.docChanges.isNotEmpty) {
-        onRefresh();
-      }
-    });
-  }
-
-  Future<void> toggleDetailSeen(
-      String notificationId, bool isDetailSeen) async {
-    try {
-      final index = _notifications.indexWhere((n) => n.id == notificationId);
-      if (index != -1) {
-        _notifications[index] = _notifications[index].copyWith(
-          isDetailSeen: isDetailSeen,
-        );
-        notifyListeners();
-      }
-      await _firestore
-          .collection('users')
-          .doc(user!.uid)
-          .collection('notifications')
-          .doc(notificationId)
-          .update({'isDetailSeen': isDetailSeen});
-
-      log('Notification $notificationId detail seen status toggled to $isDetailSeen in Firestore');
-    } catch (e) {
-      log('Error toggling detail seen status: $e');
-    }
   }
 
   Future<void> _fetchInitialNotifications() async {
@@ -133,75 +46,82 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('users')
-          .doc(user!.uid)
-          .collection('notifications')
-          .orderBy('timestamp', descending: true)
-          .limit(notificationsLimit);
+      final prefs = await SharedPreferences.getInstance();
+      final savedList = prefs.getStringList(_storageKey) ?? [];
+      _notifications.clear();
+      _notificationIds.clear();
 
-      if (lastDocument != null && isLoadMore) {
-        query = query.startAfterDocument(lastDocument!);
-      }
-
-      final snapshot = await query.get();
-      if (snapshot.docs.isNotEmpty) {
-        final newNotifications =
-            await Future.wait(snapshot.docs.map((doc) async {
-          final data = doc.data();
-          data['id'] = doc.id;
-
-          final String? postId = data['postId'] as String?;
-          if (postId != null && postId.isNotEmpty) {
-            final postSnapshot =
-                await _firestore.collection('posts').doc(postId).get();
-            if (postSnapshot.exists) {
-              final postData = postSnapshot.data();
-              if (postData != null) {
-                data['post'] = {
-                  'id': postData['id'] ?? '',
-                  'title': postData['title'] ?? 'No Title',
-                  'contentPreview':
-                      postData['contentPreview'] ?? 'No Content Preview',
-                  'contentSections': postData['contentSections'] ?? [],
-                  'timestamp': postData['timestamp'] ?? Timestamp.now(),
-                };
-              }
-            }
+      for (var str in savedList) {
+        try {
+          final map = jsonDecode(str) as Map<String, dynamic>;
+          final notif = NotificationModel.fromMap(map);
+          if (_notificationIds.add(notif.id)) {
+            _notifications.add(notif);
           }
-
-          return NotificationModel.fromMap(data);
-        }).toList());
-
-        for (final notification in newNotifications) {
-          if (_notificationIds.add(notification.id)) {
-            _notifications.add(notification);
-          }
-        }
-
-        lastDocument = snapshot.docs.last;
-
-        if (newNotifications.length < notificationsLimit) {
-          _hasMoreNotifications = false;
-        }
-      } else {
-        _hasMoreNotifications = false;
+        } catch (_) {}
       }
-    } catch (e) {
-      log('Error fetching notifications: $e');
+      _recalculateUnread();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Categorize notifications based on timestamp
+  void _recalculateUnread() {
+    unreadCount.value = _notifications.where((n) => !n.isRead).length;
+  }
+
+  Future<void> _saveToStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = _notifications.map((n) => jsonEncode(n.toMap())).toList();
+    await prefs.setStringList(_storageKey, jsonList);
+  }
+
+  Future<void> addNotification(NotificationModel notification) async {
+    if (_notificationIds.add(notification.id)) {
+      _notifications.insert(0, notification);
+      _recalculateUnread();
+      await _saveToStorage();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteNotification(String notificationId) async {
+    _notifications.removeWhere((notification) => notification.id == notificationId);
+    _notificationIds.remove(notificationId);
+    _recalculateUnread();
+    await _saveToStorage();
+    notifyListeners();
+  }
+
+  Future<void> markAllAsRead() async {
+    for (int i = 0; i < _notifications.length; i++) {
+      _notifications[i] = _notifications[i].copyWith(isRead: true);
+    }
+    unreadCount.value = 0;
+    await _saveToStorage();
+    notifyListeners();
+  }
+
+  Future<void> toggleDetailSeen(
+      String notificationId, bool isDetailSeen) async {
+    final index = _notifications.indexWhere((n) => n.id == notificationId);
+    if (index != -1) {
+      _notifications[index] = _notifications[index].copyWith(
+        isDetailSeen: isDetailSeen,
+      );
+      await _saveToStorage();
+      notifyListeners();
+    }
+  }
+
   List<NotificationModel> getNewNotifications() {
     final DateTime now = DateTime.now();
     final DateTime tenMinutesAgo = now.subtract(const Duration(minutes: 29));
 
     return _notifications.where((notification) {
-      return notification.timestamp.isAfter(tenMinutesAgo);
+      final dt = DateTime.tryParse(notification.createdAt ?? '');
+      return dt != null && dt.isAfter(tenMinutesAgo);
     }).toList();
   }
 
@@ -210,9 +130,10 @@ class NotificationProvider extends ChangeNotifier {
     final DateTime startOfToday = DateTime(now.year, now.month, now.day);
 
     return _notifications.where((notification) {
-      return notification.timestamp.isAfter(startOfToday) &&
-          notification.timestamp
-              .isBefore(now.subtract(const Duration(minutes: 10)));
+      final dt = DateTime.tryParse(notification.createdAt ?? '');
+      return dt != null &&
+          dt.isAfter(startOfToday) &&
+          dt.isBefore(now.subtract(const Duration(minutes: 10)));
     }).toList();
   }
 
@@ -221,23 +142,17 @@ class NotificationProvider extends ChangeNotifier {
     final DateTime startOfToday = DateTime(now.year, now.month, now.day);
 
     return _notifications.where((notification) {
-      return notification.timestamp.isBefore(startOfToday);
+      final dt = DateTime.tryParse(notification.createdAt ?? '');
+      return dt != null && dt.isBefore(startOfToday);
     }).toList();
   }
 
   Future<void> onRefresh() async {
-    _notifications.clear();
-    _notificationIds.clear();
-    lastDocument = null;
-    _hasMoreNotifications = true;
-    notifyListeners();
     await fetchNotifications();
   }
 
   Future<void> onLoading() async {
-    if (_hasMoreNotifications && !_isLoading) {
-      await fetchNotifications(isLoadMore: true);
-    }
+    // Local notifications are loaded all at once
   }
 
   List<NotificationModel> get notifications => _notifications;

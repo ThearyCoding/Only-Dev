@@ -8,7 +8,7 @@ import '../../model/section_model.dart';
 import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
 import '../../utils/configuration_better_player.dart';
 import '../../utils/time_utils.dart';
-import '../firebase/firebase_api_user.dart';
+import '../../data/repositories/enrollment_repository.dart';
 import '../shared/shared_preferences_service.dart';
 
 class VideoPlayerHelper {
@@ -241,21 +241,16 @@ class VideoPlayerHelper {
         await sharedPreferencesService.getSavedVideoProgress(videoUrl);
     log('Progress retrieved: $progress');
 
-    if (progress == null || progress.isEmpty) {
-      log('No progress data found, using default values.');
-      return;
-    }
-
     String sectionId =
-        progress['sectionId']?.toString() ?? sections[0].id.toString();
+        progress?['sectionId']?.toString() ?? sections[0].id.toString();
     int sectionIndex =
-        int.tryParse(progress['sectionIndex']?.toString() ?? '0') ?? 0;
-    String lectureId = progress['lectureId']?.toString() ??
+        int.tryParse(progress?['sectionIndex']?.toString() ?? '0') ?? 0;
+    String lectureId = progress?['lectureId']?.toString() ??
         sections[0].lectures[0].id.toString();
     int lectureIndex =
-        int.tryParse(progress['lectureIndex']?.toString() ?? '0') ?? 0;
+        int.tryParse(progress?['lectureIndex']?.toString() ?? '0') ?? 0;
     int startPosition =
-        int.tryParse(progress['position']?.toString() ?? '0') ?? 0;
+        int.tryParse(progress?['position']?.toString() ?? '0') ?? 0;
 
     if (sectionIndex >= sections.length) {
       log('Section index out of bounds, using default.');
@@ -275,7 +270,7 @@ class VideoPlayerHelper {
       lecture.videoUrl,
       lecture.title,
       lecture.description,
-      TimeUtils.formatTimestamp(lecture.timestamp),
+      TimeUtils.formatTimestamp(lecture.createdAt),
       lecture.views,
       startPosition,
       lecture.videoDuration,
@@ -315,7 +310,7 @@ class VideoPlayerHelper {
     if (lecture != null) {
       videoTitle = lecture.title;
       description = lecture.description;
-      timestamp = TimeUtils.formatTimestamp(lecture.timestamp);
+      timestamp = TimeUtils.formatTimestamp(lecture.createdAt);
       views = lecture.views;
     }
 
@@ -336,11 +331,14 @@ class VideoPlayerHelper {
     String sectionId,
     String lectureId,
   ) async {
-    await UserService().updateViewCounts(
-      categoryId,
-      courseId,
-      sectionId,
-      lectureId,
-    );
+    try {
+      await locator<EnrollmentRepository>().updateProgress(
+        courseId,
+        lectureId,
+        markCompleted: true,
+      );
+    } catch (e) {
+      log('Error updating lesson progress: $e');
+    }
   }
 }

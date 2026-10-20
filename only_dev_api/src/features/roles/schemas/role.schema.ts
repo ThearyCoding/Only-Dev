@@ -22,6 +22,12 @@ export class Role {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);

@@ -7,11 +7,6 @@ import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
 import 'package:only_dev_app/data/models/models.dart';
 import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/model/admin_model.dart';
-import 'package:only_dev_app/model/courses_model.dart';
-import 'package:only_dev_app/model/enrollment_model.dart';
-import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/service/download/download_manager.dart';
 import 'package:only_dev_app/widgets/cards/course_card_registered.dart';
 import '../viewmodel/enrollments_viewmodel.dart';
 
@@ -25,7 +20,6 @@ class MyCoursesView extends StatefulWidget {
 class _MyCoursesViewState extends State<MyCoursesView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DownloadManager _downloadManager = DownloadManager();
   String _savedDir = '';
   Set<String> _downloadedVideos = {};
 
@@ -177,12 +171,7 @@ class _MyCoursesViewState extends State<MyCoursesView>
               adminId: '',
             );
 
-        final admin = AdminModel(
-          id: course.adminId,
-          name: 'Instructor',
-          email: '',
-          imageUrl: '',
-        );
+        final admin = UserModel.empty();
 
         final totalLessons = course.totalLessons ?? 10;
         final currentLessons = (totalLessons * (enrollment.percentComplete / 100)).round();

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
 import 'package:only_dev_app/features/profile/view/user_information_screen.dart';
-import 'package:only_dev_app/features/courses/view/show_all_course_screen.dart';
+import 'package:only_dev_app/features/courses/view/course_list_screen.dart';
 import 'home_screen.dart';
 import 'package:only_dev_app/features/notifications/view/notification_screen.dart';
 
@@ -103,7 +103,7 @@ class MainPageState extends State<MainPage> {
               onProfileImageTapped: _onProfileImageTapped,
               onNotificationsTapped: _onNotificationTapped,
             ),
-            const AllCoursesScreen(),
+            const CourseListScreen(),
             const NotificationsScreen(),
             const UserInformationScreen(),
           ],

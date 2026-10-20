@@ -61,18 +61,20 @@ class AppToastUtils {
       customStyle: textStyle,
     );
 
-    ToastifyFlutter.success(
-      ctx,
-      message: message,
-      duration: duration,
-      position: position,
-      style: style,
-      alignment: alignment,
-      textStyle: resolvedTextStyle,
-      textAlign: textAlign,
-      onClose: onClose,
-      animationCurve: animationCurve,
-    );
+    try {
+      ToastifyFlutter.success(
+        ctx,
+        message: message,
+        duration: duration,
+        position: position,
+        style: style,
+        alignment: alignment,
+        textStyle: resolvedTextStyle,
+        textAlign: textAlign,
+        onClose: onClose,
+        animationCurve: animationCurve,
+      );
+    } catch (_) {}
   }
 
   /// Displays an error toast notification.
@@ -97,18 +99,20 @@ class AppToastUtils {
       customStyle: textStyle,
     );
 
-    ToastifyFlutter.error(
-      ctx,
-      message: message,
-      duration: duration,
-      position: position,
-      style: style,
-      alignment: alignment,
-      textStyle: resolvedTextStyle,
-      textAlign: textAlign,
-      onClose: onClose,
-      animationCurve: animationCurve,
-    );
+    try {
+      ToastifyFlutter.error(
+        ctx,
+        message: message,
+        duration: duration,
+        position: position,
+        style: style,
+        alignment: alignment,
+        textStyle: resolvedTextStyle,
+        textAlign: textAlign,
+        onClose: onClose,
+        animationCurve: animationCurve,
+      );
+    } catch (_) {}
   }
 
   /// Displays a warning toast notification.
@@ -133,18 +137,20 @@ class AppToastUtils {
       customStyle: textStyle,
     );
 
-    ToastifyFlutter.warning(
-      ctx,
-      message: message,
-      duration: duration,
-      position: position,
-      style: style,
-      alignment: alignment,
-      textStyle: resolvedTextStyle,
-      textAlign: textAlign,
-      onClose: onClose,
-      animationCurve: animationCurve,
-    );
+    try {
+      ToastifyFlutter.warning(
+        ctx,
+        message: message,
+        duration: duration,
+        position: position,
+        style: style,
+        alignment: alignment,
+        textStyle: resolvedTextStyle,
+        textAlign: textAlign,
+        onClose: onClose,
+        animationCurve: animationCurve,
+      );
+    } catch (_) {}
   }
 
   /// Displays an informational toast notification.
@@ -169,18 +175,20 @@ class AppToastUtils {
       customStyle: textStyle,
     );
 
-    ToastifyFlutter.info(
-      ctx,
-      message: message,
-      duration: duration,
-      position: position,
-      style: style,
-      alignment: alignment,
-      textStyle: resolvedTextStyle,
-      textAlign: textAlign,
-      onClose: onClose,
-      animationCurve: animationCurve,
-    );
+    try {
+      ToastifyFlutter.info(
+        ctx,
+        message: message,
+        duration: duration,
+        position: position,
+        style: style,
+        alignment: alignment,
+        textStyle: resolvedTextStyle,
+        textAlign: textAlign,
+        onClose: onClose,
+        animationCurve: animationCurve,
+      );
+    } catch (_) {}
   }
 
   /// Displays a toast notification with smart classification based on message keywords and icon.

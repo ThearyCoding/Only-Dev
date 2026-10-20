@@ -9,6 +9,8 @@ import { CoursesModule } from './features/courses/courses.module.js';
 import { EnrollmentsModule } from './features/enrollments/enrollments.module.js';
 import { QuizzesModule } from './features/quizzes/quizzes.module.js';
 import { StorageModule } from './features/storage/storage.module.js';
+import { HomeModule } from './features/home/home.module.js';
+import { SeedModule } from './seed/seed.module.js';
 import { AppController } from './app.controller.js';
 
 @Module({
@@ -21,7 +23,7 @@ import { AppController } from './app.controller.js';
 
     // MongoDB connection via Mongoose
     MongooseModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: ConfigModule ? [ConfigModule] : [],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>(
@@ -42,6 +44,8 @@ import { AppController } from './app.controller.js';
     EnrollmentsModule,
     QuizzesModule,
     StorageModule,
+    HomeModule,
+    SeedModule,
   ],
   controllers: [AppController],
 })

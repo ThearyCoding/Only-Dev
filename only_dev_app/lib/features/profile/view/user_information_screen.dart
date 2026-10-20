@@ -1,72 +1,67 @@
-import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:iconly/iconly.dart';
 import 'package:only_dev_app/widgets/buttons/custom_button_widget_02.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as legacy_provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
-import 'package:only_dev_app/di/dependency_injection.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/profile/provider/user_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_user.dart';
-import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:only_dev_app/widgets/list-widget/custom_list_tile_widget.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/features/settings/provider/theme_provider.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_storage.dart';
 import 'package:only_dev_app/utils/image_picker_utils.dart';
 import 'package:only_dev_app/utils/show_dialog_sign_out_utils.dart';
 import 'package:only_dev_app/utils/compress_image_util.dart';
 
-class UserInformationScreen extends StatefulWidget {
+class UserInformationScreen extends ConsumerStatefulWidget {
   const UserInformationScreen({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  State<UserInformationScreen> createState() => UserInformationScreenState();
+  ConsumerState<UserInformationScreen> createState() =>
+      UserInformationScreenState();
 }
 
-class UserInformationScreenState extends State<UserInformationScreen> {
-  String photoURL = '';
+class UserInformationScreenState extends ConsumerState<UserInformationScreen> {
   late UserProvider userProvider;
   late CustomizeThemeProvider themeProvider;
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  User? user = locator<FirebaseAuth>().currentUser;
+  final User? user = FirebaseAuth.instance.currentUser;
   final ScrollController _scrollController = ScrollController();
-  bool _isScrolled = false;
+  final ValueNotifier<bool> _isScrolledNotifier = ValueNotifier<bool>(false);
+
   @override
   void initState() {
     super.initState();
-    userProvider = Provider.of<UserProvider>(context, listen: false);
-    themeProvider = Provider.of<CustomizeThemeProvider>(context, listen: false);
+    userProvider =
+        legacy_provider.Provider.of<UserProvider>(context, listen: false);
+    themeProvider = legacy_provider.Provider.of<CustomizeThemeProvider>(context,
+        listen: false);
     _scrollController.addListener(_scrollListener);
   }
 
   void _scrollListener() {
-    if (_scrollController.offset > 10 && !_isScrolled) {
-      setState(() {
-        _isScrolled = true;
-      });
-    } else if (_scrollController.offset <= 10 && _isScrolled) {
-      setState(() {
-        _isScrolled = false;
-      });
+    if (_scrollController.offset > 10 && !_isScrolledNotifier.value) {
+      _isScrolledNotifier.value = true;
+    } else if (_scrollController.offset <= 10 && _isScrolledNotifier.value) {
+      _isScrolledNotifier.value = false;
     }
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _isScrolledNotifier.dispose();
     super.dispose();
   }
 
@@ -82,7 +77,11 @@ class UserInformationScreenState extends State<UserInformationScreen> {
             elevation: 0,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             pinned: true,
-            title: _isScrolled ? const Text('Profile Settings') : null,
+            title: ValueListenableBuilder<bool>(
+              valueListenable: _isScrolledNotifier,
+              builder: (context, isScrolled, _) =>
+                  isScrolled ? const Text('Profile Settings') : const SizedBox.shrink(),
+            ),
             flexibleSpace: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 double appBarHeight = constraints.biggest.height;
@@ -116,15 +115,18 @@ class UserInformationScreenState extends State<UserInformationScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Consumer<UserProvider>(
-              builder: (context, value, child) {
-                final user = userProvider.user;
-                if (userProvider.isLoading) {
+            child: Builder(
+              builder: (context) {
+                final profileState = ref.watch(userProfileProvider);
+                final currentUser = profileState.user ?? userProvider.user;
+                if (profileState.isLoading || (currentUser == null && userProvider.isLoading)) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
                 } else {
-                  return user == null ? _buildErrorState() : _build(user);
+                  return currentUser == null
+                      ? _buildErrorState()
+                      : _build(currentUser);
                 }
               },
             ),
@@ -135,7 +137,6 @@ class UserInformationScreenState extends State<UserInformationScreen> {
   }
 
   Widget _build(UserModel userModel) {
-    String initials = _extractUserName(userModel);
     Color backgroundColor = Colors.white;
     backgroundColor = _getBackgroundColor(userModel, backgroundColor);
     final localization = AppLocalizations.of(context);
@@ -176,39 +177,15 @@ class UserInformationScreenState extends State<UserInformationScreen> {
                                   'imageUrl': userModel.photoURL,
                                 })
                             : null,
-                        child: Container(
-                          width: avatarSize - 10,
-                          height: avatarSize - 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: backgroundColor,
-                          ),
-                          child: CircleAvatar(
-                            radius: (avatarSize - 10) / 2,
-                            backgroundColor: Colors.transparent,
-                            child: userModel.photoURL.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: userModel.photoURL,
-                                    placeholder: (context, url) =>
-                                        const CircularProgressIndicator(),
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
-                                    imageBuilder: (context, imageProvider) =>
-                                        CircleAvatar(
-                                      radius: (avatarSize - 10) / 2,
-                                      backgroundImage: imageProvider,
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      initials.toUpperCase(),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: avatarSize * 0.4,
-                                      ),
-                                    ),
-                                  ),
+                        child: AppCircleAvatar(
+                          imageUrl: userModel.photoURL,
+                          name: userModel.fullName,
+                          radius: (avatarSize - 10) / 2,
+                          backgroundColor: backgroundColor,
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: avatarSize * 0.4,
                           ),
                         ),
                       ),
@@ -286,25 +263,19 @@ class UserInformationScreenState extends State<UserInformationScreen> {
   }
 
   Color _getBackgroundColor(UserModel userModel, Color backgroundColor) {
-    if (userModel.backgroundColor != null) {
-      Color userColor =
-          Color(int.parse(userModel.backgroundColor.replaceFirst('#', '0xff')));
-
-      backgroundColor = userColor;
+    final rawColor = userModel.backgroundColor.trim();
+    if (rawColor.isNotEmpty) {
+      final hex = rawColor.startsWith('#')
+          ? '0xff${rawColor.substring(1)}'
+          : (rawColor.startsWith('0x') ? rawColor : '0xff$rawColor');
+      final parsed = int.tryParse(hex);
+      if (parsed != null) {
+        return Color(parsed);
+      }
     }
     return backgroundColor;
   }
 
-  String _extractUserName(UserModel userModel) {
-    String initials = '';
-    if (userModel.firstName.isNotEmpty) {
-      initials += userModel.firstName[0];
-    }
-    if (userModel.lastName.isNotEmpty) {
-      initials += userModel.lastName[0];
-    }
-    return initials;
-  }
 
   double _listTilePadding(bool isSmallest, bool isSmall) {
     double listTilePadding = isSmallest
@@ -381,14 +352,12 @@ class UserInformationScreenState extends State<UserInformationScreen> {
   Future<void> _uploadImageAndSaveUrl(File imageFile) async {
     try {
       EasyLoading.show(status: 'Preparing to upload...');
-
-      String? downloadURL = await FirebaseApiStorage().uploadImage(
-          File(imageFile.path), 'user_images',
-          oldPhotoUrl: photoURL);
-      if (downloadURL != null) {
-        await _saveImageUrlToFirestore(downloadURL);
+      await ref.read(userProfileProvider.notifier).uploadAvatar(imageFile);
+      if (!mounted) return;
+      final updatedUser = ref.read(userProfileProvider).user;
+      if (updatedUser != null) {
+        userProvider.setUserData(updatedUser);
       }
-
       EasyLoading.dismiss();
     } catch (e) {
       EasyLoading.dismiss();
@@ -398,39 +367,19 @@ class UserInformationScreenState extends State<UserInformationScreen> {
     }
   }
 
-  Future<void> _saveImageUrlToFirestore(String imageUrl) async {
-    try {
-      if (user != null) {
-        await firestore.collection('users').doc(user!.uid).update({
-          'photoURL': imageUrl,
-        });
-        setState(() {
-          photoURL = imageUrl;
-        });
-      }
-    } catch (e) {
-      log('Error saving image URL: $e');
-    } finally {
-      EasyLoading.dismiss();
-    }
-  }
-
-  File? _imageFile;
   Future<void> _pickImage() async {
-    File? croppedFile = await ImageUtils.pickImage();
-
+    final File? croppedFile = await ImageUtils.pickImage();
     if (croppedFile != null) {
-      File? image = await CompressImageUtils.compressImage(croppedFile);
-      setState(() {
-        _imageFile = image;
-      });
-      _uploadImageAndSaveUrl(_imageFile!);
+      final File? image = await CompressImageUtils.compressImage(croppedFile);
+      if (image != null) {
+        await _uploadImageAndSaveUrl(image);
+      }
     }
   }
 
   ThemeSwitcher _buildSwitcher(bool isdark) {
     return ThemeSwitcher(builder: (context) {
-      return Consumer<CustomizeThemeProvider>(
+      return legacy_provider.Consumer<CustomizeThemeProvider>(
         builder: (context, value, child) {
           return IconButton(
             splashRadius: 20,
@@ -490,7 +439,7 @@ class _listviewItem extends StatelessWidget {
             ),
             title: localization.editProfile,
             onTap: () {
-              Provider.of<UserProvider>(context, listen: false)
+              legacy_provider.Provider.of<UserProvider>(context, listen: false)
                   .setUserData(userModel);
 
               context.push(RoutesPath.editProfileInformation);
@@ -578,17 +527,7 @@ class _listviewItem extends StatelessWidget {
       EasyLoading.show(
         status: 'Logout User',
       );
-      String userId = locator<FirebaseAuth>().currentUser!.uid;
-
-      if (userId != null && userId.isNotEmpty) {
-        await locator<FirebaseFirestore>()
-            .collection('users')
-            .doc(userId)
-            .update({
-          'fcmToken': FieldValue.delete(),
-        });
-      }
-      userProvider.handleUserLogout();
+      await userProvider.handleUserLogout();
       EasyLoading.dismiss();
     }
   }

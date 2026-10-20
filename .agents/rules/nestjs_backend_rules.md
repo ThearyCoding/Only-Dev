@@ -78,6 +78,11 @@ Always follow the **Feature-First Modular Architecture** (`src/features/<feature
   - **Never emit duplicate keys**: Responses and error payloads must never contain duplicate keys (e.g., avoid providing both `status_code` and `statusCode`). Use only the single `snake_case` key.
   - Incoming request DTOs should accept `snake_case` properties (or use `@Expose({ name: 'snake_case' })` from `class-transformer` or bidirectional DTO mapping).
 
+## 13. Screen-Aggregated / Composite Endpoints (BFF Pattern)
+- **Avoid requiring mobile clients to call multiple endpoints to render a single screen**.
+- For content-rich views (e.g., Home Screen, Course Detail Screen, Dashboard), expose a dedicated aggregation endpoint (e.g. `GET /home`) that bundles all necessary sub-resources (`banners`, `categories`, `courses`, `recent_courses`, `popular_courses`) into a single, cohesive response payload.
+- Leverage Redis caching on aggregated screen responses to ensure blazing fast sub-50ms response times for composite data.
+
 ---
 
 ## Required API Request Flow

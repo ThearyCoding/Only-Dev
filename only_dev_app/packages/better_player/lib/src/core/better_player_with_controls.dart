@@ -8,6 +8,7 @@ import 'package:better_player/src/controls/better_player_material_controls.dart'
 import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/subtitles/better_player_subtitles_drawer.dart';
 import 'package:better_player/src/video_player/video_player.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class BetterPlayerWithControls extends StatefulWidget {
@@ -298,6 +299,27 @@ class _BetterPlayerVideoFitWidgetState
   @override
   Widget build(BuildContext context) {
     if (_initialized && _started) {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final double aspectRatio = (controller!.value.aspectRatio > 0)
+            ? controller!.value.aspectRatio
+            : (16 / 9);
+        return Center(
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: VideoPlayer(controller),
+          ),
+        );
+      }
+
+      final double width =
+          (controller!.value.size != null && controller!.value.size!.width > 0)
+              ? controller!.value.size!.width
+              : 16.0;
+      final double height =
+          (controller!.value.size != null && controller!.value.size!.height > 0)
+              ? controller!.value.size!.height
+              : 9.0;
+
       return Center(
         child: ClipRect(
           child: Container(
@@ -306,8 +328,8 @@ class _BetterPlayerVideoFitWidgetState
             child: FittedBox(
               fit: widget.boxFit,
               child: SizedBox(
-                width: controller!.value.size?.width ?? 0,
-                height: controller!.value.size?.height ?? 0,
+                width: width,
+                height: height,
                 child: VideoPlayer(controller),
               ),
             ),

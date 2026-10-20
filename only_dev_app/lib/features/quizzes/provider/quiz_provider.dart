@@ -1,18 +1,20 @@
+import 'dart:convert';
 import 'dart:developer';
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:only_dev_app/core/global_navigation.dart';
+import 'package:only_dev_app/data/repositories/quiz_repository.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 
 class QuizProvider with ChangeNotifier {
+  final QuizRepository _quizRepository = locator<QuizRepository>();
+  final SharedPreferences _prefs = locator<SharedPreferences>();
   List<Map<String, dynamic>> _questions = [];
   final User? _user = locator<FirebaseAuth>().currentUser;
-  final FirebaseFirestore _firestore = locator<FirebaseFirestore>();
   int _currentQuestionIndex = 0;
   String _selectedAnswer = '';
   List<String> _userAnswers = [];
@@ -22,7 +24,7 @@ class QuizProvider with ChangeNotifier {
   late String _courseId;
   late String _categoryId;
   late String _title;
-  late String defaultQuizId;
+  String defaultQuizId = '';
   bool _isQuizCompleted = false;
   bool _isFetching = false;
 
@@ -44,11 +46,11 @@ class QuizProvider with ChangeNotifier {
   set settitle(String title) => _title = title;
   set selectedAnswer(String answer) {
     _selectedAnswer = answer;
-    notifyListeners(); // Notifies listeners of changes
+    notifyListeners();
   }
 
   void restartQuiz() {
-    _countdownTimer?.cancel(); // Cancel any existing timer
+    _countdownTimer?.cancel();
     _currentQuestionIndex = 0;
     _selectedAnswer = '';
     _userAnswers.clear();
@@ -62,18 +64,12 @@ class QuizProvider with ChangeNotifier {
   }
 
   Future<void> reTakeTest() async {
-    try {
-      await _firestore
-          .collection('user_progress_quiz')
-          .doc(_user!.uid)
-          .collection('quizzes')
-          .doc(_courseId)
-          .delete();
-      restartQuiz();
-      fetchQuestions(courseId);
-    } catch (e) {
-      log("Error resetting quiz: $e");
+    final uid = _user?.uid ?? '';
+    if (uid.isNotEmpty) {
+      await _prefs.remove('quiz_progress_${uid}_$_courseId');
     }
+    restartQuiz();
+    fetchQuestions(_courseId);
   }
 
   Future<void> fetchQuestions(String courseId) async {
@@ -81,14 +77,26 @@ class QuizProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      QuerySnapshot<Map<String, dynamic>> querySnapshot = await _firestore
-          .collection('quizzes')
-          .doc(courseId)
-          .collection('questions')
-          .get();
-
-      List<Map<String, dynamic>> fetchedQuestions =
-          querySnapshot.docs.map((doc) => doc.data()).toList();
+      final quizzes = await _quizRepository.getQuizzesByCourse(courseId);
+      List<Map<String, dynamic>> fetchedQuestions = [];
+      if (quizzes.isNotEmpty) {
+        final quiz = quizzes.first;
+        defaultQuizId = (quiz['id'] ?? quiz['_id'] ?? '').toString();
+        final raw = quiz['questions'] as List? ?? [];
+        fetchedQuestions = raw.map((item) {
+          final m = Map<String, dynamic>.from(item as Map);
+          if (m['options'] != null && m['options'] is List) {
+            final opts = (m['options'] as List).map((o) {
+              if (o is Map) {
+                return (o['text'] ?? o['title'] ?? '').toString();
+              }
+              return o.toString();
+            }).toList();
+            m['options'] = opts;
+          }
+          return m;
+        }).toList();
+      }
 
       for (var question in fetchedQuestions) {
         if (question['options'] != null && question['options'] is List) {
@@ -99,7 +107,7 @@ class QuizProvider with ChangeNotifier {
 
       _questions = fetchedQuestions;
       notifyListeners();
-      loadUserProgress();
+      await loadUserProgress();
     } catch (e) {
       log("Error fetching questions: $e");
     } finally {
@@ -161,16 +169,14 @@ class QuizProvider with ChangeNotifier {
       }
       _isQuizCompleted = true;
       saveUserProgress();
-      final context = navigatorKey.currentState!.context;
+      final context = navigatorKey.currentState?.context;
 
-      if (context != null) {
+      if (context != null && context.mounted) {
         context.go(RoutesPath.resultquizscreen, extra: {
           "questions": _questions,
           "userAnswers": _userAnswers,
           "correctAnswers": _questions
-              .map((question) => question["answer"] != null
-                  ? question['answer'] as String
-                  : '')
+              .map((question) => (question["answer"] ?? '').toString())
               .toList(),
         });
       }
@@ -192,68 +198,49 @@ class QuizProvider with ChangeNotifier {
   }
 
   Future<void> saveUserProgress() async {
-    if (_user!.uid.isEmpty) {
-      log("Error saving user progress: userId is not set.");
-      return;
-    }
+    final uid = _user?.uid ?? '';
+    if (uid.isEmpty) return;
 
     try {
-      await _firestore
-          .collection('user_progress_quiz')
-          .doc(_user.uid)
-          .collection('quizzes')
-          .doc(_courseId)
-          .set({
+      final data = {
         'currentQuestionIndex': _currentQuestionIndex,
         'userAnswers': _userAnswers,
         'isQuizCompleted': _isQuizCompleted,
         'timer': _timer,
-      });
+      };
+      await _prefs.setString('quiz_progress_${uid}_$_courseId', jsonEncode(data));
     } catch (e) {
       log("Error saving user progress: $e");
     }
   }
 
   Future<void> loadUserProgress() async {
-    if (_user!.uid.isEmpty) {
-      log("Error loading user progress: userId is not set.");
-      return;
-    }
+    final uid = _user?.uid ?? '';
+    if (uid.isEmpty) return;
 
     try {
-      DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
-          .collection('user_progress_quiz')
-          .doc(_user.uid)
-          .collection('quizzes')
-          .doc(_courseId)
-          .get();
+      final raw = _prefs.getString('quiz_progress_${uid}_$_courseId');
+      if (raw != null) {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        _currentQuestionIndex = data['currentQuestionIndex'] ?? 0;
+        _userAnswers = List<String>.from(data['userAnswers'] ?? []);
+        _isQuizCompleted = data['isQuizCompleted'] ?? false;
+        _timer = data['timer'] ?? 20;
 
-      if (snapshot.exists) {
-        var data = snapshot.data();
-        if (data != null) {
-          _currentQuestionIndex = data['currentQuestionIndex'] ?? 0;
-          _userAnswers = List<String>.from(data['userAnswers'] ?? []);
-          _isQuizCompleted = data['isQuizCompleted'] ?? false;
-          _timer = data['timer'] ?? 20;
+        if (_isQuizCompleted) {
+          final context = navigatorKey.currentState?.context;
 
-          if (_isQuizCompleted) {
-            final context = navigatorKey.currentState!.context;
-
-            if (context != null) {
-              if(!context.mounted)return;
-              context.go(RoutesPath.resultquizscreen, extra: {
-                "questions": _questions,
-                "userAnswers": _userAnswers,
-                "correctAnswers": _questions
-                    .map((question) => question["answer"] != null
-                        ? question['answer'] as String
-                        : '')
-                    .toList(),
-              });
-            }
-          } else {
-            startTimer();
+          if (context != null && context.mounted) {
+            context.go(RoutesPath.resultquizscreen, extra: {
+              "questions": _questions,
+              "userAnswers": _userAnswers,
+              "correctAnswers": _questions
+                  .map((question) => (question["answer"] ?? '').toString())
+                  .toList(),
+            });
           }
+        } else {
+          startTimer();
         }
       }
     } catch (e) {
@@ -263,7 +250,7 @@ class QuizProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    super.dispose();
     cancelTimer();
+    super.dispose();
   }
 }

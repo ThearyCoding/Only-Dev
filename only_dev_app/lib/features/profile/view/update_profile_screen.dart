@@ -1,8 +1,8 @@
-import 'package:only_dev_app/di/dependency_injection.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/model/user_model.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_user.dart';
 import 'package:only_dev_app/widgets/textfield/custom_text_field_widget_02.dart';
 import 'package:only_dev_app/widgets/textfield/custom_textfield_widget.dart';
 import 'package:only_dev_app/utils/custom_validator.dart';
@@ -11,34 +11,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_btn/loading_btn.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart' as legacy_provider;
 
 import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_date_picker_widget.dart';
 
-class EditProfileInformation extends StatefulWidget {
+class EditProfileInformation extends ConsumerStatefulWidget {
   const EditProfileInformation({
     super.key,
   });
 
   @override
-  State<EditProfileInformation> createState() => EditProfileInformationState();
+  ConsumerState<EditProfileInformation> createState() =>
+      EditProfileInformationState();
 }
 
-class EditProfileInformationState extends State<EditProfileInformation> {
+class EditProfileInformationState
+    extends ConsumerState<EditProfileInformation> {
   String? email;
   String? photoURL;
   String? uid;
-  final UserService userService = UserService();
   TextEditingController txtfirstname = TextEditingController();
   TextEditingController txtlastname = TextEditingController();
   TextEditingController txtbio = TextEditingController();
-  final FirebaseFirestore firestore = locator<FirebaseFirestore>();
   final User? _auth = locator<FirebaseAuth>().currentUser;
-  DateTime? selectedDate = DateTime(2006, 1, 5);
-  String? _errorTextFirstName;
-  String? _errorTextLastName;
+  final ValueNotifier<DateTime> _selectedDateNotifier =
+      ValueNotifier<DateTime>(DateTime(2006, 1, 5));
+  final ValueNotifier<String?> _errorTextFirstNameNotifier =
+      ValueNotifier<String?>(null);
+  final ValueNotifier<String?> _errorTextLastNameNotifier =
+      ValueNotifier<String?>(null);
   final formKey = GlobalKey<FormState>();
 
   // Add ValueNotifier to track unsaved changes
@@ -47,20 +50,37 @@ class EditProfileInformationState extends State<EditProfileInformation> {
   @override
   void initState() {
     super.initState();
-    userModel = Provider.of<UserProvider>(context, listen: false).userModel;
-    if (userModel != null) {
-      uid = _auth!.uid;
-      photoURL = userModel!.photoURL;
-      txtfirstname.text = userModel!.firstName;
-      txtlastname.text = userModel!.lastName;
-      txtbio.text = userModel!.bio ?? '';
-      selectedDate = userModel!.dob;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileState = ref.read(userProfileProvider);
+      userModel = profileState.user ??
+          legacy_provider.Provider.of<UserProvider>(context, listen: false).userModel;
+      if (userModel != null) {
+        uid = _auth?.uid;
+        photoURL = userModel!.photoURL;
+        txtfirstname.text = userModel!.firstName;
+        txtlastname.text = userModel!.lastName;
+        txtbio.text = userModel!.bio ?? '';
+        _selectedDateNotifier.value =
+            DateTime.tryParse(userModel!.dob) ?? DateTime(2006, 1, 5);
+      }
+    });
 
     // Add listeners to detect changes in text fields
     txtfirstname.addListener(_checkForUnsavedChanges);
     txtlastname.addListener(_checkForUnsavedChanges);
     txtbio.addListener(_checkForUnsavedChanges);
+  }
+
+  @override
+  void dispose() {
+    _selectedDateNotifier.dispose();
+    _errorTextFirstNameNotifier.dispose();
+    _errorTextLastNameNotifier.dispose();
+    _hasUnsavedChanges.dispose();
+    txtfirstname.dispose();
+    txtlastname.dispose();
+    txtbio.dispose();
+    super.dispose();
   }
 
   void handleInputChange(String value, bool isFirstName) {
@@ -73,43 +93,39 @@ class EditProfileInformationState extends State<EditProfileInformation> {
     }
 
     if (isFirstName) {
-      setState(() {
-        txtfirstname.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-        _errorTextFirstName = regex.hasMatch(newValue)
-            ? null
-            : 'Only letters and numbers are allowed.';
-      });
+      txtfirstname.value = TextEditingValue(
+        text: newValue,
+        selection: TextSelection.collapsed(offset: newValue.length),
+      );
+      _errorTextFirstNameNotifier.value = regex.hasMatch(newValue)
+          ? null
+          : 'Only letters and numbers are allowed.';
     } else {
-      setState(() {
-        txtlastname.value = TextEditingValue(
-          text: newValue,
-          selection: TextSelection.collapsed(offset: newValue.length),
-        );
-        _errorTextLastName = regex.hasMatch(newValue)
-            ? null
-            : 'Only letters and numbers are allowed.';
-      });
+      txtlastname.value = TextEditingValue(
+        text: newValue,
+        selection: TextSelection.collapsed(offset: newValue.length),
+      );
+      _errorTextLastNameNotifier.value = regex.hasMatch(newValue)
+          ? null
+          : 'Only letters and numbers are allowed.';
     }
   }
 
   void _checkForUnsavedChanges() {
+    if (userModel == null) return;
     bool hasChanges = txtfirstname.text != userModel!.firstName ||
         txtlastname.text != userModel!.lastName ||
         txtbio.text != userModel!.bio ||
-        selectedDate != userModel!.dob;
+        (_selectedDateNotifier.value.toIso8601String() != userModel!.dob);
 
     _hasUnsavedChanges.value = hasChanges;
   }
 
   Future<void> onDateSelected(BuildContext context) async {
-    final DateTime? pickedDate = await selectDate(context, selectedDate!);
-    if (pickedDate != null && pickedDate != selectedDate) {
-      setState(() {
-        selectedDate = pickedDate;
-      });
+    final DateTime? pickedDate =
+        await selectDate(context, _selectedDateNotifier.value);
+    if (pickedDate != null && pickedDate != _selectedDateNotifier.value) {
+      _selectedDateNotifier.value = pickedDate;
       _checkForUnsavedChanges();
     }
   }
@@ -172,8 +188,8 @@ class EditProfileInformationState extends State<EditProfileInformation> {
     final isdark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      onPopInvoked: (didPop) {
-        _onWillPop;
+      onPopInvokedWithResult: (didPop, result) {
+        _onWillPop();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -227,45 +243,58 @@ class EditProfileInformationState extends State<EditProfileInformation> {
                   Row(
                     children: [
                       Expanded(
-                        child: CustomTextFieldWidget02(
-                          controller: txtfirstname,
-                          labelText: 'First Name | ',
-                          hintText: 'E.g., John',
-                          errorText: _errorTextFirstName,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-Z0-9]+$'),
-                            ),
-                          ],
-                          validator: (value) => customValidator(value),
-                          onChanged: (value) => handleInputChange(value, true),
+                        child: ValueListenableBuilder<String?>(
+                          valueListenable: _errorTextFirstNameNotifier,
+                          builder: (context, errorText, _) {
+                            return CustomTextFieldWidget02(
+                              controller: txtfirstname,
+                              labelText: 'First Name | ',
+                              hintText: 'E.g., John',
+                              errorText: errorText,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^[a-zA-Z0-9]+$'),
+                                ),
+                              ],
+                              validator: (value) => customValidator(value),
+                              onChanged: (value) => handleInputChange(value, true),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: CustomTextFieldWidget02(
-                          controller: txtlastname,
-                          labelText: 'Last Name | ',
-                          hintText: 'E.g., Smith',
-                          errorText: _errorTextLastName,
-                          validator: (value) => customValidator(value),
-                          onChanged: (value) => handleInputChange(value, false),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^[a-zA-Z0-9]+$'),
-                            ),
-                          ],
+                        child: ValueListenableBuilder<String?>(
+                          valueListenable: _errorTextLastNameNotifier,
+                          builder: (context, errorText, _) {
+                            return CustomTextFieldWidget02(
+                              controller: txtlastname,
+                              labelText: 'Last Name | ',
+                              hintText: 'E.g., Smith',
+                              errorText: errorText,
+                              validator: (value) => customValidator(value),
+                              onChanged: (value) => handleInputChange(value, false),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^[a-zA-Z0-9]+$'),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  CustomDatePicker(
-                    selectedValue: selectedDate != null
-                        ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                        : '',
-                    onPressed: () {
-                      onDateSelected(context);
+                  ValueListenableBuilder<DateTime>(
+                    valueListenable: _selectedDateNotifier,
+                    builder: (context, date, _) {
+                      return CustomDatePicker(
+                        selectedValue: '${date.day}/${date.month}/${date.year}',
+                        onPressed: () {
+                          onDateSelected(context);
+                        },
+                      );
                     },
                   ),
                   const SizedBox(height: 20),
@@ -287,29 +316,37 @@ class EditProfileInformationState extends State<EditProfileInformation> {
                     builder: (context, hasChanges, child) {
                       return AbsorbPointer(
                         absorbing: hasChanges ? false : true,
-                        
                         child: CustomBtnLoadingWidget(
                           btnText: 'Save Changes',
                           borderRadius: 10,
                           isInput: hasChanges,
-                          backgroundColor: hasChanges
-                              ?  Colors.blue
-                              : Colors.transparent,
+                          backgroundColor:
+                              hasChanges ? Colors.blue : Colors.transparent,
                           onTap: hasChanges
                               ? (startLoading, stopLoading, btnState) async {
                                   if (btnState == ButtonState.idle) {
                                     startLoading();
                                     if (formKey.currentState!.validate()) {
-                                      await userService.updateUser(
-                                        uid: uid,
-                                        firstName: txtfirstname.text.trim(),
-                                        lastName: txtlastname.text.trim(),
-                                        displayName:
-                                            '${txtfirstname.text.trim()} ${txtlastname.text.trim()}',
-                                        bio: txtbio.text.trim(),
-                                        dob: selectedDate,
-                                      );
-                                      await _showSuccessDialog();
+                                      try {
+                                        final updatedUser = await ref
+                                            .read(userProfileProvider.notifier)
+                                            .updateProfile(
+                                              fullName:
+                                                  '${txtfirstname.text.trim()} ${txtlastname.text.trim()}',
+                                              bio: txtbio.text.trim(),
+                                            );
+                                        if (!context.mounted) return;
+                                        legacy_provider.Provider.of<
+                                                    UserProvider>(context,
+                                                listen: false)
+                                            .setUserData(updatedUser);
+                                        await _showSuccessDialog();
+                                      } catch (e) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to update profile: $e')),
+                                        );
+                                      }
                                     }
                                     stopLoading();
                                   }

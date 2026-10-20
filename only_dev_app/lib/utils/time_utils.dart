@@ -6,8 +6,13 @@ enum TimeUnit {
 }
 
 class TimeUtils {
-  static bool isNew(DateTime? addedDate, int timeToCheck, TimeUnit timeUnit) {
+  static bool isNew(dynamic addedDate, int timeToCheck, TimeUnit timeUnit) {
     if (addedDate == null) return false;
+    final DateTime? date = addedDate is DateTime
+        ? addedDate
+        : DateTime.tryParse(addedDate.toString());
+    if (date == null) return false;
+
     DateTime now = DateTime.now();
     DateTime timeAgo;
     if (timeUnit == TimeUnit.days) {
@@ -15,7 +20,7 @@ class TimeUtils {
     } else {
       timeAgo = now.subtract(Duration(seconds: timeToCheck));
     }
-    return addedDate.isAfter(timeAgo);
+    return date.isAfter(timeAgo);
   }
 
   static String formatDuration(int durationInSeconds) {
@@ -55,9 +60,23 @@ class TimeUtils {
     }
   }
 
-  static String formatTimestamp(DateTime timestamp) {
+  static String formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return '';
+    if (timestamp is String && timestamp.isEmpty) return '';
+
+    DateTime? dt;
+    if (timestamp is DateTime) {
+      dt = timestamp;
+    } else if (timestamp is String) {
+      dt = DateTime.tryParse(timestamp);
+      // If backend already formatted it as a readable string, return as-is
+      if (dt == null) return timestamp;
+    } else {
+      return timestamp.toString();
+    }
+
     final now = DateTime.now();
-    final difference = now.difference(timestamp.toUtc());
+    final difference = now.difference(dt.toUtc());
 
     if (difference.inMinutes < 1) {
       return 'Just now';
@@ -68,15 +87,12 @@ class TimeUtils {
     } else if (difference.inDays < 7) {
       return '${difference.inDays}d';
     } else {
-      // Check if the timestamp is within the current year
-      if (timestamp.year == now.year) {
-        // Format the timestamp to only display month and day
+      if (dt.year == now.year) {
         final formatter = DateFormat('MMM dd');
-        return formatter.format(timestamp);
+        return formatter.format(dt);
       } else {
-        // Format the timestamp to display the full date including the year
         final formatter = DateFormat('MMM dd yyyy');
-        return formatter.format(timestamp);
+        return formatter.format(dt);
       }
     }
   }

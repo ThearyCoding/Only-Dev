@@ -3,8 +3,8 @@ import 'package:only_dev_app/features/courses/provider/banners_provider.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../app_widgets/app_image_widget.dart';
 
 class BannerWidget extends StatelessWidget {
   const BannerWidget({super.key});
@@ -86,39 +86,13 @@ class BannerWidget extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: ClipRRect(
+                          child: AppImageWidget(
+                            imageUrl: banner.imageUrl,
+                            width: constraints.maxWidth,
+                            height: height,
+                            fit: BoxFit.cover,
                             borderRadius: BorderRadius.circular(10),
-                            child: CachedNetworkImage(
-                              imageUrl: banner.imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) {
-                                final isDarkMode =
-                                    Theme.of(context).brightness ==
-                                        Brightness.dark;
-                                return Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[300]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[500]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: constraints.maxWidth,
-                                    height: height,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              },
-                              errorWidget: (context, url, error) => Container(
-                                width: constraints.maxWidth,
-                                height: height,
-                                color: Colors.grey,
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ),
+                            fallbackIcon: Icons.campaign_outlined,
                           ),
                         ),
                       );

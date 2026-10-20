@@ -84,7 +84,7 @@ export class EnrollmentsService {
     return saved;
   }
 
-  async isEnrolled(userId: string, courseId: string): Promise<{ isEnrolled: boolean; enrollmentId?: string }> {
+  async isEnrolled(userId: string, courseId: string): Promise<{ isEnrolled: boolean; isRegistered: boolean; enrollmentId?: string }> {
     const userObjId = new mongoose.Types.ObjectId(userId);
     const courseObjId = new mongoose.Types.ObjectId(courseId);
 
@@ -94,8 +94,10 @@ export class EnrollmentsService {
       status: 'active',
     });
 
+    const registered = !!enrollment;
     return {
-      isEnrolled: !!enrollment,
+      isEnrolled: registered,
+      isRegistered: registered,
       enrollmentId: enrollment ? enrollment._id.toString() : undefined,
     };
   }

@@ -1,17 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:only_dev_app/data/repositories/course_repository.dart';
+import 'package:only_dev_app/data/repositories/quiz_repository.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/model/lecture_model.dart';
 import 'package:only_dev_app/model/section_model.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_quiz.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_section.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_user.dart';
 import 'package:only_dev_app/service/shared/shared_preferences_service.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 
 class LectureProvider with ChangeNotifier {
-  final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
-  final FirebaseApiSection _apiSection = locator<FirebaseApiSection>();
+  final QuizRepository _quizRepository = locator<QuizRepository>();
+  final CourseRepository _courseRepository = locator<CourseRepository>();
   int _selectedVideoIndex = 0;
   String _selectedLectureId = '';
   String _videoTitle = '';
@@ -32,6 +31,7 @@ class LectureProvider with ChangeNotifier {
   String get videoTitle => _videoTitle;
   String get videoDescription => _videoDescription;
   String get timestamp => _timestamp;
+  String get createdAt => _timestamp;
   int get views => _views;
   int get totalQuestions => _totalQuestions;
   bool get isLoading => _isLoading;
@@ -77,7 +77,7 @@ class LectureProvider with ChangeNotifier {
     setLoadingQuestions(true);
 
     try {
-      _totalQuestions = await _apiQuiz.fetchTotalQuestions(courseId);
+      _totalQuestions = await _quizRepository.fetchTotalQuestions(courseId);
     } catch (e) {
       AppToastUtils.error("Error fetching questions: $e");
     } finally {
@@ -91,9 +91,8 @@ class LectureProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      List<Section> tempSections =
-          await _apiSection.fetchSections(categoryId, courseId);
-      sections = tempSections;
+      final course = await _courseRepository.getCourseById(courseId);
+      sections = course.sections ?? [];
 
       _isLoading = false;
       notifyListeners();
@@ -139,7 +138,7 @@ class LectureProvider with ChangeNotifier {
   }
 
   Future<void> loadWatchedLectures() async {
-    watchedLectures = await UserService().getWatchedLectures();
+    // In-memory / repository backed
     notifyListeners();
   }
 

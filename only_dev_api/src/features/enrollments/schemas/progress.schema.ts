@@ -43,6 +43,12 @@ export class UserCourseProgress {
 
   @Prop()
   certificateId?: string;
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const UserCourseProgressSchema = SchemaFactory.createForClass(UserCourseProgress);

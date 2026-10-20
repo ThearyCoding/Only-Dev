@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
+import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
+import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/textfield/custom_text_field_widget_02.dart';
@@ -65,7 +68,7 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        "Create an account to access all features of our e-learning platform.",
+                        "Create an account to access all features of Only Dev.",
                         style: TextStyle(
                           fontSize: 16,
                           color: Theme.of(context).textTheme.bodyMedium?.color ??
@@ -155,7 +158,15 @@ class _RegisterViewState extends State<RegisterView> {
                             );
                             stopLoading();
                             if (success && context.mounted) {
-                              context.go(RoutesPath.home);
+                              if (model.currentUser != null) {
+                                Provider.of<UserProvider>(context, listen: false)
+                                    .setUserData(model.currentUser!);
+                              }
+                              await Provider.of<AuthenticationProvider>(context, listen: false)
+                                  .saveUserLoginStatus(true);
+                              if (context.mounted) {
+                                context.go(RoutesPath.home);
+                              }
                             }
                           }
                         },

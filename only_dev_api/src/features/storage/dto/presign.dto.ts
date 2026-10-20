@@ -10,7 +10,7 @@ export class PresignRequestDto {
   contentType: string; // e.g. 'video/mp4', 'image/jpeg', 'application/pdf'
 
   @IsString()
-  @IsIn(['videos', 'thumbnails', 'avatars', 'attachments', 'resources'])
+  @IsIn(['videos', 'thumbnails', 'avatars', 'attachments', 'resources', 'images', 'posts'])
   folder: string;
 
   @IsNumber()

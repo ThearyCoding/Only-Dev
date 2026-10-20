@@ -1,6 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
-import '../../model/admin_model.dart';
+import '../app_widgets/app_image_widget.dart';
+import '../../model/user_model.dart';
 import '../../model/courses_model.dart';
 import '../../routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 
 class CourseCardRegistered extends StatefulWidget {
-  final AdminModel admin;
+  final UserModel admin;
   final CourseModel course;
   final int currentLessons;
   final int totalLessons;
@@ -60,30 +59,14 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
+          AppImageWidget(
+            imageUrl: widget.course.imageUrl,
+            height: 180.0,
+            width: double.infinity,
+            fit: BoxFit.cover,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16.0),
-              topRight: Radius.circular(16.0),
-            ),
-            child: CachedNetworkImage(
-              imageUrl: widget.course.imageUrl,
-              height: 180.0,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Shimmer.fromColors(
-                baseColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[700]!
-                    : Colors.grey[300]!,
-                highlightColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey[500]!
-                    : Colors.grey[100]!,
-                child: Container(
-                  height: 180.0,
-                  width: double.infinity,
-                  color: Colors.white,
-                ),
-              ),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
+              topLeft: Radius.circular(10.0),
+              topRight: Radius.circular(10.0),
             ),
           ),
           Padding(

@@ -1,9 +1,12 @@
 import 'dart:developer';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:only_dev_app/data/repositories/course_repository.dart';
+import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/model/courses_model.dart';
 
 class SearchEngineProvider with ChangeNotifier {
+  final CourseRepository _courseRepository = locator<CourseRepository>();
+
   String _txtSearch = '';
   List<CourseModel> _courses = [];
   bool _isLoading = false;
@@ -20,55 +23,29 @@ class SearchEngineProvider with ChangeNotifier {
   }
 
   Future<void> searchCourses(String query) async {
+    if (query.trim().isEmpty) {
+      _courses = [];
+      _searchAttempted = false;
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _searchAttempted = true;
     notifyListeners();
 
     try {
-      String normalizedQuery = normalizeString(query);
-      List<String> queryTokens = splitIntoTokens(normalizedQuery);
-
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collectionGroup('courses').get();
-
-      _courses = querySnapshot.docs.where((doc) {
-        String title = normalizeString(doc.get('title').toString());
-        List<String> titleTokens = splitIntoTokens(title);
-
-        // Check if any query token is in the title tokens
-        return queryTokens.any((queryToken) =>
-            titleTokens.any((titleToken) => titleToken.contains(queryToken)));
-      }).map((doc) {
-        return CourseModel.fromMap(doc.data() as Map<String, dynamic>);
-      }).toList();
-
-      // Optional: Sort results by relevance
-      _courses.sort((a, b) => calculateRelevance(b.title, queryTokens)
-          .compareTo(calculateRelevance(a.title, queryTokens)));
+      _courses = await _courseRepository.getCourses(
+        search: query.trim(),
+        limit: 30,
+      );
     } catch (error) {
-      log('Error fetching courses: $error');
+      log('Error searching courses: $error');
       _courses = [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  // Normalize text by converting to lowercase and removing special characters
-  String normalizeString(String input) {
-    return input.toLowerCase().replaceAll(RegExp(r'[^a-z0-9\s]'), '');
-  }
-
-  // Split the text into tokens (words)
-  List<String> splitIntoTokens(String text) {
-    return text.split(' ').where((token) => token.isNotEmpty).toList();
-  }
-
-  // Calculate relevance score based on token matches
-  int calculateRelevance(String title, List<String> queryTokens) {
-    List<String> titleTokens = splitIntoTokens(normalizeString(title));
-    return queryTokens.fold<int>(
-        0, (score, token) => score + (titleTokens.contains(token) ? 1 : 0));
   }
 
   void clearSearch() {

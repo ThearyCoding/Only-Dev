@@ -102,9 +102,11 @@ class NotificationItem extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  notification.timestamp != null
-                      ? DateFormat('EEE /MMM/yy: h:mm a')
-                          .format(notification.timestamp)
+                  (notification.createdAt ?? '').isNotEmpty
+                      ? (DateTime.tryParse(notification.createdAt!) != null
+                          ? DateFormat('EEE /MMM/yy: h:mm a')
+                              .format(DateTime.parse(notification.createdAt!))
+                          : notification.createdAt!)
                       : 'No Date',
                   style: GoogleFonts.roboto(
                     fontSize: 11,

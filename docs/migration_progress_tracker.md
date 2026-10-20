@@ -22,10 +22,14 @@ This document tracks all completed milestones, current architectural implementat
 | **Barrel Export Elimination** | Direct Explicit Package Imports | ✅ Completed | `lib/export` completely removed, 0 cyclic imports |
 | **Screens & Providers to Features** | Domain Feature Packaging | ✅ Completed | `lib/screens` & `lib/providers` deleted; all moved to `features/` |
 | **Model Cleanup** | Active Models Preservation | ✅ Completed | Removed dead models (`course_admin_model`, `quiz_question`) |
-| **Coding Standards & Rules** | Monorepo Rules (`.agents/rules/`) | ✅ Completed | Enforced for Flutter (MVVM/Dio) & NestJS (Modular/DTO) |
-| **Automated Testing Suite** | Flutter Tests & Vitest Units | ✅ Completed | 5 Flutter unit/widget tests, 8 NestJS tests passing |
+| **AdminModel Elimination** | Unified `UserModel` & RBAC | ✅ Completed | `admin_model.dart` deleted, all UI uses `UserModel` |
+| **Automated Testing Suite** | Flutter Tests & Vitest Units | ✅ Completed | 9 Flutter unit/widget tests, 12 NestJS tests passing |
 | **`snake_case` API Key Standard** | TransformInterceptor & Dart Models | ✅ Completed | Response keys & model maps fully snake_cased |
-| **End-to-End API Integration** | Mobile $\leftrightarrow$ NestJS REST API | ⏳ Pending | Phase 6 |
+| **Screen-Aggregated API Pattern** | BFF Endpoint (`GET /home`) | ✅ Completed | 1 call aggregates banners, categories, courses |
+| **Complete Firestore Elimination** | Zero Firestore, Pure REST/Local | ✅ Completed | `cloud_firestore` removed, 0 imports in app |
+| **Riverpod Migration & No-setState Rule** | `flutter_riverpod` 2.6.1 | ✅ Completed | Zero `setState`, zero direct repo calls in UI |
+| **Database Seeder & Real Videos** | Mongoose, Verified MP4 & HLS | ✅ Completed | 5 courses, 18 lessons, real videos, quizzes, enrollments |
+| **End-to-End API Integration** | Mobile $\leftrightarrow$ NestJS REST API | ⏳ In Progress | Phase 6 |
 
 ---
 
@@ -204,14 +208,50 @@ This document tracks all completed milestones, current architectural implementat
   - NestJS API: Implemented recursive `keysToSnakeCase` in [`only_dev_api/src/common/interceptors/transform.interceptor.ts`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/src/common/interceptors/transform.interceptor.ts) so every HTTP JSON response payload automatically emits single `snake_case` keys (including `status_code` in response envelopes and error filters).
   - Flutter Models: Updated all active domain models in `lib/model/` (`CourseModel`, `UserModel`, `EnrollmentModel`, `Lecture`, `Section`, `NotificationModel`, `RegistrationModel`, `CategoryModel`, `BannerModel`, `PostModel`, `AdminModel`) to emit **strictly single `snake_case` keys** in `toMap()` and `toJson()`, completely eliminating duplicate camelCase keys.
   - Persisted Rule 11 (Testing Strategy) and Rule 12 (`snake_case` Standard & No Duplicate Keys) across `.agents/rules/` and `docs/`.
+- [x] **String Date Formatting & Audit Fields (`createdAt`, `updatedAt`, `createdBy`, `updatedBy`)**:
+  - **No `DateTime` in Models**: Removed all `DateTime` and Firestore `Timestamp` types from client data models; backend formats dates to ISO strings (`obj.toISOString()`).
+  - **Removed `timestamp` Completely**: Removed `timestamp` from constructors, stored fields, map serialization payloads, and getters across all models; updated all UI widgets and providers to consume `createdAt` directly.
+  - **Client Utility Verification**: Updated `time_utils.dart`, `notification_provider.dart`, `registration_provider.dart`, `course_content_screen.dart`, `build_course_card_widget_ui_v1.dart`, `build_course_card_widget_ui_v2.dart`, and profile screens to consume string timestamps safely.
+  - **Verified Quality**: Both `flutter test` and `npm run test` pass, and `npm run build` compiles with 0 errors.
+- [x] **Zero `AdminModel` / Unified RBAC `UserModel` Migration**:
+  - **Deleted `admin_model.dart`**: Fully removed `admin_model.dart` and its export from `models.dart`.
+  - **Equipped `UserModel`**: Added compatibility aliases (`id`, `name`, `imageUrl`, and `empty()` factory) to [`only_dev_app/lib/model/user_model.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/model/user_model.dart).
+  - **Refactored UI & Providers**: Updated all course cards, search screens, course views, `AdminProvider`, `CourseProvider`, and `AllCoursesProvider` to utilize `UserModel` directly with 0 errors.
+- [x] **Screen-Aggregated API Pattern (Single Screen = Single Endpoint)**:
+  - **Enforced Architectural Rule 13**: Updated `.agents/rules/flutter_mvvm_rules.md`, `.agents/rules/nestjs_backend_rules.md`, and `docs/flutter_coding_rules.md`. Prohibits making multiple scattered API calls for a single screen.
+  - **NestJS `HomeModule` & `HomeController`**: Exposes composite `GET /home` (and alias `GET /home/get-home`) returning aggregated `{ banners, categories, courses, recent_courses, popular_courses }` with Redis caching (`screen:home`, 300s TTL).
+  - **Flutter `HomeScreenData` & `HomeViewModel`**: Implemented `HomeScreenData`, `HomeRemoteDataSource` (Dio-based), `HomeRepository`, and `HomeViewModel` to load the entire screen dataset in one request.
+  - **Testing**: Added Vitest tests for `HomeService` (12/12 API tests passing) and Flutter tests for `HomeViewModel` (9/9 Flutter tests passing).
+
+- [x] **Firebase Storage Elimination & Cloudflare R2 Cutover**:
+  - **Removed Dependency**: Completely removed `firebase_storage` package from [`only_dev_app/pubspec.yaml`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/pubspec.yaml) and removed `FirebaseStorage` singleton from `dependency_injection.dart`.
+  - **Presigned Upload Flow**: Built [`StorageRemoteDataSource`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/data/datasources/storage_remote_data_source.dart) and [`StorageRepository`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/data/repositories/storage_repository.dart) to request presigned upload URLs from NestJS (`POST /storage/presign`) and stream binary files directly to Cloudflare R2 via Dio.
+  - **Upload Handlers Updated**: Converted [`FirebaseApiStorage`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/service/firebase/firebase_api_storage.dart), profile screens, and [`post_editor_screen.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/features/posts/view/post_editor_screen.dart) to use Cloudflare R2 with `EasyLoading` progress tracking.
+  - **Dead Code Removed**: Safely removed dead file `upload_video.dart`.
+- [x] **Home Screen Cutover to REST API**:
+  - **Banners & Categories**: Rewrote [`BannersProvider`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/features/courses/provider/banners_provider.dart) and [`CategoriesProvider`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/features/courses/provider/categories_provider.dart) to load from `HomeRepository` (`GET /home`), eliminating Firestore streams.
+  - **Courses**: Updated [`CourseProvider`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/features/courses/provider/course_provider.dart) to load catalog, recent, and popular courses from `HomeRepository` and category courses from `CourseRepository` (`GET /courses`).
+- [x] **Complete Firestore Elimination & Legacy Service Purge**:
+  - **Purged Files**: Deleted `firebase_api_notifications.dart`, `firebase_api_user.dart`, `firebase_api_storage.dart`, `local_storage_service.dart`, `category_preferences.dart`.
+  - **Removed Dependency**: Completely removed `cloud_firestore: ^5.0.0` from `only_dev_app/pubspec.yaml`.
+  - **Zero Firestore References**: Verified 0 `cloud_firestore` and 0 `firebase_storage` imports remain in the Flutter client.
+  - **Local Persistence & Repository**: Created [`PostRepository`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/data/repositories/post_repository.dart) and rewrote `NotificationProvider` using decoupled SharedPreferences persistence.
+- [x] **Riverpod State Management & Architectural Rules Enforcement**:
+  - **Added `flutter_riverpod: ^2.6.1`**: Root wrapped in `ProviderScope` in `main.dart`.
+  - **Centralized Riverpod Providers**: Built [`app_providers.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/core/providers/app_providers.dart) with `userProfileProvider`, `completeInfoProvider`, `postsListProvider`, `postDetailProvider`, and `postEditorProvider`.
+  - **UI Views Decoupled**: Converted `CompleteInformations`, `UpdateProfileScreen`, `UserInformationScreen`, `PostEditorScreen`, `PostListScreen`, and `DisplayPostScreen` to Riverpod `ConsumerStatefulWidget` and `ConsumerWidget`.
+  - **Strict Rules Followed**:
+    - Zero `setState` across converted UI screens; state is managed reactively via Riverpod Notifiers.
+    - Zero direct calls to `locator<Repository>()` or `locator<Service>()` in UI views; all data flows through Riverpod.
 
 ---
 
 ## ⏳ Phase 6: End-to-End Mobile Integration & Testing (Next)
 
+- [x] Connect Home Screen to `GET /api/v1/home` composite endpoint.
+- [x] Replace Firebase Storage with Cloudflare R2 presigned uploads.
+- [x] Connect Course Detail Screen to `GET /api/v1/courses/get-detail/:id` with Bearer token enrollment checking.
+- [x] Connect Enrollment button to `POST /api/v1/enrollments`.
 - [ ] Connect Course Catalog Screen to `GET /api/v1/courses`.
-- [ ] Connect Course Detail Screen to `GET /api/v1/courses/:id`.
-- [ ] Connect Enrollment button to `POST /api/v1/enrollments`.
 - [ ] Connect BetterPlayer video resume to `POST /api/v1/enrollments/progress/:courseId`.
-- [ ] Test instructor upload flow with Cloudflare R2 presigned URLs.
 

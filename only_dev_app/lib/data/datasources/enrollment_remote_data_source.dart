@@ -30,7 +30,8 @@ class EnrollmentRemoteDataSourceImpl implements EnrollmentRemoteDataSource {
   Future<bool> checkEnrollment(String courseId) async {
     final response = await _dioClient.get(ApiEndpoints.checkEnrollment(courseId));
     if (response.data != null && response.data['data'] != null) {
-      return (response.data['data']['isEnrolled'] ?? false) as bool;
+      final data = response.data['data'];
+      return (data['is_enrolled'] ?? data['isEnrolled'] ?? data['is_registered'] ?? data['isRegistered'] ?? false) as bool;
     }
     return false;
   }

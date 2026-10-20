@@ -58,6 +58,7 @@ class MyAppState extends State<MyApp> {
                   : CustomThemes.lightTheme,
               builder: (context, myTheme) {
                 return MaterialApp.router(
+                  title: 'Only Dev',
                   routerConfig: _router,
                   scaffoldMessengerKey: scaffoldMessengerKey,
                   debugShowCheckedModeBanner: false,

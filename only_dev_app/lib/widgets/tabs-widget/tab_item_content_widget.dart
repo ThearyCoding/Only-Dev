@@ -313,7 +313,7 @@ class TabItemContentWidgetState extends State<TabItemContentWidget> {
         lecture.videoUrl,
         lecture.title,
         lecture.description,
-        TimeUtils.formatTimestamp(lecture.timestamp),
+        TimeUtils.formatTimestamp(lecture.createdAt),
         lecture.views,
         startPosition,
         duration,

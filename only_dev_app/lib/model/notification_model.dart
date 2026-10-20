@@ -1,14 +1,14 @@
 import 'dart:convert';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'post_model.dart';
 
 class NotificationModel {
   final String registerId;
   final String title;
   final String message;
-  final DateTime timestamp;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? createdBy;
+  final String? updatedBy;
   final String courseId;
   final String id;
   final bool isRead;
@@ -22,7 +22,10 @@ class NotificationModel {
     required this.registerId,
     required this.title,
     required this.message,
-    required this.timestamp,
+    this.createdAt,
+    this.updatedAt,
+    this.createdBy,
+    this.updatedBy,
     required this.courseId,
     required this.id,
     required this.isRead,
@@ -37,7 +40,10 @@ class NotificationModel {
     String? registerId,
     String? title,
     String? message,
-    DateTime? timestamp,
+    String? createdAt,
+    String? updatedAt,
+    String? createdBy,
+    String? updatedBy,
     String? courseId,
     String? id,
     bool? isRead,
@@ -51,7 +57,10 @@ class NotificationModel {
       registerId: registerId ?? this.registerId,
       title: title ?? this.title,
       message: message ?? this.message,
-      timestamp: timestamp ?? this.timestamp,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
       courseId: courseId ?? this.courseId,
       id: id ?? this.id,
       isRead: isRead ?? this.isRead,
@@ -69,7 +78,10 @@ class NotificationModel {
       registerId: '',
       title: 'Unknown',
       message: '',
-      timestamp: DateTime.now(),
+      createdAt: '',
+      updatedAt: '',
+      createdBy: '',
+      updatedBy: '',
       courseId: '',
       isRead: false,
       isDetailSeen: false,
@@ -78,24 +90,15 @@ class NotificationModel {
     );
   }
 
-  static DateTime _parseDateTime(dynamic val) {
-    if (val == null) return DateTime.now();
-    if (val is Timestamp) return val.toDate();
-    if (val is DateTime) return val;
-    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
-    if (val is String) {
-      final parsed = DateTime.tryParse(val);
-      if (parsed != null) return parsed;
-    }
-    return DateTime.now();
-  }
-
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'register_id': registerId,
       'title': title,
       'message': message,
-      'timestamp': timestamp.toIso8601String(),
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'created_by': createdBy,
+      'updated_by': updatedBy,
       'course_id': courseId,
       'id': id,
       'is_read': isRead,
@@ -112,7 +115,10 @@ class NotificationModel {
       registerId: (map['register_id'] ?? map['registerId'] ?? '').toString(),
       title: (map['title'] ?? 'No Title').toString(),
       message: (map['message'] ?? 'No Message').toString(),
-      timestamp: _parseDateTime(map['timestamp']),
+      createdAt: (map['created_at'] ?? map['createdAt'] ?? map['timestamp'])?.toString(),
+      updatedAt: (map['updated_at'] ?? map['updatedAt'])?.toString(),
+      createdBy: (map['created_by'] ?? map['createdBy'])?.toString(),
+      updatedBy: (map['updated_by'] ?? map['updatedBy'])?.toString(),
       courseId: (map['course_id'] ?? map['courseId'] ?? '').toString(),
       id: (map['id'] ?? map['_id'] ?? '').toString(),
       isRead: map['is_read'] ?? map['isRead'] ?? false,
@@ -133,7 +139,7 @@ class NotificationModel {
 
   @override
   String toString() {
-    return 'NotificationModel(registerId: $registerId, title: $title, message: $message, timestamp: $timestamp, courseId: $courseId, id: $id, isRead: $isRead, isDetailSeen: $isDetailSeen, type: $type , categoryId: $categoryId)';
+    return 'NotificationModel(registerId: $registerId, title: $title, message: $message, createdAt: $createdAt, courseId: $courseId, id: $id, isRead: $isRead, isDetailSeen: $isDetailSeen, type: $type , categoryId: $categoryId)';
   }
 
   @override
@@ -143,7 +149,7 @@ class NotificationModel {
     return other.registerId == registerId &&
         other.title == title &&
         other.message == message &&
-        other.timestamp == timestamp &&
+        other.createdAt == createdAt &&
         other.courseId == courseId &&
         other.id == id &&
         other.isRead == isRead &&
@@ -157,7 +163,7 @@ class NotificationModel {
     return registerId.hashCode ^
         title.hashCode ^
         message.hashCode ^
-        timestamp.hashCode ^
+        createdAt.hashCode ^
         courseId.hashCode ^
         id.hashCode ^
         isRead.hashCode ^

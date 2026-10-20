@@ -1,17 +1,15 @@
 
 
 import 'package:flutter/material.dart';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
-import '../../model/admin_model.dart';
+import '../app_widgets/app_image_widget.dart';
+import '../../model/user_model.dart';
 import '../../model/courses_model.dart';
 import '../../utils/responsive_utils.dart';
 import '../../utils/time_utils.dart';
 
 class CourseCardV1 extends StatelessWidget {
   final CourseModel course;
-  final AdminModel admin;
+  final UserModel admin;
   final int quizCount;
   final String userId;
   final bool isRegistered;
@@ -42,22 +40,12 @@ class CourseCardV1 extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: <Widget>[
-                  CachedNetworkImage(
+                  AppImageWidget(
                     imageUrl: course.imageUrl,
-                    placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
-                      child: Container(
-                        height: getResponsiveWidth(context, 110),
-                        width: double.infinity,
-                        color: Colors.white,
-                      ),
-                    ),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
                     height: getResponsiveWidth(context, 110),
-                    fit: BoxFit.cover,
                     width: double.infinity,
+                    fit: BoxFit.cover,
+                    fallbackIcon: Icons.menu_book_outlined,
                   ),
                   Container(
                     height: getResponsiveWidth(context, 110),
@@ -78,7 +66,7 @@ class CourseCardV1 extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (TimeUtils.isNew(course.timestamp, 4, TimeUnit.days))
+                  if (TimeUtils.isNew(course.createdAt, 4, TimeUnit.days))
                     Positioned(
                       left: 0,
                       top: 0,
@@ -112,29 +100,10 @@ class CourseCardV1 extends StatelessWidget {
                     right: 8,
                     child: Row(
                       children: [
-                        ClipOval(
-                          child: SizedBox(
-                            height: getResponsiveHeight(context, 70),
-                            width: getResponsiveHeight(context, 70),
-                            child: CachedNetworkImage(
-                              imageUrl: admin.imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Shimmer.fromColors(
-                                baseColor: Colors.grey[300]!,
-                                highlightColor: Colors.grey[100]!,
-                                child: Container(
-                                  color: Colors.grey[300],
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey,
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ),
-                          ),
+                        AppCircleAvatar(
+                          imageUrl: admin.imageUrl,
+                          name: admin.name,
+                          radius: getResponsiveHeight(context, 35),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

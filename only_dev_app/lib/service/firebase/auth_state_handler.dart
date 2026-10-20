@@ -1,17 +1,27 @@
 import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
 import 'package:only_dev_app/features/auth/view/login_with_social_media_or_sign_up_with_email.dart';
-import 'package:only_dev_app/utils/generate_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../routes/app_routes.dart';
+import 'package:only_dev_app/data/repositories/user_repository.dart';
+import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/features/home/view/main_screen.dart';
-import 'firebase_api_user.dart';
+import 'package:only_dev_app/service/api/dio_client.dart';
 
 class AuthStateHandler extends StatelessWidget {
   const AuthStateHandler({super.key});
+
+  Future<bool> _checkInfoComplete(User currentUser) async {
+    try {
+      final profile = await locator<UserRepository>().getMyProfile();
+      return profile.fullName.trim().isNotEmpty && profile.fullName != 'Unknown';
+    } catch (_) {
+      return (currentUser.displayName?.isNotEmpty ?? false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +42,8 @@ class AuthStateHandler extends StatelessWidget {
               return const MainPage();
             } else {
               return FutureBuilder<bool>(
-                future: UserService().isInformationComplete(currentUser).first,
+                future: _checkInfoComplete(currentUser),
                 builder: (context, infoSnapshot) {
-                  GenerateColor.onUserLogin();
                   if (infoSnapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CupertinoActivityIndicator(),
@@ -58,12 +67,20 @@ class AuthStateHandler extends StatelessWidget {
               );
             }
           } else {
+            final token = locator<DioClient>().authInterceptor.token;
+            if (authProvider.isLoggedIn && token != null && token.isNotEmpty) {
+              return const MainPage();
+            }
             return const LoginwithSocialMediaOrSignUpWithEmail();
           }
         } else if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator.adaptive(),
           );
+        }
+        final token = locator<DioClient>().authInterceptor.token;
+        if (authProvider.isLoggedIn && token != null && token.isNotEmpty) {
+          return const MainPage();
         }
         return const LoginwithSocialMediaOrSignUpWithEmail();
       },

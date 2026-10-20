@@ -37,9 +37,11 @@ AVPictureInPictureController *_pipController;
 }
 
 - (nonnull UIView *)view {
-    BetterPlayerView *playerView = [[BetterPlayerView alloc] initWithFrame:CGRectZero];
-    playerView.player = _player;
-    return playerView;
+    if (self.playerView == nil) {
+        self.playerView = [[BetterPlayerView alloc] initWithFrame:CGRectZero];
+        self.playerView.player = _player;
+    }
+    return self.playerView;
 }
 
 - (void)addObservers:(AVPlayerItem*)item {
@@ -69,6 +71,7 @@ AVPictureInPictureController *_pipController;
 }
 
 - (void)clear {
+    self.playerView = nil;
     _isInitialized = false;
     _isPlaying = false;
     _disposed = false;
@@ -248,17 +251,15 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
                     if (self->_disposed) return;
                     if ([videoTrack statusOfValueForKey:@"preferredTransform"
                                                   error:nil] == AVKeyValueStatusLoaded) {
-                        // Rotate the video by using a videoComposition and the preferredTransform
                         self->_preferredTransform = [self fixTransform:videoTrack];
-                        // Note:
-                        // https://developer.apple.com/documentation/avfoundation/avplayeritem/1388818-videocomposition
-                        // Video composition can only be used with file-based media and is not supported for
-                        // use with media served using HTTP Live Streaming.
-                        AVMutableVideoComposition* videoComposition =
-                        [self getVideoCompositionWithTransform:self->_preferredTransform
-                                                     withAsset:asset
-                                                withVideoTrack:videoTrack];
-                        item.videoComposition = videoComposition;
+                        NSInteger rotationDegrees = (NSInteger)round(radiansToDegrees(atan2(self->_preferredTransform.b, self->_preferredTransform.a)));
+                        if (rotationDegrees != 0) {
+                            AVMutableVideoComposition* videoComposition =
+                            [self getVideoCompositionWithTransform:self->_preferredTransform
+                                                         withAsset:asset
+                                                    withVideoTrack:videoTrack];
+                            item.videoComposition = videoComposition;
+                        }
                     }
                 };
                 [videoTrack loadValuesAsynchronouslyForKeys:@[ @"preferredTransform" ]

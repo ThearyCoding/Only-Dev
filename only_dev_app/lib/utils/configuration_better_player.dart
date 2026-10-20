@@ -30,7 +30,7 @@ BetterPlayerConfiguration configurationBetterPlayer(
       enableQualities: false,
       showControls: showControls,
       enableSubtitles: false,
-      controlBarColor: Colors.black.withOpacity(0.5),
+      controlBarColor: Colors.black.withValues(alpha: 0.5),
       progressBarHandleColor: Colors.red,
       
     ),
@@ -47,7 +47,7 @@ BetterPlayerPlaylistConfiguration createPlayList(
 BetterPlayerCacheConfiguration cacheConfiguration(String videoUrl,
     {int maxCacheSize = 50 * 1024 * 1024}) {
   return BetterPlayerCacheConfiguration(
-      useCache: true,
+      useCache: false,
       maxCacheSize: maxCacheSize,
       key: videoUrl.toString(),
       maxCacheFileSize: 50 * 1024 * 1024,

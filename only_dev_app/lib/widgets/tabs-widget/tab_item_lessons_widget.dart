@@ -1,6 +1,5 @@
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
-
-import '../../model/admin_model.dart';
+import '../../model/user_model.dart';
 import 'package:only_dev_app/features/courses/provider/admin_provider.dart';
 import 'package:only_dev_app/features/courses/provider/course_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
@@ -9,7 +8,6 @@ import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../di/dependency_injection.dart';
-import '../../service/firebase/firebase_api_user.dart';
 import 'package:flutter/material.dart';
 
 class TabItemLessonsWidget extends StatefulWidget {
@@ -27,7 +25,6 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
   late RegistrationProvider registrationProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
   final ScrollController scrollController = ScrollController();
-  final UserService userService = locator<UserService>();
   final Map<String, int> totalLecturesMap = {};
 
   @override
@@ -73,7 +70,7 @@ class _TabItemLessonsWidgetState extends State<TabItemLessonsWidget>
               final quizCount = courseProvider.quizCounts[course.id] ?? 0;
               final admin = adminProvider.admins.firstWhere(
                   (admin) => admin.id == course.adminId,
-                  orElse: () => AdminModel.empty());
+                  orElse: () => UserModel.empty());
               final totalLectures = courseProvider.lecturesMap[course.id] ?? 0;
               final isRegistered = registrationProvider.registeredCourses
                   .any((register) => register.courseId == course.id);

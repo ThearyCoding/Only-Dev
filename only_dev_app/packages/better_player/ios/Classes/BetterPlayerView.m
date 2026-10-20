@@ -6,12 +6,24 @@
 
 // BetterPlayerView.m
 @implementation BetterPlayerView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+        self.backgroundColor = [UIColor clearColor];
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    }
+    return self;
+}
+
 - (AVPlayer *)player {
     return self.playerLayer.player;
 }
 
 - (void)setPlayer:(AVPlayer *)player {
     self.playerLayer.player = player;
+    self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspect;
 }
 
 // Override UIView method

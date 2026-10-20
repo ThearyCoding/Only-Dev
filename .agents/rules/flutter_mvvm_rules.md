@@ -2,19 +2,22 @@
 
 Follow these coding rules strictly for the Flutter project (`only_dev_app`):
 
-## 1. Architecture
-Always use the **MVVM (Model–View–ViewModel)** architecture.
-- Feature views inherit from `BaseView<T>` (or use `Consumer<T>`).
-- ViewModels inherit from `BaseViewModel` (or `ChangeNotifier`) to manage reactive states (`ViewState.idle`, `busy`, `error`, `success`).
+## 1. Architecture & State Management (Riverpod)
+Always use **Riverpod** for state management and follow the **MVVM (Model–View–ViewModel / Notifier)** architecture.
+- Feature views inherit from `ConsumerWidget` or `ConsumerStatefulWidget`.
+- Use `ref.watch()` to reactively listen to state changes and rebuild UI.
+- Use `ref.read()` in event handlers to invoke actions or mutations.
+- State is managed via Riverpod Notifiers (`Notifier`, `AsyncNotifier`, `StateNotifier`) or ViewModels decoupled from Flutter widgets.
 
 ## 2. HTTP Requests
 Always use the **`dio`** package for all API calls. Centralized through `DioClient` with interceptors (`AuthInterceptor`, `ApiErrorInterceptor`).
 
-## 3. UI Separation
-Never make API calls directly inside UI widgets. UI widgets must only display data and forward user actions to the ViewModel.
+## 3. UI Separation & No `setState` Rule
+- **No `setState`**: **DO NOT USE `setState`**. All screen state, UI state, toggle flags, and asynchronous operations must be managed reactively through **Riverpod**.
+- **No Direct Service or Repository in UI**: Never make API calls or invoke repository/service methods directly inside UI widgets. UI widgets must only display data and forward user actions to Riverpod notifiers/providers.
 
-## 4. ViewModel
-Handle UI state and presentation logic, including loading, success, empty, and error states. ViewModels must never import UI rendering packages like `dart:ui`.
+## 4. ViewModel / Notifier
+Handle UI state and presentation logic, including loading, success, empty, and error states. Notifiers and ViewModels must never import UI rendering packages like `dart:ui`.
 
 ## 5. Repository
 Use a repository layer between the ViewModel and API service / data sources to manage data access, caching, and domain transformations.
@@ -23,7 +26,9 @@ Use a repository layer between the ViewModel and API service / data sources to m
 Put all endpoint methods in API service / remote data source classes and use the centralized Dio client (`locator<DioClient>()`).
 
 ## 7. Data Models
-Use typed Dart models to parse API responses instead of using `dynamic` everywhere. Ensure safe parsing and null-safety.
+Use typed Dart models to parse API responses instead of using `dynamic` everywhere.
+- **Dates & Timestamps as Strings**: Do not use `DateTime` in models. Let the backend format dates and return them as strings (`String` or `String?`). Models must store dates as strings rather than parsing to `DateTime`.
+- Ensure safe parsing and null-safety.
 
 ## 8. Dependency Injection
 Reuse existing dependency injection (`GetIt locator` in `lib/di/dependency_injection.dart`) and project conventions.
@@ -48,6 +53,12 @@ Before changing anything, inspect the existing project structure and follow its 
   - `fromMap` / `fromJson` constructors must parse `snake_case` keys (with fallback to `camelCase` for backward compatibility where applicable).
   - `toMap` / `toJson` methods must emit strictly `snake_case` keys only.
   - **Never emit duplicate keys**: Do NOT output both camelCase and snake_case keys in serialization (e.g., avoid `'full_name': name, 'fullName': name`). Only include the single `snake_case` key.
+
+## 13. Screen-Aggregated API Pattern (Single Screen = Single Endpoint)
+- **Do NOT call multiple API endpoints for the same screen**.
+- Never make multiple scattered HTTP requests from a single screen or ViewModel (e.g., calling banners, categories, popular courses, and recent courses separately to populate the Home screen).
+- The backend must provide a consolidated screen endpoint (e.g., `GET /home`) returning an aggregated payload (`banners`, `categories`, `courses`, `recent_courses`, `popular_courses`).
+- The mobile app requests this single composite endpoint through its ViewModel/Repository via Dio, minimizing mobile network round trips, battery consumption, and complex fragmented loading states.
 
 ---
 

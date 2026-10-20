@@ -160,9 +160,12 @@ class _VideoProgressBarState
     final RenderObject? renderObject = context.findRenderObject();
     if (renderObject != null) {
       final box = renderObject as RenderBox;
+      if (box.size.width <= 0) return;
       final Offset tapPos = box.globalToLocal(globalPosition);
-      final double relative = tapPos.dx / box.size.width;
-      if (relative > 0) {
+      final double relative = (tapPos.dx / box.size.width).clamp(0.0, 1.0);
+      if (relative > 0 &&
+          controller?.value.duration != null &&
+          controller!.value.duration!.inMilliseconds > 0) {
         final Duration position = controller!.value.duration! * relative;
         lastSeek = position;
         await betterPlayerController!.seekTo(position);
@@ -197,6 +200,15 @@ class _ProgressBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.width.isNaN ||
+        size.height.isNaN ||
+        size.width.isInfinite ||
+        size.height.isInfinite ||
+        size.width <= 0 ||
+        size.height <= 0) {
+      return;
+    }
+
     const height = 2.0;
 
     canvas.drawRRect(
@@ -209,35 +221,43 @@ class _ProgressBarPainter extends CustomPainter {
       ),
       colors.backgroundPaint,
     );
-    if (!value.initialized) {
+    if (!value.initialized ||
+        value.duration == null ||
+        value.duration!.inMilliseconds <= 0) {
       return;
     }
     double playedPartPercent =
         value.position.inMilliseconds / value.duration!.inMilliseconds;
-    if (playedPartPercent.isNaN) {
-      playedPartPercent = 0;
+    if (playedPartPercent.isNaN || playedPartPercent.isInfinite || playedPartPercent < 0) {
+      playedPartPercent = 0.0;
     }
-    final double playedPart =
+    double playedPart =
         playedPartPercent > 1 ? size.width : playedPartPercent * size.width;
+    if (playedPart.isNaN || playedPart.isInfinite || playedPart < 0) {
+      playedPart = 0.0;
+    }
+    playedPart = playedPart.clamp(0.0, size.width);
     for (final DurationRange range in value.buffered) {
       double start = range.startFraction(value.duration!) * size.width;
-      if (start.isNaN) {
-        start = 0;
+      if (start.isNaN || start.isInfinite) {
+        start = 0.0;
       }
       double end = range.endFraction(value.duration!) * size.width;
-      if (end.isNaN) {
-        end = 0;
+      if (end.isNaN || end.isInfinite) {
+        end = 0.0;
       }
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromPoints(
-            Offset(start, size.height / 2),
-            Offset(end, size.height / 2 + height),
+      if (end > start) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromPoints(
+              Offset(start, size.height / 2),
+              Offset(end, size.height / 2 + height),
+            ),
+            const Radius.circular(4.0),
           ),
-          const Radius.circular(4.0),
-        ),
-        colors.bufferedPaint,
-      );
+          colors.bufferedPaint,
+        );
+      }
     }
     canvas.drawRRect(
       RRect.fromRectAndRadius(

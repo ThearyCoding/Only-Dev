@@ -11,6 +11,9 @@ class ApiEndpoints {
     return 'http://localhost:4000/api/v1';
   }
 
+  // Screen-Aggregated BFF Endpoints (Single Screen = Single Endpoint)
+  static const String home = '/home';
+
   // Auth
   static const String login = '/auth/login';
   static const String register = '/auth/register';
@@ -28,7 +31,7 @@ class ApiEndpoints {
 
   // Courses
   static const String courses = '/courses';
-  static String courseDetail(String id) => '/courses/$id';
+  static String courseDetail(String id) => '/courses/get-detail/$id';
   static String courseSections(String id) => '/courses/$id/sections';
   static String sectionLessons(String sectionId) => '/courses/sections/$sectionId/lessons';
 

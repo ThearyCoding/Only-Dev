@@ -1,115 +1,92 @@
 import 'dart:io';
-import 'package:only_dev_app/features/posts/view/post_list_screen.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_notifications.dart';
-import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/features/posts/view/post_list_screen.dart';
+import 'package:only_dev_app/utils/app_toast_utils.dart';
 
-class PostEditorScreen extends StatefulWidget {
+class PostEditorScreen extends ConsumerStatefulWidget {
   const PostEditorScreen({super.key});
 
   @override
-  PostEditorScreenState createState() => PostEditorScreenState();
+  ConsumerState<PostEditorScreen> createState() => _PostEditorScreenState();
 }
 
-class PostEditorScreenState extends State<PostEditorScreen> {
+class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
   final TextEditingController _titleController = TextEditingController();
-  final List<Map<String, dynamic>> _contentSections = [];
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final Uuid uuid = const Uuid();
+  final Map<String, TextEditingController> _textControllers = {};
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    for (final controller in _textControllers.values) {
+      controller.dispose();
+    }
+    _textControllers.clear();
+    super.dispose();
+  }
+
+  TextEditingController _getControllerForSection(String sectionId) {
+    return _textControllers.putIfAbsent(
+      sectionId,
+      () => TextEditingController(),
+    );
+  }
 
   void _addTextSection() {
-    setState(() {
-      _contentSections.add({
-        'type': 'text',
-        'controller': TextEditingController(),
-      });
-    });
+    ref.read(postEditorProvider.notifier).addTextSection();
   }
 
   Future<void> _addImageSection() async {
-    // final ImagePicker picker = ImagePicker();
-    // final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    // if (image != null) {
-    //   setState(() {
-    //     _contentSections.add({
-    //       'type': 'image',
-    //       'filePath': image.path,
-    //     });
-    //   });
-    // }
-  }
-
-  void _removeSection(int index) {
-    setState(() {
-      _contentSections.removeAt(index);
-    });
-  }
-
-  Future<String> _uploadImage(String filePath) async {
     try {
-      String fileId = uuid.v4();
-      Reference storageRef = _storage.ref().child('post_images/$fileId');
-      UploadTask uploadTask = storageRef.putFile(File(filePath));
-      TaskSnapshot snapshot = await uploadTask;
-      return await snapshot.ref.getDownloadURL();
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        ref.read(postEditorProvider.notifier).addImageSection(image.path);
+      }
     } catch (e) {
-      throw Exception('Image upload failed: $e');
+      AppToastUtils.error('Failed to pick image: $e');
     }
+  }
+
+  void _removeSection(String sectionId) {
+    _textControllers.remove(sectionId)?.dispose();
+    ref.read(postEditorProvider.notifier).removeSection(sectionId);
   }
 
   Future<void> _savePost() async {
-    if (_titleController.text.isEmpty || _contentSections.isEmpty) {
-      AppToastUtils.warning('Title and at least one content section are required!');
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      AppToastUtils.warning('Title is required!');
       return;
     }
 
-    try {
-      // Create a new document in Firestore
-      DocumentReference postRef = _firestore.collection('posts').doc();
-      // Get the auto-generated ID
-      String id = postRef.id;
-      String notificationId = const Uuid().v1();
-      List<Map<String, dynamic>> contentList = [];
-      String? contentPreview;
+    final editorState = ref.read(postEditorProvider);
+    if (editorState.sections.isEmpty) {
+      AppToastUtils.warning('At least one content section is required!');
+      return;
+    }
 
-      for (var section in _contentSections) {
-        if (section['type'] == 'text') {
-          String textContent = section['controller'].text;
-          contentList.add({
-            'type': 'text',
-            'content': textContent,
-          });
-          // Set content preview to the first text section
-          contentPreview ??= textContent;
-        } else if (section['type'] == 'image') {
-          String imageUrl = await _uploadImage(section['filePath']);
-          contentList.add({
-            'type': 'image',
-            'url': imageUrl,
-          });
-        }
+    // Collect all text from controllers
+    final Map<String, String> textContents = {};
+    for (var section in editorState.sections) {
+      if (section.type == 'text') {
+        textContents[section.id] = _textControllers[section.id]?.text ?? '';
       }
+    }
 
-      // If no contentPreview is found, set a default one
-      contentPreview ??= 'No content available';
-
-      await postRef.set({
-        'id': id,
-        'title': _titleController.text,
-        'contentPreview': contentPreview,
-        'contentSections': contentList,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      await FirebaseApiNotifications()
-          .markAsReadForUsersWithToken(notificationId, id);
+    try {
+      await ref.read(postEditorProvider.notifier).savePost(
+            title: title,
+            textContents: textContents,
+          );
       if (!mounted) return;
       AppToastUtils.success('Post saved successfully!');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PostListScreen()),
+      );
     } catch (e) {
       if (!mounted) return;
       AppToastUtils.error('Failed to save post: $e');
@@ -118,15 +95,29 @@ class PostEditorScreenState extends State<PostEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final editorState = ref.watch(postEditorProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add New Post'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _savePost,
-          ),
+          if (editorState.isSubmitting)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _savePost,
+            ),
           IconButton(
             icon: const Icon(Icons.newspaper),
             onPressed: () {
@@ -151,14 +142,16 @@ class PostEditorScreenState extends State<PostEditorScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              ..._contentSections.map((section) {
-                if (section['type'] == 'text') {
+              ...editorState.sections.map((section) {
+                if (section.type == 'text') {
+                  final controller = _getControllerForSection(section.id);
                   return Padding(
+                    key: ValueKey(section.id),
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Column(
                       children: [
                         TextField(
-                          controller: section['controller'],
+                          controller: controller,
                           maxLines: 4,
                           decoration: const InputDecoration(
                             labelText: 'Content',
@@ -170,25 +163,24 @@ class PostEditorScreenState extends State<PostEditorScreen> {
                           alignment: Alignment.centerRight,
                           child: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeSection(
-                                _contentSections.indexOf(section)),
+                            onPressed: () => _removeSection(section.id),
                           ),
                         ),
                       ],
                     ),
                   );
-                } else if (section['type'] == 'image') {
+                } else if (section.type == 'image') {
                   return Padding(
+                    key: ValueKey(section.id),
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Column(
                       children: [
-                        Image.file(File(section['filePath'])),
+                        Image.file(File(section.content)),
                         Align(
                           alignment: Alignment.centerRight,
                           child: IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeSection(
-                                _contentSections.indexOf(section)),
+                            onPressed: () => _removeSection(section.id),
                           ),
                         ),
                       ],
@@ -196,18 +188,18 @@ class PostEditorScreenState extends State<PostEditorScreen> {
                   );
                 }
                 return const SizedBox.shrink();
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _addTextSection,
+                    onPressed: editorState.isSubmitting ? null : _addTextSection,
                     icon: const Icon(Icons.text_fields),
                     label: const Text('Add Text'),
                   ),
                   ElevatedButton.icon(
-                    onPressed: _addImageSection,
+                    onPressed: editorState.isSubmitting ? null : _addImageSection,
                     icon: const Icon(Icons.add_a_photo),
                     label: const Text('Add Image'),
                   ),

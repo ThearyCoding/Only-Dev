@@ -9,6 +9,7 @@ import {
   Param,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { CoursesService } from '../service/courses.service.js';
 import { CreateCourseDto, UpdateCourseDto, CreateSectionDto, CreateLessonDto } from '../dto/course.dto.js';
@@ -37,9 +38,35 @@ export class CoursesController {
   }
 
   @Public()
+  @Get('get-detail/:id')
+  async getCourseDetailById(
+    @Param('id') id: string,
+    @CurrentUser() user?: CurrentUserPayload,
+  ) {
+    return this.coursesService.findById(id, true, user?.userId);
+  }
+
+  @Public()
+  @Get('get-detail')
+  async getCourseDetailByQuery(
+    @Query('id') id?: string,
+    @Query('course_id') courseId?: string,
+    @CurrentUser() user?: CurrentUserPayload,
+  ) {
+    const targetId = id || courseId;
+    if (!targetId) {
+      throw new BadRequestException('Course id is required');
+    }
+    return this.coursesService.findById(targetId, true, user?.userId);
+  }
+
+  @Public()
   @Get(':id')
-  async getCourseById(@Param('id') id: string) {
-    return this.coursesService.findById(id, true);
+  async getCourseById(
+    @Param('id') id: string,
+    @CurrentUser() user?: CurrentUserPayload,
+  ) {
+    return this.coursesService.findById(id, true, user?.userId);
   }
 
   @Post()

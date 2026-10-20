@@ -1,6 +1,6 @@
 {
-    "name": "e_leaningapp",
-    "short_name": "e_leaningapp",
+    "name": "Only Dev",
+    "short_name": "Only Dev",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

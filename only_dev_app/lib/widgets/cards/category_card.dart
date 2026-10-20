@@ -1,14 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../model/category_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
+import '../app_widgets/app_image_widget.dart';
+import '../../model/category_model.dart';
 
 class CategoryCard extends StatelessWidget {
   final CategoryModel category;
   final double widgetWidth;
   final double fontSize;
 
-  const CategoryCard({Key? key,required this.category, required this.widgetWidth, required this.fontSize}) : super(key: key);
+  const CategoryCard({Key? key, required this.category, required this.widgetWidth, required this.fontSize}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +19,14 @@ class CategoryCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          ClipRRect(
+          AppImageWidget(
+            imageUrl: category.imageUrl,
+            blurHash: category.blurHash,
             borderRadius: BorderRadius.circular(15),
-            child: CachedNetworkImage(
-              imageUrl: category.imageUrl,
-              placeholder: (context, url) => BlurHash(hash: category.blurHash ?? ''),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-              height: double.infinity,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            height: double.infinity,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            fallbackIcon: Icons.category_outlined,
           ),
           Positioned(
             bottom: 0,

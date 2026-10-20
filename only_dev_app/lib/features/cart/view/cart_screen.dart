@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/utils/generate_color.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
@@ -24,47 +25,25 @@ class _CartScreenState extends State<CartScreen> {
   String firstname = '';
   String lastname = '';
 
- 
-
-  // Function to fetch user color and names from Firestore
-  void fetchUserColor() async {
-    DocumentSnapshot doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .get();
-
-    if (doc.exists) {
-      String? colorHex = doc['backgroundColor'];
-      String firstname = doc["firstName"] ?? '';
-      String lastname = doc["lastName"] ?? '';
-
-      if (colorHex != null) {
-        Color userColor = Color(int.parse(colorHex.replaceFirst('#', '0xff')));
-        setState(() {
-          backgroundColor = userColor;
-          textColor =GenerateColor.getContrastingTextColor(userColor);
-          this.firstname = firstname;
-          this.lastname = lastname;
-        });
-      }
+  void fetchUserData() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currentUser = userProvider.userModel ?? userProvider.user;
+    if (currentUser != null) {
+      setState(() {
+        firstname = currentUser.firstName;
+        lastname = currentUser.lastName;
+        backgroundColor = GenerateColor.generateRandomColor();
+        textColor = GenerateColor.getContrastingTextColor(backgroundColor);
+      });
     }
-  }
-
-  // Function to handle user login and save random color
-  Future<void> onUserLogin() async {
-    Color userColor =GenerateColor.generateRandomColor();
-    String colorHex = '#${userColor.value.toRadixString(16).padLeft(6, '0')}';
-
-    await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
-      'backgroundColor': colorHex,
-    }, SetOptions(merge: true));
   }
 
   @override
   void initState() {
     super.initState();
-    onUserLogin();
-    fetchUserColor();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchUserData();
+    });
   }
 
   @override
@@ -151,9 +130,6 @@ class _CartScreenState extends State<CartScreen> {
                 backgroundColor: Colors.green,
                 onTap: (startLoading, stopLoading, btnstate) async {
                   startLoading;
-
-                  await onUserLogin();
-
                   AppToastUtils.success("Success!");
                   stopLoading;
                 },

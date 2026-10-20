@@ -22,8 +22,8 @@ export class StorageController {
     @Body() dto: PresignRequestDto,
   ) {
     // Basic folder permission rules:
-    // Any authenticated user can upload their own avatar
-    if (dto.folder === 'avatars') {
+    // Any authenticated user can upload their own avatar, post images, thumbnails, etc.
+    if (dto.folder !== 'videos') {
       return this.storageService.generatePresignedUploadUrl(user.userId, dto);
     }
 

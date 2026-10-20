@@ -9,12 +9,17 @@ class EnrollmentModel {
   final String status;
   final double pricePaid;
   final String currency;
-  final DateTime enrolledAt;
-  final DateTime? expiresAt;
+  final String enrolledAt;
+  final String? expiresAt;
   final int percentComplete;
   final bool isCompleted;
   final String? lastAccessedLessonId;
   final CourseModel? course;
+
+  final String? createdAt;
+  final String? updatedAt;
+  final String? createdBy;
+  final String? updatedBy;
 
   EnrollmentModel({
     required this.id,
@@ -30,27 +35,17 @@ class EnrollmentModel {
     this.isCompleted = false,
     this.lastAccessedLessonId,
     this.course,
+    this.createdAt,
+    this.updatedAt,
+    this.createdBy,
+    this.updatedBy,
   });
 
   // Backward compatibility getters for existing UI widgets
   bool get isRegistered => status == 'active';
   String get docId => id;
-  DateTime get timestamp => enrolledAt;
   String get categoryId => course?.categoryId ?? '';
   int get progressPercentage => percentComplete;
-
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-    try {
-      final dynamic dyn = value;
-      return dyn.toDate() as DateTime;
-    } catch (_) {
-      return DateTime.now();
-    }
-  }
 
   factory EnrollmentModel.fromMap(Map<String, dynamic> map) {
     CourseModel? courseObj;
@@ -82,8 +77,8 @@ class EnrollmentModel {
       currency: (map['price_paid'] is Map
           ? map['price_paid']['currency']
           : (map['pricePaid'] is Map ? map['pricePaid']['currency'] : map['currency'])) ?? 'USD',
-      enrolledAt: _parseDateTime(map['enrolled_at'] ?? map['enrolledAt'] ?? map['timestamp']),
-      expiresAt: (map['expires_at'] ?? map['expiresAt']) != null ? _parseDateTime(map['expires_at'] ?? map['expiresAt']) : null,
+      enrolledAt: (map['enrolled_at'] ?? map['enrolledAt'] ?? map['timestamp'] ?? '').toString(),
+      expiresAt: (map['expires_at'] ?? map['expiresAt'])?.toString(),
       percentComplete: progressMap != null
           ? ((progressMap['percent_complete'] ?? progressMap['percentComplete'] ?? 0) as num).toInt()
           : ((map['percent_complete'] ?? map['percentComplete'] ?? 0) as num).toInt(),
@@ -92,6 +87,10 @@ class EnrollmentModel {
           : (map['is_completed'] ?? map['isCompleted'] ?? false) as bool,
       lastAccessedLessonId: (progressMap?['last_accessed_lesson_id'] ?? progressMap?['lastAccessedLessonId'])?.toString(),
       course: courseObj,
+      createdAt: (map['created_at'] ?? map['createdAt'] ?? map['enrolled_at'] ?? map['enrolledAt'] ?? map['timestamp'])?.toString(),
+      updatedAt: (map['updated_at'] ?? map['updatedAt'])?.toString(),
+      createdBy: (map['created_by'] ?? map['createdBy'])?.toString(),
+      updatedBy: (map['updated_by'] ?? map['updatedBy'])?.toString(),
     );
   }
 
@@ -107,11 +106,15 @@ class EnrollmentModel {
       'status': status,
       'price_paid': pricePaid,
       'currency': currency,
-      'enrolled_at': enrolledAt.toIso8601String(),
-      'expires_at': expiresAt?.toIso8601String(),
+      'enrolled_at': enrolledAt,
+      'expires_at': expiresAt,
       'percent_complete': percentComplete,
       'is_completed': isCompleted,
       'last_accessed_lesson_id': lastAccessedLessonId,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'created_by': createdBy,
+      'updated_by': updatedBy,
     };
   }
 

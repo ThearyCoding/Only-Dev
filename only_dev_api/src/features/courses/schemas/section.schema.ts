@@ -99,6 +99,12 @@ export class Section {
 
   @Prop({ type: [LessonSchema], default: [] })
   lessons: Lesson[];
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const SectionSchema = SchemaFactory.createForClass(Section);

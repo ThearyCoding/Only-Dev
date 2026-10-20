@@ -50,10 +50,10 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  /// `E-Learning`
+  /// `Only Dev`
   String get appTitle {
     return Intl.message(
-      'E-Learning',
+      'Only Dev',
       name: 'appTitle',
       desc: '',
       args: [],

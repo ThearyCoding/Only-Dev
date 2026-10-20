@@ -73,6 +73,12 @@ export class User {
 
   @Prop()
   lastLoginAt?: Date;
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

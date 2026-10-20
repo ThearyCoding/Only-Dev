@@ -8,5 +8,4 @@ export '../../model/category_model.dart';
 export '../../model/banner_model.dart';
 export '../../model/notification_model.dart';
 export '../../model/post_model.dart';
-export '../../model/admin_model.dart';
 

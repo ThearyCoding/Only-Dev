@@ -1,14 +1,13 @@
-import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/utils/app_toast_utils.dart';
-import 'package:only_dev_app/widgets/loadings-widget/custom_smart_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:only_dev_app/model/notification_model.dart';
+
 import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
+import 'package:only_dev_app/features/posts/view/post_editor_screen.dart';
+import 'package:only_dev_app/generated/l10n.dart';
+import 'package:only_dev_app/model/notification_model.dart';
+import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_notification_shimmer_loading.dart';
 import 'package:only_dev_app/widgets/notification-widget/notification_widget.dart';
-import 'package:only_dev_app/features/posts/view/post_editor_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -18,23 +17,43 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late RefreshController _refreshController;
+  final ScrollController _scrollController = ScrollController();
+  NotificationProvider? _provider;
+
   @override
   void initState() {
     super.initState();
-    _refreshController = RefreshController(initialRefresh: false);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _refreshController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200) {
+      final p = _provider;
+      if (p != null && p.hasMoreNotifications && !p.isLoading) {
+        p.onLoading().then((_) {
+          if (!p.hasMoreNotifications && mounted) {
+            final localization = AppLocalizations.of(context);
+            AppToastUtils.show(localization.no_more_notifications);
+          }
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final localization = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -62,64 +81,67 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Consumer<NotificationProvider>(
         builder: (context, provider, child) {
+          _provider = provider;
+
           if (provider.isLoading && provider.notifications.isEmpty) {
             return const BuildNotificationShimmerLoading();
           }
-          List<NotificationModel> newNotifications =
-              provider.getNewNotifications();
-          List<NotificationModel> todayNotifications =
-              provider.getTodayNotifications();
-          List<NotificationModel> earlierNotifications =
-              provider.getEarlierNotifications();
-          return SmartRefresher(
-            controller: _refreshController,
-            enablePullUp: true,
-            header: const CustomizeHeader(),
-            footer: CustomizeFooter(noDataText: localization.notifications),
-            onRefresh: () async {
-              _refreshController.loadComplete();
-              await provider.onRefresh();
-              _refreshController.refreshCompleted();
-            },
-            onLoading: () async {
-              await _refreshController.requestLoading();
-              await provider.onLoading();
-              _refreshController.loadComplete();
-              if (!provider.hasMoreNotifications) {
-                AppToastUtils.show(localization.no_more_notifications);
-                _refreshController.loadNoData();
-                return;
-              }
-            },
-            child: provider.notifications.isEmpty
-                ? Center(
+
+          if (provider.notifications.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: provider.onRefresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
                     child: Text(localization.no_notifications),
-                  )
-                : ListView(
-                    children: [
-                      if (newNotifications.isNotEmpty) ...[
-                        _buildSectionHeader(localization.NEW),
-                        ...newNotifications
-                            .map((notification) =>
-                                NotificationItem(notification: notification))
-                            .toList(),
-                      ],
-                      if (todayNotifications.isNotEmpty) ...[
-                        _buildSectionHeader(localization.today),
-                        ...todayNotifications
-                            .map((notification) =>
-                                NotificationItem(notification: notification))
-                            .toList(),
-                      ],
-                      if (earlierNotifications.isNotEmpty) ...[
-                        _buildSectionHeader(localization.earlier),
-                        ...earlierNotifications
-                            .map((notification) =>
-                                NotificationItem(notification: notification))
-                            .toList(),
-                      ],
-                    ],
                   ),
+                ),
+              ),
+            );
+          }
+
+          final List<NotificationModel> newNotifications =
+              provider.getNewNotifications();
+          final List<NotificationModel> todayNotifications =
+              provider.getTodayNotifications();
+          final List<NotificationModel> earlierNotifications =
+              provider.getEarlierNotifications();
+
+          return RefreshIndicator(
+            onRefresh: provider.onRefresh,
+            child: ListView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                if (newNotifications.isNotEmpty) ...[
+                  _buildSectionHeader(localization.NEW),
+                  ...newNotifications
+                      .map((notification) =>
+                          NotificationItem(notification: notification)),
+                ],
+                if (todayNotifications.isNotEmpty) ...[
+                  _buildSectionHeader(localization.today),
+                  ...todayNotifications
+                      .map((notification) =>
+                          NotificationItem(notification: notification)),
+                ],
+                if (earlierNotifications.isNotEmpty) ...[
+                  _buildSectionHeader(localization.earlier),
+                  ...earlierNotifications
+                      .map((notification) =>
+                          NotificationItem(notification: notification)),
+                ],
+                if (provider.isLoading && provider.notifications.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),

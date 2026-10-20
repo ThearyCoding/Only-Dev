@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../di/dependency_injection.dart';
-import '../../model/admin_model.dart';
+import '../../model/user_model.dart';
 import 'package:only_dev_app/features/courses/provider/admin_provider.dart';
 import 'package:only_dev_app/features/courses/provider/course_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
 import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
-
 class TabItemRecentWidget extends StatefulWidget {
   final Key uniqueKey;
   const TabItemRecentWidget(this.uniqueKey, {super.key});
@@ -26,8 +24,6 @@ class _TabItemRecentWidgetState extends State<TabItemRecentWidget>
   late AdminProvider adminProvider;
   late RegistrationProvider registrationProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
-  final RefreshController refreshController =
-      RefreshController(initialRefresh: false);
   final ScrollController scrollController = ScrollController();
 
   @override
@@ -71,7 +67,7 @@ class _TabItemRecentWidgetState extends State<TabItemRecentWidget>
             final quizCount = courseProvider.quizCounts[course.id] ?? 0;
             final admin = adminProvider.admins.firstWhere(
                 (admin) => admin.id == course.adminId,
-                orElse: () => AdminModel.empty());
+                orElse: () => UserModel.empty());
             final totalLectures = courseProvider.lecturesMap[course.id] ?? 0;
             final isRegistered = registrationProvider.registeredCourses
                 .any((register) => register.courseId == course.id);

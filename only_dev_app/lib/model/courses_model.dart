@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'section_model.dart';
+import 'user_model.dart';
 
 class CourseModel {
   final String id;
@@ -6,7 +8,10 @@ class CourseModel {
   final String imageUrl;
   final String categoryId;
   final String adminId;
-  final DateTime? timestamp;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? createdBy;
+  final String? updatedBy;
   final int? registerCounts;
   final double? price;
   final int? discount;
@@ -22,6 +27,11 @@ class CourseModel {
   final int? ratingCount;
   final int? totalDurationSeconds;
   final int? totalLessons;
+  final List<Section>? sections;
+  final UserModel? instructor;
+  final bool isEnrolled;
+  final bool isRegistered;
+  final String? enrollmentId;
 
   CourseModel({
     required this.id,
@@ -29,7 +39,10 @@ class CourseModel {
     required this.imageUrl,
     required this.categoryId,
     required this.adminId,
-    this.timestamp,
+    this.createdAt,
+    this.updatedAt,
+    this.createdBy,
+    this.updatedBy,
     this.registerCounts,
     this.price,
     this.discount,
@@ -43,26 +56,17 @@ class CourseModel {
     this.ratingCount,
     this.totalDurationSeconds,
     this.totalLessons,
+    this.sections,
+    this.instructor,
+    this.isEnrolled = false,
+    this.isRegistered = false,
+    this.enrollmentId,
   });
 
   // Modern naming aliases
   String get instructorId => adminId;
   int get enrollmentCounts => registerCounts ?? 0;
   String get thumbnailUrl => imageUrl;
-
-  static DateTime? _parseDateTime(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-    // Backward compatibility for Firestore Timestamp without hard dependency
-    try {
-      final dynamic dyn = value;
-      return dyn.toDate() as DateTime;
-    } catch (_) {
-      return null;
-    }
-  }
 
   factory CourseModel.fromMap(Map<String, dynamic> map) {
     return CourseModel(
@@ -74,7 +78,10 @@ class CourseModel {
               ? map['instructor_id']['_id']
               : map['instructor_id'] ?? map['instructorId'] ?? map['admin_id'] ?? map['adminId'] ?? '')
           .toString(),
-      timestamp: _parseDateTime(map['created_at'] ?? map['createdAt'] ?? map['timestamp']),
+      createdAt: (map['created_at'] ?? map['createdAt'] ?? map['timestamp'])?.toString(),
+      updatedAt: (map['updated_at'] ?? map['updatedAt'])?.toString(),
+      createdBy: (map['created_by'] ?? map['createdBy'])?.toString(),
+      updatedBy: (map['updated_by'] ?? map['updatedBy'])?.toString(),
       registerCounts: (map['enrollment_counts'] ?? map['enrollmentCounts'] ?? map['register_counts'] ?? map['registerCounts']) as int? ?? 0,
       price: ((map['price'] ?? 0) as num).toDouble(),
       discount: (map['discount_percentage'] ?? map['discountPercentage'] ?? map['discount']) as int? ?? 0,
@@ -88,6 +95,19 @@ class CourseModel {
       ratingCount: (map['rating_count'] ?? map['ratingCount']) as int?,
       totalDurationSeconds: (map['total_duration_seconds'] ?? map['totalDurationSeconds']) as int?,
       totalLessons: (map['total_lessons'] ?? map['totalLessons']) as int?,
+      sections: (map['sections'] as List<dynamic>?)
+          ?.map((x) => Section.fromMap(x as Map<String, dynamic>))
+          .toList(),
+      instructor: (map['instructor_id'] is Map
+          ? UserModel.fromMap(map['instructor_id'] as Map<String, dynamic>)
+          : (map['instructorId'] is Map
+              ? UserModel.fromMap(map['instructorId'] as Map<String, dynamic>)
+              : (map['instructor'] is Map
+                  ? UserModel.fromMap(map['instructor'] as Map<String, dynamic>)
+                  : null))),
+      isEnrolled: (map['is_enrolled'] ?? map['isEnrolled'] ?? map['is_registered'] ?? map['isRegistered'] ?? false) == true,
+      isRegistered: (map['is_registered'] ?? map['isRegistered'] ?? map['is_enrolled'] ?? map['isEnrolled'] ?? false) == true,
+      enrollmentId: (map['enrollment_id'] ?? map['enrollmentId'])?.toString(),
     );
   }
 
@@ -101,7 +121,10 @@ class CourseModel {
       'thumbnail_url': imageUrl,
       'category_id': categoryId,
       'instructor_id': adminId,
-      'created_at': timestamp?.toIso8601String(),
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'created_by': createdBy,
+      'updated_by': updatedBy,
       'enrollment_counts': registerCounts,
       'price': price,
       'discount': discount,
@@ -115,6 +138,11 @@ class CourseModel {
       'rating_count': ratingCount,
       'total_duration_seconds': totalDurationSeconds,
       'total_lessons': totalLessons,
+      'is_enrolled': isEnrolled,
+      'is_registered': isRegistered,
+      if (enrollmentId != null) 'enrollment_id': enrollmentId,
+      if (sections != null) 'sections': sections!.map((s) => s.toMap()).toList(),
+      if (instructor != null) 'instructor': instructor!.toMap(),
     };
   }
 

@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
+import 'package:only_dev_app/service/firebase/auth_service_google.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
 
 class AuthenticationProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   bool get isLoggedIn => _isLoggedIn;
   final FirebaseAuth _auth = locator<FirebaseAuth>();
+  final AuthServiceGoogle _authServiceGoogle = locator<AuthServiceGoogle>();
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -96,5 +98,25 @@ class AuthenticationProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<User?> signInWithGoogle() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final user = await _authServiceGoogle.signInWithGoogle();
+      if (user != null) {
+        await saveUserLoginStatus(true);
+      }
+      return user;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool isSignedInWithGoogle(User? user) {
+    if (user == null) return false;
+    return _authServiceGoogle.isSignedInWithGoogle(user);
   }
 }

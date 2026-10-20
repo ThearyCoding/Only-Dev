@@ -1,31 +1,23 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class PostModel {
   final String id;
   final String title;
   final String contentPreview;
   final List<Map<String, dynamic>> contentSections;
-  final DateTime timestamp;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? createdBy;
+  final String? updatedBy;
 
   PostModel({
     required this.id,
     required this.title,
     required this.contentPreview,
     required this.contentSections,
-    required this.timestamp,
+    this.createdAt,
+    this.updatedAt,
+    this.createdBy,
+    this.updatedBy,
   });
-
-  static DateTime _parseDateTime(dynamic val) {
-    if (val == null) return DateTime.now();
-    if (val is Timestamp) return val.toDate();
-    if (val is DateTime) return val;
-    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
-    if (val is String) {
-      final parsed = DateTime.tryParse(val);
-      if (parsed != null) return parsed;
-    }
-    return DateTime.now();
-  }
 
   factory PostModel.fromMap(Map<String, dynamic> map) {
     return PostModel(
@@ -35,7 +27,10 @@ class PostModel {
       contentSections: (map['content_sections'] ?? map['contentSections']) != null
           ? List<Map<String, dynamic>>.from(map['content_sections'] ?? map['contentSections'])
           : [],
-      timestamp: _parseDateTime(map['timestamp']),
+      createdAt: (map['created_at'] ?? map['createdAt'] ?? map['timestamp'])?.toString(),
+      updatedAt: (map['updated_at'] ?? map['updatedAt'])?.toString(),
+      createdBy: (map['created_by'] ?? map['createdBy'])?.toString(),
+      updatedBy: (map['updated_by'] ?? map['updatedBy'])?.toString(),
     );
   }
 
@@ -47,7 +42,10 @@ class PostModel {
       'title': title,
       'content_preview': contentPreview,
       'content_sections': contentSections,
-      'timestamp': timestamp.toIso8601String(),
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'created_by': createdBy,
+      'updated_by': updatedBy,
     };
   }
 

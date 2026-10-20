@@ -1,47 +1,54 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blurhash/flutter_blurhash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import '../app_widgets/app_image_widget.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/other-widget/custom_dotted_border.dart';
 import '../../generated/l10n.dart';
-import '../../model/admin_model.dart';
+import '../../model/user_model.dart';
 import '../../model/courses_model.dart';
 import '../../utils/app_toast_utils.dart';
 import '../../utils/time_utils.dart';
 import '../background-widget/animation_colors_gradients.dart';
 
-class CourseCardV2 extends StatefulWidget {
+class CourseCardV2 extends StatelessWidget {
   final CourseModel course;
-  final AdminModel admin;
+  final UserModel admin;
   final int quizCount;
   final bool isRegistered;
   final int totalLectures;
 
   const CourseCardV2({
-    Key? key,
+    super.key,
     required this.course,
     required this.admin,
     required this.quizCount,
     required this.isRegistered,
     required this.totalLectures,
-  }) : super(key: key);
+  });
 
-  @override
-  CourseCardV2State createState() => CourseCardV2State();
-}
-
-class CourseCardV2State extends State<CourseCardV2>
-    with TickerProviderStateMixin {
-  final FocusNode _focusNode = FocusNode();
-  bool _isTapped = false;
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
+  void _navigation(BuildContext context, AppLocalizations localization) {
+    if (isRegistered) {
+      context.push(
+        RoutesPath.topicScreen,
+        extra: {
+          'courseId': course.id,
+          'categoryId': course.categoryId,
+          'title': course.title,
+        },
+      );
+    } else if (course.status != "active" && course.status != "published") {
+      AppToastUtils.warning(localization.Thiscoursewillbeavailableshortly);
+    } else {
+      context.push(
+        RoutesPath.detailCourseScreen,
+        extra: {
+          'categoryId': course.categoryId,
+          'courseId': course.id,
+        },
+      );
+    }
   }
 
   @override
@@ -50,62 +57,36 @@ class CourseCardV2State extends State<CourseCardV2>
     final cardColor = isDarkMode ? Colors.grey.withValues(alpha: .1) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final secondaryTextColor = isDarkMode ? Colors.white70 : Colors.black87;
-    final borderColor = _isTapped ? Colors.green : Colors.transparent;
     final localization = AppLocalizations.of(context);
+    const buttonColor = Colors.green;
 
     return ZoomTapAnimation(
-      onTap: () {
-        navigation(localization);
-        setState(() {
-          _isTapped = true;
-        });
-      },
+      onTap: () => _navigation(context, localization),
       child: Card(
         color: cardColor,
+        elevation: isDarkMode ? 0 : 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: borderColor, width: 1.0),
+          side: isDarkMode
+              ? BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1.0)
+              : BorderSide.none,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
-                if (widget.course.imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(10)),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.course.imageUrl,
-                      width: double.infinity,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      // placeholder: (context, url) => Shimmer.fromColors(
-                      //   baseColor:
-                      //       Theme.of(context).brightness == Brightness.dark
-                      //           ? Colors.grey[800]!
-                      //           : Colors.grey[300]!,
-                      //   highlightColor:
-                      //       Theme.of(context).brightness == Brightness.dark
-                      //           ? Colors.grey[600]!
-                      //           : Colors.grey[100]!,
-                      //   child: Container(
-                      //     width: double.infinity,
-                      //     height: 120,
-                      //     color: Colors.white,
-                      //   ),
-                      // ),
-                      placeholder: (context, url) => BlurHash(hash: widget.course.blurHash ?? ''),
-                      errorWidget: (context, url, error) => const Center(
-                        child: Icon(
-                          Icons.error,
-                          color: Colors.red,
-                          size: 50,
-                        ),
-                      ),
-                    ),
-                  ),
-                if (TimeUtils.isNew(widget.course.timestamp, 4, TimeUnit.days))
+                AppImageWidget(
+                  imageUrl: course.imageUrl,
+                  width: double.infinity,
+                  height: 120,
+                  fit: BoxFit.cover,
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(10)),
+                  blurHash: course.blurHash,
+                  fallbackIcon: Icons.menu_book_outlined,
+                ),
+                if (TimeUtils.isNew(course.createdAt, 4, TimeUnit.days))
                   Positioned(
                     left: 8,
                     top: 8,
@@ -133,19 +114,21 @@ class CourseCardV2State extends State<CourseCardV2>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: widget.course.price == 0 &&
-                              widget.course.status == "active"
+                      color: (course.price == 0 || course.price == null) &&
+                              (course.status == "active" ||
+                                  course.status == "published")
                           ? Colors.green
-                          : widget.course.status == "active"
+                          : (course.status == "active" ||
+                                  course.status == "published")
                               ? Colors.green
                               : Colors.blueAccent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      widget.course.status == "active"
-                          ? (widget.course.price == 0
+                      (course.status == "active" || course.status == "published")
+                          ? ((course.price == 0 || course.price == null)
                               ? localization.Free
-                              : '\$${widget.course.price!.toStringAsFixed(2)}')
+                              : '\$${course.price!.toStringAsFixed(2)}')
                           : localization.Comingsoon,
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
@@ -159,7 +142,7 @@ class CourseCardV2State extends State<CourseCardV2>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.course.title,
+                    course.title,
                     style: GoogleFonts.roboto(
                       textStyle: const TextStyle(
                         fontSize: 15.0,
@@ -169,7 +152,7 @@ class CourseCardV2State extends State<CourseCardV2>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    widget.course.description ?? '',
+                    course.description ?? '',
                     softWrap: true,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -181,8 +164,8 @@ class CourseCardV2State extends State<CourseCardV2>
                       Icon(Icons.people, color: secondaryTextColor),
                       const SizedBox(width: 4),
                       Text(
-                        widget.course.registerCounts != null
-                            ? '${widget.course.registerCounts} ${localization.students}'
+                        course.registerCounts != null
+                            ? '${course.registerCounts} ${localization.students}'
                             : '0 ${localization.students}',
                         style:
                             TextStyle(color: secondaryTextColor, fontSize: 14),
@@ -191,7 +174,7 @@ class CourseCardV2State extends State<CourseCardV2>
                       Icon(Icons.video_library, color: secondaryTextColor),
                       const SizedBox(width: 4),
                       Text(
-                        '${widget.totalLectures} ${localization.lectures}',
+                        '$totalLectures ${localization.lectures}',
                         style:
                             TextStyle(color: secondaryTextColor, fontSize: 14),
                       ),
@@ -200,14 +183,14 @@ class CourseCardV2State extends State<CourseCardV2>
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      CircleAvatar(
-                        backgroundImage:
-                            CachedNetworkImageProvider(widget.admin.imageUrl),
+                      AppCircleAvatar(
+                        imageUrl: admin.imageUrl,
+                        name: admin.name,
                         radius: 16,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        widget.admin.name,
+                        admin.name,
                         style: TextStyle(color: textColor, fontSize: 14),
                       ),
                     ],
@@ -217,14 +200,14 @@ class CourseCardV2State extends State<CourseCardV2>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       CustomDottedButton(
-                        label: widget.isRegistered
+                        label: isRegistered
                             ? localization.Continue
                             : localization.enrollnow,
-                        icon: widget.isRegistered
+                        icon: isRegistered
                             ? Icons.play_arrow
                             : Icons.arrow_forward_rounded,
-                        color: borderColor,
-                        onPressed: () => navigation(localization),
+                        color: buttonColor,
+                        onPressed: () => _navigation(context, localization),
                       ),
                     ],
                   ),
@@ -235,28 +218,5 @@ class CourseCardV2State extends State<CourseCardV2>
         ),
       ),
     );
-  }
-
-  void navigation(AppLocalizations localization) {
-    if (widget.isRegistered) {
-      context.push(
-        RoutesPath.topicScreen,
-        extra: {
-          'courseId': widget.course.id,
-          'categoryId': widget.course.categoryId,
-          'title': widget.course.title,
-        },
-      );
-    } else if (widget.course.status != "active") {
-      AppToastUtils.warning(localization.Thiscoursewillbeavailableshortly);
-    } else {
-      context.push(
-        RoutesPath.detailCourseScreen,
-        extra: {
-          'categoryId': widget.course.categoryId,
-          'courseId': widget.course.id,
-        },
-      );
-    }
   }
 }

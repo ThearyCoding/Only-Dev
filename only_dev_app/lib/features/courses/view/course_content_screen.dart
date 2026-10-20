@@ -1,117 +1,88 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:better_player/better_player.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:numeral/numeral.dart';
-import 'package:provider/provider.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 
-import 'package:only_dev_app/di/dependency_injection.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/features/courses/widgets/course_curriculum_tab_widget.dart';
+import 'package:only_dev_app/features/courses/widgets/course_description_sheet.dart';
+import 'package:only_dev_app/features/courses/widgets/course_quiz_tab_widget.dart';
+import 'package:only_dev_app/features/courses/widgets/course_video_header_widget.dart';
+import 'package:only_dev_app/features/courses/widgets/course_video_player_widget.dart';
 import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/service/videos/video_service_helper.dart';
-import 'package:only_dev_app/widgets/tabs-widget/tab_item_content_widget.dart';
-import 'package:only_dev_app/widgets/tabs-widget/tab_item_quiz_widget.dart';
-import 'package:only_dev_app/widgets/topic-widget/description_topic_widget.dart';
 
-class CourseContentScreen extends StatefulWidget {
+class CourseContentScreen extends ConsumerStatefulWidget {
   final String? title;
   final String? courseId;
   final String? categoryId;
 
-  const CourseContentScreen({super.key, this.title, this.courseId, this.categoryId});
+  const CourseContentScreen({
+    super.key,
+    this.title,
+    this.courseId,
+    this.categoryId,
+  });
 
   @override
-  CourseContentScreenState createState() => CourseContentScreenState();
+  ConsumerState<CourseContentScreen> createState() => _CourseContentScreenState();
 }
 
-class CourseContentScreenState extends State<CourseContentScreen>
+class _CourseContentScreenState extends ConsumerState<CourseContentScreen>
     with SingleTickerProviderStateMixin {
-  VideoPlayerHelper? _videoPlayerHelper;
   late TabController _tabController;
-  late LectureProvider lectureProvider;
-
-  final User? user = locator<FirebaseAuth>().currentUser;
   final PanelController _panelController = PanelController();
   final PageStorageBucket _bucket = PageStorageBucket();
-  Set<String> downloadedVideos = {};
+
+  late CourseContentParams _params;
 
   @override
   void initState() {
     super.initState();
+    _params = CourseContentParams(
+      courseId: widget.courseId?.toString() ?? '',
+      categoryId: widget.categoryId?.toString() ?? '',
+    );
 
     _tabController = TabController(length: 2, vsync: this);
-    lectureProvider = Provider.of<LectureProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeVideoPlayer();
-    });
 
     _tabController.addListener(() {
-      if (_tabController.index == 1 && !lectureProvider.hasFetchedQuestions) {
-        lectureProvider.fetchTotalQuestions(widget.courseId ?? '');
+      if (!_tabController.indexIsChanging) {
+        ref
+            .read(courseContentNotifierProvider(_params).notifier)
+            .setActiveTab(_tabController.index);
       }
     });
-  }
 
-  Future<void> _initializeVideoPlayer() async {
-    // Ensure all values are properly converted to String if they could be integers
-    String categoryId = widget.categoryId?.toString() ?? '';
-    String courseId = widget.courseId?.toString() ?? '';
-    String title = widget.title?.toString() ?? '';
-
-    if (categoryId.isNotEmpty && courseId.isNotEmpty && title.isNotEmpty) {
-      try {
-        await lectureProvider.getSections(categoryId, courseId);
-
-        // Initialize VideoPlayerHelper only after confirming values are not null
-        _videoPlayerHelper ??= VideoPlayerHelper(
-          lectureProvider: lectureProvider,
-          user: user,
-          downloadedVideos: downloadedVideos,
-        );
-
-        await _videoPlayerHelper!.initVideoPlayer(
-          categoryId,
-          courseId,
-          lectureProvider.sections,
-          () => setState(() {}),
-        );
-      } catch (e) {
-        log('Error initializing video player: $e');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_params.courseId.isNotEmpty) {
+        ref.read(courseContentNotifierProvider(_params).notifier).initialize();
       }
-    } else {
-      log('CategoryId, CourseId, or Title is null');
-    }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _videoPlayerHelper!.dispose();
     super.dispose();
-  }
-
-  void clearState() {
-    lectureProvider.setCurrentPlayingVideo('', '', '', 0);
-    lectureProvider.setSelectedLectureId('');
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final localization = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(
           widget.title ?? 'Topics',
           style: TextStyle(
-              color: isDark ? Colors.white : Colors.black, fontSize: 16),
+            color: isDark ? Colors.white : Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         elevation: 0,
         titleSpacing: 0,
@@ -121,12 +92,9 @@ class CourseContentScreenState extends State<CourseContentScreen>
           icon: Icon(
             size: 16,
             Icons.arrow_back_ios,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
+            color: isDark ? Colors.white : Colors.black,
           ),
           onPressed: () {
-            clearState();
             if (context.canPop()) {
               context.pop();
             } else {
@@ -139,144 +107,27 @@ class CourseContentScreenState extends State<CourseContentScreen>
         controller: _panelController,
         minHeight: 0,
         maxHeight: 600,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         onPanelClosed: () {
-          _videoPlayerHelper?.betterPlayerController?.play();
+          ref.read(courseContentNotifierProvider(_params).notifier).setPanelOpen(false);
         },
         onPanelOpened: () {
-          _videoPlayerHelper?.betterPlayerController?.pause();
+          ref.read(courseContentNotifierProvider(_params).notifier).setPanelOpen(true);
         },
-        panel: DraggableScrollableSheet(
-          initialChildSize: 1.0,
-          minChildSize: 0.4,
-          maxChildSize: 1.0,
-          builder: (BuildContext context, ScrollController scrollController) {
-            return Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Description",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              _panelController.close();
-                            },
-                            icon: SvgPicture.asset(
-                              width: 20,
-                              height: 20,
-                              'assets/icons/icons8-cancel.svg',
-                              // ignore: deprecated_member_use
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    const Divider(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    lectureProvider.videoTitle,
-                                    maxLines: null,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 15),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 15, bottom: 0.8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                        "${lectureProvider.views.numeral(digits: 2)} Views"),
-                                    const SizedBox(
-                                      width: 200,
-                                    ),
-                                    Text(lectureProvider.timestamp),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              DescriptionWidget(
-                                videoDescription:
-                                    lectureProvider.videoDescription,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ));
+        panel: CourseDescriptionSheet(
+          params: _params,
+          onClose: () {
+            _panelController.close();
           },
         ),
         body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: _videoPlayerHelper?.betterPlayerController != null
-                  ? BetterPlayer(
-                      controller: _videoPlayerHelper!.betterPlayerController!,
-                    )
-                  : const Center(
-                      child: CircularProgressIndicator(
-                      strokeWidth: 2.0,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    )),
-            ),
-            Consumer<LectureProvider>(
-              builder: (context, controller, child) => Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      controller.videoTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          "${controller.views} Views",
-                        ),
-                        const SizedBox(width: 20),
-                        Text(controller.timestamp),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () {
-                            _panelController.open();
-                          },
-                          child: const Text(
-                            '...more',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            CourseVideoPlayerWidget(params: _params),
+            CourseVideoHeaderWidget(
+              params: _params,
+              onMoreTap: () {
+                _panelController.open();
+              },
             ),
             TabBar(
               splashFactory: NoSplash.splashFactory,
@@ -288,7 +139,8 @@ class CourseContentScreenState extends State<CourseContentScreen>
               }),
               controller: _tabController,
               indicator: RectangularIndicator(
-                  color: Colors.blueAccent.shade400.withOpacity(.3)),
+                color: Colors.blueAccent.shade400.withValues(alpha: 0.3),
+              ),
               tabs: const [
                 Tab(text: 'Video'),
                 Tab(text: 'Practice'),
@@ -300,47 +152,13 @@ class CourseContentScreenState extends State<CourseContentScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    TabItemContentWidget(
-                      key: PageStorageKey('content-tab-${widget.courseId}'),
-                      categoryId: widget.categoryId ?? '',
-                      courseId: widget.courseId ?? '',
-                      playVideoCallback: (
-                        String videoUrl,
-                        String videoTitle,
-                        String description,
-                        String timestamp,
-                        num views,
-                        int position,
-                        int duration,
-                        String courseId,
-                        String sectionId,
-                        int sectionIndex,
-                        String lectureId,
-                        int lectureIndex,
-                      ) {
-                        log("Callback triggered: $videoTitle");
-                        _videoPlayerHelper!.setupVideoPlayer(
-                          videoUrl,
-                          videoTitle,
-                          description,
-                          timestamp,
-                          views,
-                          position,
-                          duration,
-                          widget.categoryId ?? '',
-                          courseId,
-                          sectionId,
-                          sectionIndex,
-                          lectureId,
-                          lectureIndex,
-                        );
-                        setState(() {});
-                      },
+                    CourseCurriculumTabWidget(
+                      key: PageStorageKey('curriculum-${widget.courseId}'),
+                      params: _params,
                     ),
-                    QuizTabWidget(
-                      key: PageStorageKey('quiz-tab-${widget.courseId}'),
-                      categoryId: widget.categoryId ?? '',
-                      courseId: widget.courseId ?? '',
+                    CourseQuizTabWidget(
+                      key: PageStorageKey('quiz-${widget.courseId}'),
+                      params: _params,
                       title: widget.title ?? '',
                     ),
                   ],

@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_user.dart';
 import 'package:only_dev_app/widgets/banner-widget/banner_widget.dart';
 import 'package:only_dev_app/widgets/tabs-widget/tab_item_lessons_widget.dart';
 import 'package:only_dev_app/widgets/tabs-widget/tab_item_popular_widger.dart';
@@ -55,7 +54,6 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    locator<UserService>().saveTokenToDatabase();
 
     userProvider = Provider.of<UserProvider>(context, listen: false);
     courseController = Provider.of<CourseProvider>(context, listen: false);

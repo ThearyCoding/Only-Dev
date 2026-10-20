@@ -41,7 +41,7 @@ class MessageLookup extends MessageLookupByLibrary {
                 "វគ្គសិក្សានេះនឹងមាននៅឆាប់ៗនេះ។"),
         "allCourses": MessageLookupByLibrary.simpleMessage("គ្រប់វគ្គសិក្សា"),
         "appSettings": MessageLookupByLibrary.simpleMessage("ការកំណត់កម្មវិធី"),
-        "appTitle": MessageLookupByLibrary.simpleMessage("អេឡិចត្រូនិច"),
+        "appTitle": MessageLookupByLibrary.simpleMessage("Only Dev"),
         "back": MessageLookupByLibrary.simpleMessage("ថយក្រោយ"),
         "canLoadingText":
             MessageLookupByLibrary.simpleMessage("បញ្ចេញដើម្បីទាញយកបន្ថែម"),

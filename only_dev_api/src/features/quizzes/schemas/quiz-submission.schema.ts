@@ -49,6 +49,12 @@ export class QuizSubmission {
 
   @Prop({ default: Date.now })
   submittedAt: Date;
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const QuizSubmissionSchema = SchemaFactory.createForClass(QuizSubmission);

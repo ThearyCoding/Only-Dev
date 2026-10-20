@@ -1,31 +1,29 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:only_dev_app/data/repositories/course_repository.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
-import 'package:only_dev_app/model/admin_model.dart';
+import 'package:only_dev_app/features/home/repository/home_repository.dart';
+import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/model/courses_model.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_courses.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_lecture.dart';
-import 'package:only_dev_app/service/firebase/firebase_api_quiz.dart';
-import 'package:only_dev_app/utils/app_toast_utils.dart';
+import 'package:only_dev_app/data/repositories/quiz_repository.dart';
 
 class CourseProvider extends ChangeNotifier {
-  final FirebaseApiQuiz _apiQuiz = locator<FirebaseApiQuiz>();
-  final FirebaseApiCourses _apiCourses = locator<FirebaseApiCourses>();
-  final FirebaseApiLecture _apiLecture = locator<FirebaseApiLecture>();
+  final HomeRepository _homeRepository = locator<HomeRepository>();
+  final CourseRepository _courseRepository = locator<CourseRepository>();
+  final QuizRepository _quizRepository = locator<QuizRepository>();
   List<CourseModel> _courses = [];
   final List<CourseModel> _courseByCategoryId = [];
   final Map<String, int> _quizCounts = {};
   List<CourseModel> _recentCourses = [];
   List<CourseModel> _popularCourses = [];
-  DocumentSnapshot? _lastDocument;
+  int _categoryPage = 1;
   bool _hasMoreCourses = true;
   bool _isLoading = false;
   bool _isLoadingCourseByCategoryId = false;
   bool _isLoadingRecentCourses = false;
   bool _isLoadingPopularCourses = false;
   CourseModel? _course;
-  AdminModel? _admin;
+  UserModel? _admin;
   bool _isLoadingCourseDetail = false;
   String? _firstVideoUrl;
   bool _isLoadingFirstVideo = false;
@@ -42,13 +40,11 @@ class CourseProvider extends ChangeNotifier {
   bool get hasFetchedPopularCourses => _hasFetchedPopularCourses;
   bool get hasMoreCourses => _hasMoreCourses;
   CourseModel? get course => _course;
-  AdminModel? get admin => _admin;
+  UserModel? get admin => _admin;
   bool get isLoadingCourseDetail => _isLoadingCourseDetail;
   bool get isLoadingCourseByCategoryId => _isLoadingCourseByCategoryId;
   String? get firstVideoUrl => _firstVideoUrl;
   bool get isLoadingFirstVideo => _isLoadingFirstVideo;
-  DocumentSnapshot? get snapshot => _lastDocument;
-
   bool get isLoadingRecentCourses => _isLoadingRecentCourses;
   bool get isLoadingPopularCourses => _isLoadingPopularCourses;
 
@@ -57,7 +53,7 @@ class CourseProvider extends ChangeNotifier {
 
   Future<void> fetchQuizCount(String courseId) async {
     try {
-      int count = await _apiQuiz.fetchTotalQuestions(courseId);
+      int count = await _quizRepository.fetchTotalQuestions(courseId);
       _quizCounts[courseId] = count;
       notifyListeners();
     } catch (error) {
@@ -65,88 +61,53 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
-void fetchRecentCourses() {
-  if (_hasFetchedRecentCourses) return;  
+  Future<void> fetchRecentCourses() async {
+    if (_hasFetchedRecentCourses) return;  
+    setLoadingRecentCourses(true);
 
-  setLoadingRecentCourses(true);
-
-  try {
-    FirebaseFirestore.instance
-        .collectionGroup('courses')
-        .where('status', whereIn: ['active', 'inactive'])
-        .orderBy('timestamp', descending: true)
-        .limit(10)
-        .snapshots()
-        .listen((courseQuery) {
-          _recentCourses = courseQuery.docs
-              .map((doc) => CourseModel.fromMap(doc.data()))
-              .toList();
-
-          fetchTotalLecturesForRecentCourses();
-          setLoadingRecentCourses(false);
-
-          _hasFetchedRecentCourses = true;
-          notifyListeners();
-        });
-  } catch (e) {
-    log('Error fetching recent courses: $e');
-    setLoadingRecentCourses(false);
+    try {
+      final homeData = await _homeRepository.getHomeScreenData();
+      _recentCourses = homeData.recentCourses;
+      _hasFetchedRecentCourses = true;
+    } catch (e) {
+      log('Error fetching recent courses: $e');
+    } finally {
+      setLoadingRecentCourses(false);
+      notifyListeners();
+    }
   }
-}
 
+  Future<void> fetchPopularCourses() async {
+    if (_hasFetchedPopularCourses) return; 
+    setLoadingPopularCourses(true);
 
-  void fetchPopularCourses() {
-  if (_hasFetchedPopularCourses) return; 
-  setLoadingPopularCourses(true);
-
-  try {
-    FirebaseFirestore.instance
-        .collectionGroup('courses')
-        .where('status', whereIn: ['active', 'inactive'])
-        .orderBy('registerCounts', descending: true)
-        .limit(10)
-        .snapshots()
-        .listen((courseQuery) {
-          _popularCourses = courseQuery.docs
-              .map((doc) => CourseModel.fromMap(doc.data()))
-              .toList();
-
-          fetchTotalLecturesForPopularCourses();
-          setLoadingPopularCourses(false);
-
-          _hasFetchedPopularCourses = true;
-          notifyListeners();
-        });
-  } catch (e) {
-    log('Error fetching popular courses: $e');
-    setLoadingPopularCourses(false);
+    try {
+      final homeData = await _homeRepository.getHomeScreenData();
+      _popularCourses = homeData.popularCourses;
+      _hasFetchedPopularCourses = true;
+    } catch (e) {
+      log('Error fetching popular courses: $e');
+    } finally {
+      setLoadingPopularCourses(false);
+      notifyListeners();
+    }
   }
-}
-
 
   Future<void> fetchCourses() async {
+    setLoading(true);
     try {
-      setLoading(true);
-      _apiCourses.fetchCourses().listen((fetchedCourses) async {
-        _courses = fetchedCourses;
-        _courses
-            .shuffle(); 
-        await Future.wait(_courses.map((course) async {
-          await fetchQuizCount(course.id);
-        }));
-
-        await fetchTotalLecturesForAllCourses();
-
-        setLoading(false);
-      });
+      final homeData = await _homeRepository.getHomeScreenData();
+      _courses = homeData.courses;
     } catch (e) {
       log('Error fetching courses: $e');
+    } finally {
       setLoading(false);
+      notifyListeners();
     }
   }
 
   void clearCoursesByCategoryId() {
-    _lastDocument = null;
+    _categoryPage = 1;
     _courseByCategoryId.clear();
     _hasMoreCourses = true;
     notifyListeners();
@@ -159,44 +120,24 @@ void fetchRecentCourses() {
     setLoadingCoursebyCategoryId(true);
 
     if (isRefresh) {
-      _lastDocument = null;
+      _categoryPage = 1;
       _courseByCategoryId.clear();
       _hasMoreCourses = true;
       notifyListeners();
     }
 
     try {
-      Query query = FirebaseFirestore.instance
-          .collection('categories')
-          .doc(categoryId)
-          .collection('courses')
-          .orderBy('timestamp')
-          .limit(4);
+      final results = await _courseRepository.getCourses(
+        page: _categoryPage,
+        limit: 20,
+        category: categoryId,
+      );
 
-      if (_lastDocument != null) {
-        query = query.startAfterDocument(_lastDocument!);
+      _courseByCategoryId.addAll(results);
+      _hasMoreCourses = results.length >= 20;
+      if (_hasMoreCourses) {
+        _categoryPage++;
       }
-
-      QuerySnapshot courseSnapshot = await query.get();
-
-      if (courseSnapshot.docs.isNotEmpty) {
-        _lastDocument = courseSnapshot.docs.last;
-
-        final newCourses = courseSnapshot.docs.map((doc) {
-          final data = doc.data();
-          if (data is Map<String, dynamic>) {
-            return CourseModel.fromMap(data);
-          } else {
-            throw Exception('Unexpected data format');
-          }
-        }).toList();
-
-        _courseByCategoryId.addAll(newCourses);
-        _hasMoreCourses = newCourses.length == 4;
-      } else {
-        _hasMoreCourses = false;
-      }
-
       notifyListeners();
     } catch (error) {
       log('Error fetching courses by category: $error');
@@ -209,14 +150,15 @@ void fetchRecentCourses() {
   Future<void> refreshCourses() async {
     try {
       setLoading(true);
-      fetchCourses();
-      await Future.wait(_courses.map((course) async {
-        await fetchQuizCount(course.id);
-      }));
-      setLoading(false);
+      final homeData = await _homeRepository.getHomeScreenData();
+      _courses = homeData.courses;
+      _recentCourses = homeData.recentCourses;
+      _popularCourses = homeData.popularCourses;
     } catch (e) {
       log('Error refreshing courses: $e');
+    } finally {
       setLoading(false);
+      notifyListeners();
     }
   }
 
@@ -224,18 +166,9 @@ void fetchRecentCourses() {
       String categoryId, String courseId) async {
     try {
       setLoadingCourseDetail(true);
-      final data = await _apiCourses.fetchCourseAndAdminById(
-        categoryId: categoryId,
-        courseId: courseId,
-      );
-
-      if (data != null) {
-        _course = data['course'] as CourseModel;
-        _admin = data['admin'] as AdminModel;
-      } else {
-        _course = null;
-        _admin = null;
-      }
+      final course = await _courseRepository.getCourseById(courseId);
+      _course = course;
+      _admin = course.instructor;
       notifyListeners();
     } catch (e) {
       log('Error fetching course and admin by ID: $e');
@@ -252,9 +185,17 @@ void fetchRecentCourses() {
     setLoadingFirstVideo(true);
 
     try {
-      final videoUrl =
-          await _apiLecture.fetchFirstVideoUrl(categoryId, courseId);
-      _firstVideoUrl = videoUrl;
+      final course = await _courseRepository.getCourseById(courseId);
+      if (course.sections != null && course.sections!.isNotEmpty) {
+        for (final sec in course.sections!) {
+          final firstWithVid =
+              sec.lectures.where((l) => l.videoUrl.isNotEmpty).firstOrNull;
+          if (firstWithVid != null) {
+            _firstVideoUrl = firstWithVid.videoUrl;
+            break;
+          }
+        }
+      }
       notifyListeners();
     } catch (e) {
       log('Error fetching first video URL: $e');
@@ -266,75 +207,25 @@ void fetchRecentCourses() {
 
   // Fetch total lectures for all courses
   Future<void> fetchTotalLecturesForAllCourses() async {
-    setLoading(true);
-    notifyListeners();
-
-    Map<String, int> fetchedTotalLectures = {};
-    List<Future<void>> fetchTasks = [];
-
     for (var course in _courses) {
-      fetchTasks.add(
-        _apiLecture
-            .getTotalLectures(course.categoryId, course.id)
-            .then((lectures) {
-          fetchedTotalLectures[course.id] = lectures;
-        }),
-      );
+      totalLecturesMap[course.id] = course.totalLessons ?? 0;
     }
-
-    await Future.wait(fetchTasks);
-    totalLecturesMap = fetchedTotalLectures;
-    setLoading(false);
     notifyListeners();
   }
 
   // Fetch total lectures for recent courses
   Future<void> fetchTotalLecturesForRecentCourses() async {
-    setLoadingRecentCourses(true);
-    notifyListeners();
-
-    Map<String, int> fetchedTotalLectures = {};
-    List<Future<void>> fetchTasks = [];
-
     for (var course in _recentCourses) {
-      fetchTasks.add(
-        _apiLecture
-            .getTotalLectures(course.categoryId, course.id)
-            .then((lectures) {
-          fetchedTotalLectures[course.id] = lectures;
-        }),
-      );
+      totalLecturesMap[course.id] = course.totalLessons ?? 0;
     }
-
-    await Future.wait(fetchTasks);
-    totalLecturesMap.addAll(fetchedTotalLectures);
-
-    setLoadingRecentCourses(false);
     notifyListeners();
   }
 
   // Fetch total lectures for popular courses
   Future<void> fetchTotalLecturesForPopularCourses() async {
-    setLoadingPopularCourses(true);
-    notifyListeners();
-
-    Map<String, int> fetchedTotalLectures = {};
-    List<Future<void>> fetchTasks = [];
-
     for (var course in _popularCourses) {
-      fetchTasks.add(
-        _apiLecture
-            .getTotalLectures(course.categoryId, course.id)
-            .then((lectures) {
-          fetchedTotalLectures[course.id] = lectures;
-        }),
-      );
+      totalLecturesMap[course.id] = course.totalLessons ?? 0;
     }
-
-    await Future.wait(fetchTasks);
-    totalLecturesMap.addAll(fetchedTotalLectures);
-
-    setLoadingPopularCourses(false);
     notifyListeners();
   }
 

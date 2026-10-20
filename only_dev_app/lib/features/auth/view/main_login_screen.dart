@@ -1,12 +1,11 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:only_dev_app/di/dependency_injection.dart';
-import 'package:only_dev_app/service/firebase/auth_service_google.dart';
+import 'package:provider/provider.dart';
+import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
 import 'package:only_dev_app/widgets/buttons/custom_button_login_widget.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_text_animation_widget.dart';
 
 class MainLoginScreen extends StatelessWidget {
-  final AuthServiceGoogle _authService = locator<AuthServiceGoogle>();
   final VoidCallback? onSwitchToSignUp;
   final VoidCallback? onSwitchToLogin;
 
@@ -25,7 +24,7 @@ class MainLoginScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Welcome to App E-learning',
+                  'Welcome to Only Dev',
                   style: TextStyle(
                     fontSize: 24,
                     color: Colors.white,
@@ -113,7 +112,9 @@ class MainLoginScreen extends StatelessWidget {
                                 onPressed: isLoggingIn ? null : () async {
                                   _isLoggingIn.value = true;
                                   try {
-                                    final user = await _authService.signInWithGoogle();
+                                    final authProvider =
+                                        Provider.of<AuthenticationProvider>(context, listen: false);
+                                    final user = await authProvider.signInWithGoogle();
                                     if (user != null) {
                                       log('Signed in as: ${user.displayName}');
                                     } else {

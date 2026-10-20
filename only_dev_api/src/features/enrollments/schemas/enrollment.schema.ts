@@ -49,6 +49,12 @@ export class Enrollment {
 
   @Prop()
   expiresAt?: Date; // null = lifetime access
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const EnrollmentSchema = SchemaFactory.createForClass(Enrollment);

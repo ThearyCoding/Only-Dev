@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class CacheManager;
 
 @interface BetterPlayer : NSObject <FlutterPlatformView, FlutterStreamHandler, AVPictureInPictureControllerDelegate>
+@property(nonatomic, strong, nullable) BetterPlayerView* playerView;
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) BetterPlayerEzDrmAssetsLoaderDelegate* loaderDelegate;
 @property(nonatomic) FlutterEventChannel* eventChannel;

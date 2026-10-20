@@ -69,6 +69,12 @@ export class Quiz {
 
   @Prop({ type: [QuestionSubSchema], default: [] })
   questions: QuestionSub[];
+
+  @Prop({ type: String, default: null })
+  createdBy?: string;
+
+  @Prop({ type: String, default: null })
+  updatedBy?: string;
 }
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
