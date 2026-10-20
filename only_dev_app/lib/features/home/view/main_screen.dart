@@ -1,5 +1,4 @@
 import 'package:dot_navigation_bar/dot_navigation_bar.dart';
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconly/iconly.dart';
@@ -86,58 +85,56 @@ class MainPageState extends ConsumerState<MainPage> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return ThemeSwitchingArea(
-      child: Scaffold(
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            HomePage(
-              onSeeAllCoursesTapped: _onSeeAllCourses,
-              onProfileImageTapped: _onProfileImageTapped,
-              onNotificationsTapped: _onNotificationTapped,
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          HomePage(
+            onSeeAllCoursesTapped: _onSeeAllCourses,
+            onProfileImageTapped: _onProfileImageTapped,
+            onNotificationsTapped: _onNotificationTapped,
+          ),
+          const CourseListScreen(),
+          const NotificationsScreen(),
+          const UserInformationScreen(),
+        ],
+      ),
+      bottomNavigationBar: DotNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        marginR: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        itemPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+        items: [
+          DotNavigationBarItem(
+            icon: _buildIcon(IconlyBold.home, _selectedIndex == 0),
+          ),
+          DotNavigationBarItem(
+            icon: _buildIcon(Icons.video_collection, _selectedIndex == 1),
+          ),
+          DotNavigationBarItem(
+            icon: Consumer(
+              builder: (context, ref, child) {
+                final notif = ref.watch(notificationNotifierProvider);
+                return _buildIcon(
+                  IconlyBold.notification,
+                  _selectedIndex == 2,
+                  badgeCount: notif.unreadCount.value,
+                );
+              },
             ),
-            const CourseListScreen(),
-            const NotificationsScreen(),
-            const UserInformationScreen(),
-          ],
-        ),
-        bottomNavigationBar: DotNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          marginR: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          itemPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-          items: [
-            DotNavigationBarItem(
-              icon: _buildIcon(IconlyBold.home, _selectedIndex == 0),
-            ),
-            DotNavigationBarItem(
-              icon: _buildIcon(Icons.video_collection, _selectedIndex == 1),
-            ),
-            DotNavigationBarItem(
-              icon: Consumer(
-                builder: (context, ref, child) {
-                  final notif = ref.watch(notificationNotifierProvider);
-                  return _buildIcon(
-                    IconlyBold.notification,
-                    _selectedIndex == 2,
-                    badgeCount: notif.unreadCount.value,
-                  );
-                },
-              ),
-            ),
-            DotNavigationBarItem(
-              icon: _buildIcon(IconlyBold.profile, _selectedIndex == 3),
-            ),
-          ],
-          dotIndicatorColor: AppStyle.primaryColor,
-          backgroundColor:
-              isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
-          enablePaddingAnimation: false,
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          paddingR: const EdgeInsets.all(8),
-          selectedItemColor: AppStyle.primaryColor,
-          unselectedItemColor: Colors.grey,
-        ),
+          ),
+          DotNavigationBarItem(
+            icon: _buildIcon(IconlyBold.profile, _selectedIndex == 3),
+          ),
+        ],
+        dotIndicatorColor: AppStyle.primaryColor,
+        backgroundColor:
+            isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+        enablePaddingAnimation: false,
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        paddingR: const EdgeInsets.all(8),
+        selectedItemColor: AppStyle.primaryColor,
+        unselectedItemColor: Colors.grey,
       ),
     );
   }

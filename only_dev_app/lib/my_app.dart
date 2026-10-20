@@ -1,4 +1,3 @@
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -42,33 +41,26 @@ class MyAppState extends ConsumerState<MyApp> {
     final themeProvider = ref.watch(themeNotifierProvider);
     final languageProvider = ref.watch(languageNotifierProvider);
 
-    return ThemeProvider(
-      initTheme: themeProvider.currentTheme == ThemeMode.dark
-          ? CustomThemes.darkTheme
-          : CustomThemes.lightTheme,
-      builder: (context, myTheme) {
-        return MaterialApp.router(
-          title: 'Only Dev',
-          routerConfig: _router,
-          scaffoldMessengerKey: scaffoldMessengerKey,
-          debugShowCheckedModeBanner: false,
-          theme: myTheme,
-          darkTheme: CustomThemes.darkTheme,
-          themeMode: themeProvider.currentTheme,
-          locale: languageProvider.locale,
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('km', ''),
-          ],
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          builder: EasyLoading.init(),
-        );
-      },
+    return MaterialApp.router(
+      title: 'Only Dev',
+      routerConfig: _router,
+      scaffoldMessengerKey: scaffoldMessengerKey,
+      debugShowCheckedModeBanner: false,
+      theme: CustomThemes.lightTheme,
+      darkTheme: CustomThemes.darkTheme,
+      themeMode: themeProvider.currentTheme,
+      locale: languageProvider.locale,
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('km', ''),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      builder: EasyLoading.init(),
     );
   }
 }

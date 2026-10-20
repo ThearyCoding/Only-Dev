@@ -5,7 +5,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconly/iconly.dart';
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/profile/widgets/profile_header_card.dart';
 import 'package:only_dev_app/features/profile/widgets/profile_menu_group.dart';
@@ -212,21 +211,17 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
           ),
         ),
         actions: [
-          ThemeSwitcher(
-            builder: (context) {
-              return IconButton(
-                tooltip: 'Toggle Theme',
-                icon: Icon(
-                  themeProvider.currentTheme == ThemeMode.dark
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
-                  color: isDark ? Colors.amber : const Color(0xFF475569),
-                  size: 22,
-                ),
-                onPressed: () {
-                  themeProvider.switchTheme(context);
-                },
-              );
+          IconButton(
+            tooltip: 'Toggle Theme',
+            icon: Icon(
+              themeProvider.currentTheme == ThemeMode.dark
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+              color: isDark ? Colors.amber : const Color(0xFF475569),
+              size: 22,
+            ),
+            onPressed: () {
+              themeProvider.switchTheme();
             },
           ),
           IconButton(
@@ -454,26 +449,22 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
         ProfileMenuGroup(
           title: localization.appSettings,
           items: [
-            ThemeSwitcher(
-              builder: (context) {
-                return ProfileMenuItem(
-                  icon: isDark
-                      ? Icons.dark_mode_rounded
-                      : Icons.light_mode_rounded,
-                  iconColor: const Color(0xFFF59E0B),
-                  title: 'Dark Mode',
-                  subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
-                  trailing: Switch.adaptive(
-                    value: isDark,
-                    activeTrackColor: const Color(0xFFF59E0B),
-                    onChanged: (value) {
-                      themeProvider.switchTheme(context);
-                    },
-                  ),
-                  onTap: () {
-                    themeProvider.switchTheme(context);
-                  },
-                );
+            ProfileMenuItem(
+              icon: isDark
+                  ? Icons.dark_mode_rounded
+                  : Icons.light_mode_rounded,
+              iconColor: const Color(0xFFF59E0B),
+              title: 'Dark Mode',
+              subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
+              trailing: Switch.adaptive(
+                value: isDark,
+                activeTrackColor: const Color(0xFFF59E0B),
+                onChanged: (value) {
+                  themeProvider.switchTheme();
+                },
+              ),
+              onTap: () {
+                themeProvider.switchTheme();
               },
             ),
             ProfileMenuItem(
@@ -621,26 +612,22 @@ class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
         ProfileMenuGroup(
           title: localization.appSettings,
           items: [
-            ThemeSwitcher(
-              builder: (context) {
-                return ProfileMenuItem(
-                  icon: isDark
-                      ? Icons.dark_mode_rounded
-                      : Icons.light_mode_rounded,
-                  iconColor: const Color(0xFFF59E0B),
-                  title: 'Dark Mode',
-                  subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
-                  trailing: Switch.adaptive(
-                    value: isDark,
-                    activeTrackColor: const Color(0xFFF59E0B),
-                    onChanged: (value) {
-                      themeProvider.switchTheme(context);
-                    },
-                  ),
-                  onTap: () {
-                    themeProvider.switchTheme(context);
-                  },
-                );
+            ProfileMenuItem(
+              icon: isDark
+                  ? Icons.dark_mode_rounded
+                  : Icons.light_mode_rounded,
+              iconColor: const Color(0xFFF59E0B),
+              title: 'Dark Mode',
+              subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
+              trailing: Switch.adaptive(
+                value: isDark,
+                activeTrackColor: const Color(0xFFF59E0B),
+                onChanged: (value) {
+                  themeProvider.switchTheme();
+                },
+              ),
+              onTap: () {
+                themeProvider.switchTheme();
               },
             ),
             ProfileMenuItem(

@@ -1,17 +1,30 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
+import 'package:only_dev_app/features/settings/provider/theme_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    SharedPreferences.setMockInitialValues({'isLoggedIn': true});
+    SharedPreferences.setMockInitialValues({'isLoggedIn': true, 'isdarkMode': true});
   });
 
-  group('UserProvider & AuthenticationProvider Disposal Tests', () {
+  group('Theme, UserProvider & AuthenticationProvider Tests', () {
+    test('CustomizeThemeProvider switches theme immediately without animation dependencies', () {
+      final themeProvider = CustomizeThemeProvider();
+      expect(themeProvider.currentTheme, equals(ThemeMode.dark));
+
+      themeProvider.switchTheme();
+      expect(themeProvider.currentTheme, equals(ThemeMode.light));
+
+      themeProvider.switchTheme();
+      expect(themeProvider.currentTheme, equals(ThemeMode.dark));
+    });
+
     test('AuthenticationProvider notifyListeners does not throw after dispose', () {
       final authProvider = AuthenticationProvider();
       authProvider.dispose();

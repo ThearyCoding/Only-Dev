@@ -1,9 +1,6 @@
-import 'package:animated_theme_switcher/animated_theme_switcher.dart';
-import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:flutter/material.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:only_dev_app/theme/custom_theme.dart';
+import 'package:only_dev_app/di/dependency_injection.dart';
 
 class CustomizeThemeProvider extends ChangeNotifier {
   ThemeMode _currentTheme = ThemeMode.dark;
@@ -11,6 +8,22 @@ class CustomizeThemeProvider extends ChangeNotifier {
   SharedPreferences? _prefs;
 
   ThemeMode get currentTheme => _currentTheme;
+
+  bool _isDisposed = false;
+  bool get isDisposed => _isDisposed;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
+    }
+  }
 
   CustomizeThemeProvider() {
     _initTheme();
@@ -29,19 +42,11 @@ class CustomizeThemeProvider extends ChangeNotifier {
     _initTheme();
   }
 
-  void switchTheme(BuildContext context) {
+  void switchTheme([BuildContext? context]) {
     _currentTheme =
         _currentTheme == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
 
     _saveThemeToStorage(_currentTheme);
-
-    ThemeSwitcher.of(context).changeTheme(
-      theme: _currentTheme == ThemeMode.dark
-          ? CustomThemes.darkTheme
-          : CustomThemes.lightTheme,
-      isReversed: _currentTheme == ThemeMode.light,
-    );
-
     notifyListeners();
   }
 
