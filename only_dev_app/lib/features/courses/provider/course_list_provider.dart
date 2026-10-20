@@ -31,8 +31,10 @@ class CourseListProvider with ChangeNotifier {
   final Set<String> courseIds = <String>{};
   final Map<String, List<CourseModel>> categoryCourseCache = {};
 
-  CourseListProvider({required TickerProvider tickerProvider}) {
-    fetchCategories(tickerProvider);
+  CourseListProvider({TickerProvider? tickerProvider}) {
+    if (tickerProvider != null) {
+      fetchCategories(tickerProvider);
+    }
   }
 
   void disposeControllers() {

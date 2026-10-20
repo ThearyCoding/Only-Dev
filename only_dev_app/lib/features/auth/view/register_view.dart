@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
-import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
-import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/textfield/custom_text_field_widget_02.dart';
 import '../viewmodel/auth_viewmodel.dart';
 
-class RegisterView extends StatefulWidget {
+class RegisterView extends ConsumerStatefulWidget {
   final VoidCallback? onSwitchToLogin;
 
   const RegisterView({super.key, this.onSwitchToLogin});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  ConsumerState<RegisterView> createState() => _RegisterViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
+class _RegisterViewState extends ConsumerState<RegisterView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -159,10 +158,12 @@ class _RegisterViewState extends State<RegisterView> {
                             stopLoading();
                             if (success && context.mounted) {
                               if (model.currentUser != null) {
-                                Provider.of<UserProvider>(context, listen: false)
+                                ref
+                                    .read(userNotifierProvider)
                                     .setUserData(model.currentUser!);
                               }
-                              await Provider.of<AuthenticationProvider>(context, listen: false)
+                              await ref
+                                  .read(authNotifierProvider)
                                   .saveUserLoginStatus(true);
                               if (context.mounted) {
                                 context.go(RoutesPath.home);

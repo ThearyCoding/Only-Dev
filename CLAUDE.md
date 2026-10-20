@@ -64,23 +64,33 @@ flutter run
   - Plyr Surf Film 720p HD MP4: `https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-720p.mp4`
   - Plyr Surf Film 576p MP4: `https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4`
   - Mux Adaptive HLS Stream: `https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8`
+- **Video & Media Pipeline**:
+  - Local patched package: `only_dev_app/packages/better_player` with defensive NaN progress bar clamping.
+  - Universal Image Component: Always use `AppImageWidget` / `AppCircleAvatar` (`lib/widgets/app_widgets/app_image_widget.dart`). Never call raw `CachedNetworkImage` or `Image.network` in UI widgets.
+  - Native Pull-To-Refresh: Use native `RefreshIndicator` and `ScrollController` threshold pagination. Never use third-party `pull_to_refresh` packages.
 
 ---
 
 ## 3. Strict Flutter Coding Rules (`only_dev_app`)
 
-1. **State Management & Zero `setState`**:
-   - Always use **Riverpod** or clean **MVVM (`BaseViewModel` / `BaseView`)**.
+1. **State Management — Riverpod ONLY**:
+   - `package:provider` is **completely banned and removed**. Never import `package:provider`.
+   - The entire app is wrapped with `ProviderScope` at `main.dart`.
+   - **Feature-Scoped State over Global State**: State classes and Notifiers belonging to a specific domain (Profile, Quizzes, Courses, Cart) must live inside `lib/features/<feature>/provider/`.
+   - **Lifecycle Management via `.autoDispose`**: Feature-scoped providers must use `.autoDispose` so that memory is freed when screens are destroyed.
+   - **Global State Reservation**: Only truly app-wide, session-long singletons live in `lib/core/providers/` (Auth session/JWT tokens, App Theme, App Language/Locale).
+2. **Decoupled MVVM (`BaseViewModel` / `BaseView`) & Zero `setState`**:
+   - `BaseView<T extends BaseViewModel>` utilizes Flutter's native `ListenableBuilder` (completely decoupled from third-party provider packages).
    - **DO NOT USE `setState`**. All screen state, UI state, toggle flags, and async flows must be managed reactively via Riverpod notifiers or ViewModels.
-2. **Layered Separation of Concerns**:
+3. **Layered Separation of Concerns**:
    - **Never call services or repositories directly in UI widgets**. UI widgets only display state and forward user events to Riverpod notifiers or ViewModels.
-3. **HTTP Client (`DioClient`)**:
+4. **Networking (`DioClient`)**:
    - All network calls must use `locator<DioClient>()`.
    - `AuthInterceptor` automatically attaches `Authorization: Bearer <jwt_access_token>`.
    - Tokens stored in `SharedPreferences`:
      - `jwt_access_token`
      - `jwt_refresh_token`
-4. **Data Models & JSON Keys (`snake_case`)**:
+5. **Data Models & JSON Keys (`snake_case`)**:
    - Dart properties use `camelCase`.
    - `fromMap` constructors must parse `snake_case` with fallback to `camelCase`:
      ```dart
@@ -89,10 +99,13 @@ flutter run
      ```
    - `toMap` methods emit strictly `snake_case`. Never emit duplicate keys.
    - Timestamps and dates are stored as `String?`. Do not parse to `DateTime` in models.
-5. **Defensive Parsing**:
+6. **Defensive Parsing**:
    - Never use raw `int.parse()` on API color strings or dynamic values.
    - Always use `int.tryParse()` with a fallback to `GenerateColor.generateRandomColor()`.
-6. **Application Title**:
+7. **Native UI & Image Standards**:
+   - Always use `AppImageWidget` and `AppCircleAvatar` (`lib/widgets/app_widgets/app_image_widget.dart`).
+   - Use native `RefreshIndicator` and standard `ScrollController` listener for pagination.
+8. **Application Title**:
    - App title is **Only Dev** across all platforms (iOS `CFBundleDisplayName`, Android `android:label`, macOS `PRODUCT_NAME`, Web title, `MaterialApp.title: 'Only Dev'`).
 
 ---

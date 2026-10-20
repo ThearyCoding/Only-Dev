@@ -1,39 +1,30 @@
 import 'package:dot_navigation_bar/dot_navigation_bar.dart';
-import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconly/iconly.dart';
-import 'package:provider/provider.dart';
-import 'package:only_dev_app/features/profile/view/user_information_screen.dart';
-import 'package:only_dev_app/features/courses/view/course_list_screen.dart';
-import 'home_screen.dart';
-import 'package:only_dev_app/features/notifications/view/notification_screen.dart';
 
-class MainPage extends StatefulWidget {
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/features/courses/view/course_list_screen.dart';
+import 'package:only_dev_app/features/notifications/view/notification_screen.dart';
+import 'package:only_dev_app/features/profile/view/user_information_screen.dart';
+import 'home_screen.dart';
+
+class MainPage extends ConsumerStatefulWidget {
   const MainPage({super.key});
 
   @override
-  MainPageState createState() => MainPageState();
+  ConsumerState<MainPage> createState() => MainPageState();
 }
 
-class MainPageState extends State<MainPage> {
-  bool isConnectedToInternet = true;
-  bool wasConnectedToInternet = true;
+class MainPageState extends ConsumerState<MainPage> {
   int _selectedIndex = 0;
-  late NotificationProvider notificationProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    notificationProvider =
-        Provider.of<NotificationProvider>(context, listen: false);
-  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       if (_selectedIndex == 2) {
-        notificationProvider.markAllAsRead();
+        ref.read(notificationNotifierProvider).markAllAsRead();
       }
     });
   }
@@ -44,8 +35,9 @@ class MainPageState extends State<MainPage> {
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color:
-                isSelected ? Colors.blue.withValues(alpha: .2) : Colors.transparent,
+            color: isSelected
+                ? Colors.blue.withValues(alpha: .2)
+                : Colors.transparent,
           ),
           padding: const EdgeInsets.all(8),
           child: Icon(
@@ -63,7 +55,7 @@ class MainPageState extends State<MainPage> {
                 style: const TextStyle(color: Colors.white, fontSize: 10),
               ),
               backgroundColor: Colors.red,
-              isLabelVisible: badgeCount == 0 ? false : true,
+              isLabelVisible: badgeCount != 0,
               child: Container(),
             ),
           ),
@@ -121,12 +113,13 @@ class MainPageState extends State<MainPage> {
               icon: _buildIcon(Icons.video_collection, _selectedIndex == 1),
             ),
             DotNavigationBarItem(
-              icon: Consumer<NotificationProvider>(
-                builder: (context, value, child) {
+              icon: Consumer(
+                builder: (context, ref, child) {
+                  final notif = ref.watch(notificationNotifierProvider);
                   return _buildIcon(
                     IconlyBold.notification,
                     _selectedIndex == 2,
-                    badgeCount: notificationProvider.unreadCount.value,
+                    badgeCount: notif.unreadCount.value,
                   );
                 },
               ),

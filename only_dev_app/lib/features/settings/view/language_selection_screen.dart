@@ -1,17 +1,18 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/widgets/app-bar-widget/app_bar_widget.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import 'package:only_dev_app/features/settings/provider/language_provider.dart';
-
-class LanguageSelectionScreen extends StatelessWidget {
+class LanguageSelectionScreen extends ConsumerWidget {
   const LanguageSelectionScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final languageProvider = ref.watch(languageNotifierProvider);
     final localization = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,

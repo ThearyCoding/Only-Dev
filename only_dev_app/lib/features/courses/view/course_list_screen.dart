@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
-import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/features/courses/provider/course_list_provider.dart';
 import 'package:only_dev_app/widgets/course-widget/course_list_widget.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_tap_shimmer_widget.dart';
 import 'package:only_dev_app/features/search/view/search_engine_screen.dart';
 
-class CourseListScreen extends StatefulWidget {
+class CourseListScreen extends ConsumerStatefulWidget {
   const CourseListScreen({super.key});
 
   @override
-  State<CourseListScreen> createState() => _CourseListScreenState();
+  ConsumerState<CourseListScreen> createState() => _CourseListScreenState();
 }
 
-class _CourseListScreenState extends State<CourseListScreen>
+class _CourseListScreenState extends ConsumerState<CourseListScreen>
     with SingleTickerProviderStateMixin {
   final PageStorageBucket _bucket = PageStorageBucket();
-  late RegistrationProvider registrationProvider;
 
   @override
   void initState() {
     super.initState();
-
-    registrationProvider =
-        Provider.of<RegistrationProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = ref.read(courseListNotifierProvider);
+      if (provider.tabController == null) {
+        provider.fetchCategories(this);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final localization = AppLocalizations.of(context);
+    final registrationProvider = ref.watch(registrationNotifierProvider);
+    final provider = ref.watch(courseListNotifierProvider);
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -60,8 +63,8 @@ class _CourseListScreenState extends State<CourseListScreen>
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Consumer<CourseListProvider>(
-            builder: (context, provider, child) {
+          child: Builder(
+            builder: (context) {
               if (provider.isLoadingCategories) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 15),
@@ -106,8 +109,8 @@ class _CourseListScreenState extends State<CourseListScreen>
           ),
         ),
       ),
-      body: Consumer<CourseListProvider>(
-        builder: (context, provider, child) {
+      body: Builder(
+        builder: (context) {
           if (provider.categories.isEmpty || provider.tabController == null) {
             return const BuildShimmerCourseCardV2();
           }

@@ -1,15 +1,15 @@
-import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/generated/l10n.dart';
 
-class DisEnableNotificationScreen extends StatelessWidget {
+class DisEnableNotificationScreen extends ConsumerWidget {
   const DisEnableNotificationScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    Provider.of<NotificationProvider>(context, listen: false);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(notificationNotifierProvider);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final localization = AppLocalizations.of(context);
     return Scaffold(
@@ -23,10 +23,7 @@ class DisEnableNotificationScreen extends StatelessWidget {
           ),
           actions: [
             IconButton(
-              onPressed: () {
-               // NavigationService.instance.pushMaterialRoute(const CachePage());
-
-              },
+              onPressed: () {},
               icon: const Icon(Icons.cached),
             )
           ],
@@ -34,7 +31,6 @@ class DisEnableNotificationScreen extends StatelessWidget {
               splashRadius: 20,
               onPressed: () {
                 context.pop();
-                 
               },
               tooltip: localization.back,
               icon: Icon(
@@ -43,15 +39,11 @@ class DisEnableNotificationScreen extends StatelessWidget {
                 size: 16,
               )),
         ),
-        body: Consumer<NotificationProvider>(
-          builder: (context, provider, child) {
-            return SwitchListTile(
-              title: const Text('Enable Notifications'),
-              value: provider.notificationsEnabled,
-              onChanged: (bool value) {
-                provider.updateNotificationPreference(value);
-              },
-            );
+        body: SwitchListTile(
+          title: const Text('Enable Notifications'),
+          value: provider.notificationsEnabled,
+          onChanged: (bool value) {
+            provider.updateNotificationPreference(value);
           },
         ));
   }

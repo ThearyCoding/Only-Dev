@@ -2,10 +2,11 @@ import 'dart:developer';
 import 'package:scroll_to_index/scroll_to_index.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:expandable/expandable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import '../../di/dependency_injection.dart';
 import '../../model/lecture_model.dart';
 import '../../model/section_model.dart';
@@ -17,7 +18,7 @@ import '../../utils/time_utils.dart';
 import '../loadings-widget/build_content_loading_shimmer.dart';
 import '../list-widget/list_item_widget.dart';
 
-class TabItemContentWidget extends StatefulWidget {
+class TabItemContentWidget extends ConsumerStatefulWidget {
   final String categoryId;
   final String courseId;
   final Function(
@@ -43,10 +44,10 @@ class TabItemContentWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  TabItemContentWidgetState createState() => TabItemContentWidgetState();
+  ConsumerState<TabItemContentWidget> createState() => TabItemContentWidgetState();
 }
 
-class TabItemContentWidgetState extends State<TabItemContentWidget> {
+class TabItemContentWidgetState extends ConsumerState<TabItemContentWidget> {
   late LectureProvider provider;
   User? user = locator<FirebaseAuth>().currentUser;
   var downloadManager = DownloadManager();
@@ -59,7 +60,7 @@ class TabItemContentWidgetState extends State<TabItemContentWidget> {
   @override
   void initState() {
     super.initState();
-    provider = Provider.of<LectureProvider>(context, listen: false);
+    provider = ref.read(lectureNotifierProvider);
     getApplicationSupportDirectory().then((value) => savedDir = value.path);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeAutoScroll();
@@ -107,7 +108,8 @@ class TabItemContentWidgetState extends State<TabItemContentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final lectureProvider = Provider.of<LectureProvider>(context);
+    final lectureProvider = ref.watch(lectureNotifierProvider);
+    provider = lectureProvider;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return lectureProvider.isLoading
         ? const BuildContentLoadingShimmer()

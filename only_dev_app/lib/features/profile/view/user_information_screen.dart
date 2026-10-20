@@ -1,534 +1,490 @@
 import 'dart:io';
-import 'dart:ui';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:iconly/iconly.dart';
-import 'package:only_dev_app/widgets/buttons/custom_button_widget_02.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as legacy_provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconly/iconly.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
-import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
-import 'package:only_dev_app/features/profile/provider/user_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:only_dev_app/features/profile/widgets/profile_header_card.dart';
+import 'package:only_dev_app/features/profile/widgets/profile_menu_group.dart';
+import 'package:only_dev_app/features/profile/widgets/profile_menu_item.dart';
+import 'package:only_dev_app/features/profile/widgets/profile_stats_card.dart';
+import 'package:only_dev_app/features/settings/provider/language_provider.dart';
+import 'package:only_dev_app/features/settings/provider/theme_provider.dart';
+import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/widgets/list-widget/custom_list_tile_widget.dart';
-import 'package:only_dev_app/generated/l10n.dart';
-import 'package:only_dev_app/features/settings/provider/theme_provider.dart';
+import 'package:only_dev_app/utils/compress_image_util.dart';
 import 'package:only_dev_app/utils/image_picker_utils.dart';
 import 'package:only_dev_app/utils/show_dialog_sign_out_utils.dart';
-import 'package:only_dev_app/utils/compress_image_util.dart';
 
 class UserInformationScreen extends ConsumerStatefulWidget {
-  const UserInformationScreen({
-    super.key,
-  });
+  const UserInformationScreen({super.key});
 
   @override
   ConsumerState<UserInformationScreen> createState() =>
-      UserInformationScreenState();
+      _UserInformationScreenState();
 }
 
-class UserInformationScreenState extends ConsumerState<UserInformationScreen> {
-  late UserProvider userProvider;
-  late CustomizeThemeProvider themeProvider;
-  final User? user = FirebaseAuth.instance.currentUser;
+class _UserInformationScreenState extends ConsumerState<UserInformationScreen> {
   final ScrollController _scrollController = ScrollController();
-  final ValueNotifier<bool> _isScrolledNotifier = ValueNotifier<bool>(false);
-
-  @override
-  void initState() {
-    super.initState();
-    userProvider =
-        legacy_provider.Provider.of<UserProvider>(context, listen: false);
-    themeProvider = legacy_provider.Provider.of<CustomizeThemeProvider>(context,
-        listen: false);
-    _scrollController.addListener(_scrollListener);
-  }
-
-  void _scrollListener() {
-    if (_scrollController.offset > 10 && !_isScrolledNotifier.value) {
-      _isScrolledNotifier.value = true;
-    } else if (_scrollController.offset <= 10 && _isScrolledNotifier.value) {
-      _isScrolledNotifier.value = false;
-    }
-  }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _isScrolledNotifier.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverAppBar(
-            elevation: 0,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            pinned: true,
-            title: ValueListenableBuilder<bool>(
-              valueListenable: _isScrolledNotifier,
-              builder: (context, isScrolled, _) =>
-                  isScrolled ? const Text('Profile Settings') : const SizedBox.shrink(),
-            ),
-            flexibleSpace: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                double appBarHeight = constraints.biggest.height;
-                double blurAmount = appBarHeight > kToolbarHeight ? 0 : 10;
-
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: blurAmount,
-                          sigmaY: blurAmount,
-                        ),
-                        child: Container(
-                          color: Theme.of(context)
-                              .scaffoldBackgroundColor
-                              .withOpacity(blurAmount > 0 ? 0.6 : 0),
-                        ),
-                      ),
-                    ),
-                    AppBar(
-                      elevation: 0,
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor,
-                      actions: [_buildSwitcher(isDark)],
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Builder(
-              builder: (context) {
-                final profileState = ref.watch(userProfileProvider);
-                final currentUser = profileState.user ?? userProvider.user;
-                if (profileState.isLoading || (currentUser == null && userProvider.isLoading)) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else {
-                  return currentUser == null
-                      ? _buildErrorState()
-                      : _build(currentUser);
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+  Future<void> _onRefresh() async {
+    try {
+      await ref.read(userProfileProvider.notifier).loadProfile();
+      if (mounted) {
+        final regProvider = ref.read(registrationNotifierProvider);
+        await regProvider.init();
+      }
+    } catch (_) {}
   }
 
-  Widget _build(UserModel userModel) {
-    Color backgroundColor = Colors.white;
-    backgroundColor = _getBackgroundColor(userModel, backgroundColor);
+  Future<void> _pickImage() async {
+    try {
+      final File? croppedFile = await ImageUtils.pickImage();
+      if (croppedFile != null) {
+        final File? compressedImage =
+            await CompressImageUtils.compressImage(croppedFile);
+        if (compressedImage != null) {
+          EasyLoading.show(status: 'Updating profile avatar...');
+          await ref
+              .read(userProfileProvider.notifier)
+              .uploadAvatar(compressedImage);
+
+          if (!mounted) return;
+          final updatedUser = ref.read(userProfileProvider).user;
+          if (updatedUser != null) {
+            ref.read(userNotifierProvider).setUserData(updatedUser);
+          }
+          EasyLoading.showSuccess('Avatar updated successfully!');
+        }
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      if (kDebugMode) {
+        print('Error uploading avatar: $e');
+      }
+      EasyLoading.showError('Failed to upload avatar');
+    }
+  }
+
+  Future<void> _handleLogout() async {
     final localization = AppLocalizations.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => LogOutDialog(
+        title: localization.logout_title,
+        message: localization.logout_message,
+        icon: Icons.logout_rounded,
+      ),
+    );
 
-        double screenWidth = constraints.maxWidth;
-        bool isSmallest = screenWidth < 320;
-        bool isSmall = screenWidth >= 320 && screenWidth < 600;
-        bool isMedium = screenWidth >= 600 && screenWidth < 900;
-        double avatarSize = _avatarSize(isSmallest, isSmall, isMedium);
-        double fontSizeName = _fontSizeName(isSmallest, isSmall, isMedium);
-        double fontSizeEmail = _fontSizeEmail(isSmallest, isSmall, isMedium);
-        double iconSize = _iconSize(isSmallest, isSmall);
-        double padding = _padding(isSmallest, isSmall);
-        double listTilePadding = _listTilePadding(isSmallest, isSmall);
+    if (confirm == true && mounted) {
+      EasyLoading.show(status: 'Signing out...');
+      final userProvider = ref.read(userNotifierProvider);
+      await userProvider.handleUserLogout();
+      EasyLoading.dismiss();
+    }
+  }
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: avatarSize,
-                    height: avatarSize,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color:
-                          isDark ? Colors.grey.shade300 : Colors.grey.shade700,
-                    ),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: userModel.photoURL.isNotEmpty
-                            ? () => context
-                                    .push(RoutesPath.detailImageScreen, extra: {
-                                  'imageUrl': userModel.photoURL,
-                                })
-                            : null,
-                        child: AppCircleAvatar(
-                          imageUrl: userModel.photoURL,
-                          name: userModel.fullName,
-                          radius: (avatarSize - 10) / 2,
-                          backgroundColor: backgroundColor,
-                          textStyle: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: avatarSize * 0.4,
-                          ),
-                        ),
-                      ),
-                    ),
+  void _showAboutDialog(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor:
+          isDark ? const Color(0xFF1E293B) : Theme.of(context).cardColor,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () async {
-                        await _pickImage();
-                      },
-                      child: Container(
-                        height: iconSize * 2,
-                        width: iconSize * 2,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDark ? Colors.grey.shade500 : Colors.black,
-                        ),
-                        child: Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: iconSize,
-                        ),
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-                ],
-              ),
-              SizedBox(height: listTilePadding / 2),
-              Text(
-                '${userModel.firstName} ${userModel.lastName}',
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontSize: fontSizeName,
-                  fontWeight: FontWeight.bold,
+                  child: Icon(
+                    Icons.code_rounded,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-              ),
-              SizedBox(height: listTilePadding / 3),
-              Text(
-                userModel.email,
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                  fontSize: fontSizeEmail,
-                ),
-              ),
-              SizedBox(height: listTilePadding / 2),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: padding),
-                child: Text(
-                  userModel.bio?.isNotEmpty == true
-                      ? userModel.bio!
-                      : localization.noBioAvailable,
+                const SizedBox(height: 12),
+                const Text(
+                  'Only Dev',
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black,
-                    fontSize: fontSizeEmail,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.visible,
                 ),
-              ),
-              SizedBox(height: listTilePadding),
-              _listviewItem(
-                  listTilePadding: listTilePadding,
-                  localization: localization,
-                  user: user,
-                  userProvider: userProvider,
-                  userModel: userModel),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'Version 1.0.0 (Build 2026)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white54 : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'The developer-centric learning platform built for modern full-stack development, streaming video tutorials, and interactive coding quizzes.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Color _getBackgroundColor(UserModel userModel, Color backgroundColor) {
-    final rawColor = userModel.backgroundColor.trim();
-    if (rawColor.isNotEmpty) {
-      final hex = rawColor.startsWith('#')
-          ? '0xff${rawColor.substring(1)}'
-          : (rawColor.startsWith('0x') ? rawColor : '0xff$rawColor');
-      final parsed = int.tryParse(hex);
-      if (parsed != null) {
-        return Color(parsed);
-      }
-    }
-    return backgroundColor;
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localization = AppLocalizations.of(context);
+
+    final profileState = ref.watch(userProfileProvider);
+    final userProviderState = ref.watch(userNotifierProvider);
+    final regProvider = ref.watch(registrationNotifierProvider);
+    final themeProvider = ref.watch(themeNotifierProvider);
+    final languageProvider = ref.watch(languageNotifierProvider);
+
+    final currentUser = profileState.user ?? userProviderState.user;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+        ),
+        actions: [
+          ThemeSwitcher(
+            builder: (context) {
+              return IconButton(
+                tooltip: 'Toggle Theme',
+                icon: Icon(
+                  themeProvider.currentTheme == ThemeMode.dark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
+                  color: isDark ? Colors.amber : const Color(0xFF475569),
+                  size: 22,
+                ),
+                onPressed: () {
+                  themeProvider.switchTheme(context);
+                },
+              );
+            },
+          ),
+          IconButton(
+            tooltip: localization.editProfile,
+            icon: const Icon(IconlyLight.edit, size: 20),
+            onPressed: () {
+              if (currentUser != null) {
+                userProviderState.setUserData(currentUser);
+              }
+              context.push(RoutesPath.editProfileInformation);
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: profileState.isLoading && currentUser == null
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : currentUser == null
+                ? _buildEmptyState(isDark)
+                : _buildProfileContent(
+                    context,
+                    user: currentUser,
+                    isDark: isDark,
+                    localization: localization,
+                    enrolledCoursesCount: regProvider.registeredCourses.length,
+                    themeProvider: themeProvider,
+                    languageProvider: languageProvider,
+                  ),
+      ),
+    );
   }
 
-
-  double _listTilePadding(bool isSmallest, bool isSmall) {
-    double listTilePadding = isSmallest
-        ? 10
-        : isSmall
-            ? 15
-            : 20;
-    return listTilePadding;
-  }
-
-  double _padding(bool isSmallest, bool isSmall) {
-    double padding = isSmallest
-        ? 10
-        : isSmall
-            ? 20
-            : 40;
-    return padding;
-  }
-
-  double _iconSize(bool isSmallest, bool isSmall) {
-    double iconSize = isSmallest
-        ? 16
-        : isSmall
-            ? 18
-            : 20;
-    return iconSize;
-  }
-
-  double _fontSizeEmail(bool isSmallest, bool isSmall, bool isMedium) {
-    double fontSizeEmail = isSmallest
-        ? 12
-        : isSmall
-            ? 14
-            : isMedium
-                ? 16
-                : 18;
-    return fontSizeEmail;
-  }
-
-  double _fontSizeName(bool isSmallest, bool isSmall, bool isMedium) {
-    double fontSizeName = isSmallest
-        ? 14
-        : isSmall
-            ? 16
-            : isMedium
-                ? 18
-                : 20;
-    return fontSizeName;
-  }
-
-  double _avatarSize(bool isSmallest, bool isSmall, bool isMedium) {
-    double avatarSize = isSmallest
-        ? 80
-        : isSmall
-            ? 100
-            : isMedium
-                ? 120
-                : 140;
-    return avatarSize;
-  }
-
-  Widget _buildErrorState() {
-    return const Center(
-      child: Text(
-        'Error loading user data. Please try again.',
-        style: TextStyle(
-          color: Colors.red,
-          fontSize: 18,
+  Widget _buildEmptyState(bool isDark) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.person_off_rounded,
+                size: 64,
+                color: isDark ? Colors.white38 : Colors.grey.shade400,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Could not load profile information',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _onRefresh,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Future<void> _uploadImageAndSaveUrl(File imageFile) async {
-    try {
-      EasyLoading.show(status: 'Preparing to upload...');
-      await ref.read(userProfileProvider.notifier).uploadAvatar(imageFile);
-      if (!mounted) return;
-      final updatedUser = ref.read(userProfileProvider).user;
-      if (updatedUser != null) {
-        userProvider.setUserData(updatedUser);
-      }
-      EasyLoading.dismiss();
-    } catch (e) {
-      EasyLoading.dismiss();
-      if (kDebugMode) {
-        print('Error uploading image: $e');
-      }
-    }
-  }
+  Widget _buildProfileContent(
+    BuildContext context, {
+    required UserModel user,
+    required bool isDark,
+    required AppLocalizations localization,
+    required int enrolledCoursesCount,
+    required CustomizeThemeProvider themeProvider,
+    required LanguageProvider languageProvider,
+  }) {
+    final languageName = languageProvider.locale.languageCode == 'km'
+        ? localization.khmer
+        : localization.english;
 
-  Future<void> _pickImage() async {
-    final File? croppedFile = await ImageUtils.pickImage();
-    if (croppedFile != null) {
-      final File? image = await CompressImageUtils.compressImage(croppedFile);
-      if (image != null) {
-        await _uploadImageAndSaveUrl(image);
-      }
-    }
-  }
+    return ListView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        // 1. Hero Header Card
+        ProfileHeaderCard(
+          user: user,
+          onCameraTap: _pickImage,
+        ),
+        const SizedBox(height: 12),
 
-  ThemeSwitcher _buildSwitcher(bool isdark) {
-    return ThemeSwitcher(builder: (context) {
-      return legacy_provider.Consumer<CustomizeThemeProvider>(
-        builder: (context, value, child) {
-          return IconButton(
-            splashRadius: 20,
-            tooltip: 'Change Theme',
-            onPressed: () {
-              themeProvider.switchTheme(context);
-            },
-            icon: Icon(
-              size: 16,
-              color: isdark ? Colors.white : Colors.black,
-              themeProvider.currentTheme == ThemeMode.dark
-                  ? Icons.nightlight_outlined
-                  : Icons.wb_sunny_outlined,
-            ),
-          );
-        },
-      );
-    });
-  }
-}
+        // 2. Stats Overview Card
+        ProfileStatsCard(
+          user: user,
+          enrolledCoursesCount: enrolledCoursesCount,
+        ),
+        const SizedBox(height: 16),
 
-// ignore: camel_case_types
-class _listviewItem extends StatelessWidget {
-  const _listviewItem(
-      {required this.listTilePadding,
-      required this.localization,
-      required this.user,
-      required this.userProvider,
-      required this.userModel});
-
-  final double listTilePadding;
-  final AppLocalizations localization;
-  final User? user;
-  final UserProvider userProvider;
-  final UserModel userModel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: listTilePadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            localization.yourAccount,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: listTilePadding / 2),
-          CustomListTile(
-            leadingIcon: Icon(
-              IconlyBold.profile,
-              size: 18,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            title: localization.editProfile,
-            onTap: () {
-              legacy_provider.Provider.of<UserProvider>(context, listen: false)
-                  .setUserData(userModel);
-
-              context.push(RoutesPath.editProfileInformation);
-            },
-          ),
-          SizedBox(height: listTilePadding / 2),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              localization.appSettings,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          SizedBox(height: listTilePadding / 2),
-          CustomListTile(
-            leadingIcon: const Icon(Icons.settings, size: 18),
-            title: localization.settings,
-            onTap: () {
-              context.push(RoutesPath.settingscreen);
-            },
-          ),
-          SizedBox(height: listTilePadding),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              localization.notificationsTitle,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          SizedBox(height: listTilePadding / 2),
-          CustomListTile(
-            leadingIcon: const Icon(Icons.notifications, size: 18),
-            title: localization.notifications,
-            onTap: () {
-              context.push(RoutesPath.isEnableNotifications);
-            },
-          ),
-          SizedBox(height: listTilePadding / 2),
-          CustomListTile(
-              leadingIcon: const Icon(Icons.video_collection, size: 18),
-              title: localization.myCourses,
+        // 3. Learning & Account Section
+        ProfileMenuGroup(
+          title: localization.yourAccount,
+          items: [
+            ProfileMenuItem(
+              icon: IconlyLight.profile,
+              iconColor: const Color(0xFF3B82F6),
+              title: localization.editProfile,
+              subtitle: 'Update your name, headline and bio',
               onTap: () {
-                context.push(RoutesPath.myCoursesScreen);
-              }),
-          SizedBox(
-            height: listTilePadding,
-          ),
-          ZoomTapAnimation(
-            onTap: () async {
-              await _onLogOuttap(context);
-            },
-            child: SizedBox(
-                width: double.infinity,
-                child: CustomElevatedButtonWidget02(
-                  onPressed: () async {
-                    await _onLogOuttap(context);
-                  },
-                  text: localization.logOut,
-                  textColor: Colors.white,
-                  backgroundColor: Colors.red,
-                )),
-          ),
-        ],
-      ),
-    );
-  }
+                ref.read(userNotifierProvider).setUserData(user);
+                context.push(RoutesPath.editProfileInformation);
+              },
+            ),
+            ProfileMenuItem(
+              icon: Icons.video_library_outlined,
+              iconColor: const Color(0xFF8B5CF6),
+              title: localization.myCourses,
+              subtitle: 'Access your enrolled courses and progress',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (enrolledCoursesCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$enrolledCoursesCount active',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF8B5CF6),
+                        ),
+                      ),
+                    ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: isDark ? Colors.white30 : Colors.grey.shade400,
+                  ),
+                ],
+              ),
+              onTap: () => context.push(RoutesPath.myCoursesScreen),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
 
-  Future<void> _onLogOuttap(BuildContext context) async {
-    bool? confirmSignOut = await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => LogOutDialog(
-        message: localization.logout_message,
-        title: localization.logout_title,
-        icon: Icons.logout,
-      ),
+        // 4. Preferences Section
+        ProfileMenuGroup(
+          title: localization.appSettings,
+          items: [
+            ThemeSwitcher(
+              builder: (context) {
+                return ProfileMenuItem(
+                  icon: isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  iconColor: const Color(0xFFF59E0B),
+                  title: 'Dark Mode',
+                  subtitle: isDark ? 'Dark theme enabled' : 'Light theme enabled',
+                  trailing: Switch.adaptive(
+                    value: isDark,
+                    activeTrackColor: const Color(0xFFF59E0B),
+                    onChanged: (value) {
+                      themeProvider.switchTheme(context);
+                    },
+                  ),
+                  onTap: () {
+                    themeProvider.switchTheme(context);
+                  },
+                );
+              },
+            ),
+            ProfileMenuItem(
+              icon: Icons.translate_rounded,
+              iconColor: const Color(0xFF06B6D4),
+              title: localization.chooseLanguage,
+              subtitle: 'Selected: $languageName',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      languageProvider.locale.languageCode.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF06B6D4),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: isDark ? Colors.white30 : Colors.grey.shade400,
+                  ),
+                ],
+              ),
+              onTap: () =>
+                  context.pushNamed(RoutesPath.languageSelectionScreen),
+            ),
+            ProfileMenuItem(
+              icon: Icons.notifications_none_rounded,
+              iconColor: const Color(0xFFEC4899),
+              title: localization.notifications,
+              subtitle: 'Notification permissions and alerts',
+              onTap: () => context.push(RoutesPath.isEnableNotifications),
+            ),
+            ProfileMenuItem(
+              icon: Icons.settings_outlined,
+              iconColor: const Color(0xFF64748B),
+              title: localization.settings,
+              subtitle: 'General application settings',
+              onTap: () => context.push(RoutesPath.settingscreen),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // 5. Support & Legal Section
+        ProfileMenuGroup(
+          title: 'Support & Legal',
+          items: [
+            ProfileMenuItem(
+              icon: Icons.info_outline_rounded,
+              iconColor: const Color(0xFF6366F1),
+              title: 'About Only Dev',
+              subtitle: 'Version 1.0.0 (Build 2026)',
+              onTap: () => _showAboutDialog(context, isDark),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // 6. Logout Section
+        ProfileMenuGroup(
+          items: [
+            ProfileMenuItem(
+              icon: Icons.logout_rounded,
+              iconColor: Colors.redAccent,
+              title: localization.logOut,
+              subtitle: 'Sign out from this device',
+              isDestructive: true,
+              onTap: _handleLogout,
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+      ],
     );
-    if (confirmSignOut!) {
-      EasyLoading.show(
-        status: 'Logout User',
-      );
-      await userProvider.handleUserLogout();
-      EasyLoading.dismiss();
-    }
   }
 }

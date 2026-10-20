@@ -1,15 +1,15 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:only_dev_app/core/global_navigation.dart';
-import 'package:only_dev_app/features/quizzes/provider/quiz_provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/quizzes/view/review_question_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/utils/show_dialog_infor_utils.dart';
 
-class ResultQuizScreen extends StatelessWidget {
+class ResultQuizScreen extends ConsumerWidget {
   final List<Map<String, dynamic>> questions;
   final List<String> userAnswers;
   final List<String> correctAnswers;
@@ -22,8 +22,8 @@ class ResultQuizScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final quizProvider = context.read<QuizProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quizProvider = ref.watch(quizNotifierProvider);
     int correctCount = 0;
     for (int i = 0; i < userAnswers.length; i++) {
       if (userAnswers[i] == correctAnswers[i]) {

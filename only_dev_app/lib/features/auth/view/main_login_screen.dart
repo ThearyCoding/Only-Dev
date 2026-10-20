@@ -1,11 +1,11 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/widgets/buttons/custom_button_login_widget.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_text_animation_widget.dart';
 
-class MainLoginScreen extends StatelessWidget {
+class MainLoginScreen extends ConsumerWidget {
   final VoidCallback? onSwitchToSignUp;
   final VoidCallback? onSwitchToLogin;
 
@@ -14,7 +14,7 @@ class MainLoginScreen extends StatelessWidget {
   MainLoginScreen({super.key, this.onSwitchToSignUp, this.onSwitchToLogin});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
@@ -112,8 +112,7 @@ class MainLoginScreen extends StatelessWidget {
                                 onPressed: isLoggingIn ? null : () async {
                                   _isLoggingIn.value = true;
                                   try {
-                                    final authProvider =
-                                        Provider.of<AuthenticationProvider>(context, listen: false);
+                                    final authProvider = ref.read(authNotifierProvider);
                                     final user = await authProvider.signInWithGoogle();
                                     if (user != null) {
                                       log('Signed in as: ${user.displayName}');

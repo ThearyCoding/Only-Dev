@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import '../app_widgets/app_image_widget.dart';
-
-import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/utils/generate_color.dart';
 
-class ProfileImage extends StatelessWidget {
+class ProfileImage extends ConsumerWidget {
   final VoidCallback onTap;
 
   const ProfileImage({super.key, required this.onTap});
@@ -25,58 +24,55 @@ class ProfileImage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<UserProvider>(
-      builder: (context, provider, child) {
-        final user = provider.user;
-        if (user == null) {
-          return const SizedBox.shrink();
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(userNotifierProvider);
+    final user = provider.user;
+    if (user == null) {
+      return const SizedBox.shrink();
+    }
 
-        final photoURL = user.photoURL.isNotEmpty
-            ? user.photoURL
-            : (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-                ? user.avatarUrl!
-                : null;
+    final photoURL = user.photoURL.isNotEmpty
+        ? user.photoURL
+        : (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+            ? user.avatarUrl!
+            : null;
 
-        // Extract initials from the user's name
-        String initials = '';
-        if (user.firstName.isNotEmpty) {
-          initials += user.firstName[0];
-        }
-        if (user.lastName.isNotEmpty) {
-          initials += user.lastName[0];
-        }
-        if (initials.isEmpty && user.fullName.isNotEmpty) {
-          initials = user.fullName[0];
-        }
+    // Extract initials from the user's name
+    String initials = '';
+    if (user.firstName.isNotEmpty) {
+      initials += user.firstName[0];
+    }
+    if (user.lastName.isNotEmpty) {
+      initials += user.lastName[0];
+    }
+    if (initials.isEmpty && user.fullName.isNotEmpty) {
+      initials = user.fullName[0];
+    }
 
-        final userColor = _resolveUserColor(user.backgroundColor);
+    final userColor = _resolveUserColor(user.backgroundColor);
 
-        return GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: AppCircleAvatar(
-                imageUrl: photoURL,
-                name: user.fullName,
-                radius: 20,
-                backgroundColor: userColor,
-                textStyle: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: AppCircleAvatar(
+            imageUrl: photoURL,
+            name: user.fullName,
+            radius: 20,
+            backgroundColor: userColor,
+            textStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

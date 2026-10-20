@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../generated/l10n.dart';
 import '../../model/user_model.dart';
@@ -60,8 +59,9 @@ class CourseListWidgetState extends State<CourseListWidget> {
   @override
   Widget build(BuildContext context) {
     final localization = AppLocalizations.of(context);
-    return Consumer<CourseListProvider>(
-      builder: (context, value, child) {
+    return ListenableBuilder(
+      listenable: widget.allCoursesProvider,
+      builder: (context, child) {
         if (widget.allCoursesProvider.categoryLoadingMap[widget.categoryId] ??
             false) {
           return const BuildShimmerCourseCardV2();

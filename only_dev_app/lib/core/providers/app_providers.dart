@@ -13,6 +13,23 @@ import '../../service/shared/shared_preferences_service.dart';
 import '../../features/courses/provider/course_content_notifier.dart';
 export '../../features/courses/provider/course_content_notifier.dart';
 
+import '../../features/auth/provider/auth_provider.dart';
+import '../../features/common/provider/internet_connection_provider.dart';
+import '../../features/courses/provider/admin_provider.dart';
+import '../../features/courses/provider/course_list_provider.dart';
+import '../../features/courses/provider/banners_provider.dart';
+import '../../features/courses/provider/categories_provider.dart';
+import '../../features/courses/provider/course_provider.dart';
+import '../../features/courses/provider/lecture_provider.dart';
+import '../../features/enrollments/provider/enrollment_provider.dart';
+import '../../features/enrollments/provider/registration_provider.dart';
+import '../../features/notifications/provider/notification_provider.dart';
+import '../../features/profile/provider/user_provider.dart';
+import '../../features/quizzes/provider/quiz_provider.dart';
+import '../../features/search/provider/search_engine_provider.dart';
+import '../../features/settings/provider/language_provider.dart';
+import '../../features/settings/provider/theme_provider.dart';
+
 // ==========================================
 // 1. Core Repository Providers
 // ==========================================
@@ -433,5 +450,82 @@ final courseContentNotifierProvider = StateNotifierProvider.autoDispose
     courseId: params.courseId,
     categoryId: params.categoryId,
   );
+});
+
+// ==========================================
+// 7. Global Application Riverpod Providers
+// ==========================================
+final internetConnectionNotifierProvider =
+    ChangeNotifierProvider<InternetConnectionProvider>((ref) {
+  return InternetConnectionProvider();
+});
+
+final authNotifierProvider =
+    ChangeNotifierProvider<AuthenticationProvider>((ref) {
+  return AuthenticationProvider();
+});
+
+final userNotifierProvider = ChangeNotifierProvider<UserProvider>((ref) {
+  return UserProvider(ref.watch(authNotifierProvider));
+});
+
+final themeNotifierProvider =
+    ChangeNotifierProvider<CustomizeThemeProvider>((ref) {
+  return CustomizeThemeProvider();
+});
+
+final languageNotifierProvider =
+    ChangeNotifierProvider<LanguageProvider>((ref) {
+  return LanguageProvider();
+});
+
+final registrationNotifierProvider =
+    ChangeNotifierProvider<RegistrationProvider>((ref) {
+  return RegistrationProvider();
+});
+
+final notificationNotifierProvider =
+    ChangeNotifierProvider<NotificationProvider>((ref) {
+  return NotificationProvider();
+});
+
+final courseNotifierProvider = ChangeNotifierProvider<CourseProvider>((ref) {
+  return CourseProvider();
+});
+
+final categoriesNotifierProvider =
+    ChangeNotifierProvider<CategoriesProvider>((ref) {
+  return CategoriesProvider();
+});
+
+final bannersNotifierProvider = ChangeNotifierProvider<BannersProvider>((ref) {
+  return BannersProvider();
+});
+
+final quizNotifierProvider = ChangeNotifierProvider<QuizProvider>((ref) {
+  return QuizProvider();
+});
+
+final lectureNotifierProvider = ChangeNotifierProvider<LectureProvider>((ref) {
+  return LectureProvider();
+});
+
+final adminNotifierProvider = ChangeNotifierProvider<AdminProvider>((ref) {
+  return AdminProvider();
+});
+
+final enrollmentNotifierProvider =
+    ChangeNotifierProvider<EnrollmentProvider>((ref) {
+  return EnrollmentProvider();
+});
+
+final searchEngineNotifierProvider =
+    ChangeNotifierProvider<SearchEngineProvider>((ref) {
+  return SearchEngineProvider();
+});
+
+final courseListNotifierProvider =
+    ChangeNotifierProvider<CourseListProvider>((ref) {
+  return CourseListProvider();
 });
 

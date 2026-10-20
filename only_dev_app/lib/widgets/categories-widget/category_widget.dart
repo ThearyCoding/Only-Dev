@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:only_dev_app/features/courses/provider/categories_provider.dart';
 import '../../routes/app_routes.dart';
 import '../cards/category_card.dart';
@@ -99,8 +98,9 @@ class CategoryWidgetState extends State<CategoryWidget> {
 
           return SizedBox(
               height: widgetHeight,
-              child: Consumer<CategoriesProvider>(
-                builder: (context, value, child) {
+              child: ListenableBuilder(
+                listenable: widget.categoriesProvider,
+                builder: (context, child) {
                   if (widget.categoriesProvider.categories.isEmpty &&
                       !widget.categoriesProvider.isLoading) {
                     return const Center(

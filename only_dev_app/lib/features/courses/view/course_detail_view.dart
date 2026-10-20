@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
 import 'package:only_dev_app/data/models/models.dart';
@@ -17,7 +18,7 @@ import 'package:only_dev_app/widgets/loadings-widget/build_course_detail_shimmer
 import 'package:only_dev_app/widgets/topic-widget/description_topic_widget.dart';
 import '../viewmodel/course_detail_viewmodel.dart';
 
-class CourseDetailView extends StatefulWidget {
+class CourseDetailView extends ConsumerStatefulWidget {
   final String categoryId;
   final String courseId;
   final CourseModel? initialCourse;
@@ -30,10 +31,10 @@ class CourseDetailView extends StatefulWidget {
   });
 
   @override
-  State<CourseDetailView> createState() => _CourseDetailViewState();
+  ConsumerState<CourseDetailView> createState() => _CourseDetailViewState();
 }
 
-class _CourseDetailViewState extends State<CourseDetailView> {
+class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _detailsTitleKey = GlobalKey();
   final double _coverHeight = 220.0;
@@ -44,7 +45,7 @@ class _CourseDetailViewState extends State<CourseDetailView> {
     // Fetch curriculum sections via lectureProvider if available in context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        final lectureProvider = Provider.of<LectureProvider>(context, listen: false);
+        final lectureProvider = ref.read(lectureNotifierProvider);
         lectureProvider.getSections(widget.categoryId, widget.courseId);
       } catch (_) {}
     });
@@ -195,7 +196,7 @@ class _CourseDetailViewState extends State<CourseDetailView> {
   ) {
     LectureProvider? lectureProvider;
     try {
-      lectureProvider = Provider.of<LectureProvider>(context, listen: false);
+      lectureProvider = ref.watch(lectureNotifierProvider);
     } catch (_) {}
 
     final totalLectures = model.totalLectures > 0

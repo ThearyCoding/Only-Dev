@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/courses/provider/categories_provider.dart';
 import 'package:only_dev_app/features/courses/provider/course_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
@@ -10,7 +12,6 @@ import 'package:only_dev_app/widgets/tabs-widget/tab_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconly/iconly.dart';
-import 'package:provider/provider.dart';
 
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/generated/l10n.dart';
@@ -23,7 +24,7 @@ import 'package:only_dev_app/widgets/user-profile/profile_image.dart';
 import 'package:only_dev_app/widgets/categories-widget/category_widget.dart';
 import 'package:flutter/scheduler.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   final VoidCallback? onProfileImageTapped;
   final VoidCallback? onSeeAllCoursesTapped;
   final VoidCallback? onNotificationsTapped;
@@ -39,7 +40,7 @@ class HomePage extends StatefulWidget {
   HomePageState createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixin {
   final ScrollController _categoriesscrollCategories = ScrollController();
   final ScrollController _scrollController = ScrollController();
   late CourseProvider courseController;
@@ -55,12 +56,10 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    userProvider = Provider.of<UserProvider>(context, listen: false);
-    courseController = Provider.of<CourseProvider>(context, listen: false);
-    categoriesProvider =
-        Provider.of<CategoriesProvider>(context, listen: false);
-    registrationController =
-        Provider.of<RegistrationProvider>(context, listen: false);
+    userProvider = ref.read(userNotifierProvider);
+    courseController = ref.read(courseNotifierProvider);
+    categoriesProvider = ref.read(categoriesNotifierProvider);
+    registrationController = ref.read(registrationNotifierProvider);
 
     _tabController = TabController(length: 3, vsync: this);
 
@@ -132,8 +131,9 @@ class HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Consumer<UserProvider>(builder: (context, value, child) {
-                if (userProvider.user != null) {
+              child: Consumer(builder: (context, ref, child) {
+                final user = ref.watch(userNotifierProvider).user;
+                if (user != null) {
                   return ProfileImage(onTap: widget.onProfileImageTapped!);
                 } else {
                   return const SizedBox();

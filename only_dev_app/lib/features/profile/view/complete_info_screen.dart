@@ -7,11 +7,9 @@ import 'package:only_dev_app/widgets/app_widgets/app_image_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_btn/loading_btn.dart';
-import 'package:provider/provider.dart' as legacy_provider;
 import 'package:random_avatar/random_avatar.dart';
 
 import 'package:only_dev_app/core/providers/app_providers.dart';
-import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/utils/date_picker_utils.dart';
 import 'package:only_dev_app/utils/image_picker_utils.dart';
@@ -72,8 +70,7 @@ class _CompleteInformationsState extends ConsumerState<CompleteInformations> {
 
   void _checkCurrentUserSignInStatus() {
     final user = widget.user;
-    final authProvider =
-        legacy_provider.Provider.of<AuthenticationProvider>(context, listen: false);
+    final authProvider = ref.read(authNotifierProvider);
     signedInWithGoogle = authProvider.isSignedInWithGoogle(user);
 
     if (signedInWithGoogle) {
@@ -333,10 +330,9 @@ class _CompleteInformationsState extends ConsumerState<CompleteInformations> {
                                       .read(completeInfoProvider.notifier)
                                       .saveProfile();
                                   if (!context.mounted) return;
-                                  legacy_provider.Provider.of<
-                                          AuthenticationProvider>(context,
-                                      listen: false)
-                                    .saveUserLoginStatus(true);
+                                  ref
+                                      .read(authNotifierProvider)
+                                      .saveUserLoginStatus(true);
                                   context.push(RoutesPath.home);
                                 } catch (e) {
                                   if (kDebugMode) {

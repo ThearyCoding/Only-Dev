@@ -11,9 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loading_btn/loading_btn.dart';
-import 'package:provider/provider.dart' as legacy_provider;
-
-import 'package:only_dev_app/features/profile/provider/user_provider.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_date_picker_widget.dart';
 
@@ -52,8 +49,7 @@ class EditProfileInformationState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileState = ref.read(userProfileProvider);
-      userModel = profileState.user ??
-          legacy_provider.Provider.of<UserProvider>(context, listen: false).userModel;
+      userModel = profileState.user ?? ref.read(userNotifierProvider).userModel;
       if (userModel != null) {
         uid = _auth?.uid;
         photoURL = userModel!.photoURL;
@@ -336,10 +332,7 @@ class EditProfileInformationState
                                               bio: txtbio.text.trim(),
                                             );
                                         if (!context.mounted) return;
-                                        legacy_provider.Provider.of<
-                                                    UserProvider>(context,
-                                                listen: false)
-                                            .setUserData(updatedUser);
+                                        ref.read(userNotifierProvider).setUserData(updatedUser);
                                         await _showSuccessDialog();
                                       } catch (e) {
                                         if (!context.mounted) return;

@@ -1,21 +1,19 @@
-import 'package:only_dev_app/widgets/cards/build_course_card_widget_ui_v2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/model/user_model.dart';
-import 'package:only_dev_app/features/search/provider/search_engine_provider.dart';
-import 'package:only_dev_app/features/courses/provider/admin_provider.dart';
-import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
+import 'package:only_dev_app/widgets/cards/build_course_card_widget_ui_v2.dart';
 
-class SearchEnginePage extends StatefulWidget {
+class SearchEnginePage extends ConsumerStatefulWidget {
   const SearchEnginePage({Key? key}) : super(key: key);
 
   @override
   SearchEnginePageState createState() => SearchEnginePageState();
 }
 
-class SearchEnginePageState extends State<SearchEnginePage> {
+class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
   final TextEditingController textController = TextEditingController();
   final FocusNode focusNode = FocusNode();
 
@@ -52,8 +50,7 @@ class SearchEnginePageState extends State<SearchEnginePage> {
             color: isDarkMode ? Colors.white : Colors.black,
           ),
           onPressed: () {
-            Provider.of<SearchEngineProvider>(context, listen: false)
-                .clearSearch();
+            ref.read(searchEngineNotifierProvider).clearSearch();
             context.pop();
           },
         ),
@@ -65,8 +62,11 @@ class SearchEnginePageState extends State<SearchEnginePage> {
           ),
         ),
       ),
-      body: Consumer<SearchEngineProvider>(
-        builder: (context, provider, child) {
+      body: Builder(
+        builder: (context) {
+          final provider = ref.watch(searchEngineNotifierProvider);
+          final adminProvider = ref.watch(adminNotifierProvider);
+          final registrationProvider = ref.watch(registrationNotifierProvider);
           return Column(
             children: [
               Padding(
@@ -126,35 +126,30 @@ class SearchEnginePageState extends State<SearchEnginePage> {
                                       color: Colors.grey, fontSize: 16),
                                 ),
                               )
-                            : Consumer2<AdminProvider, RegistrationProvider>(
-                                builder: (context, adminProvider,
-                                    registrationProvider, child) {
-                                  return ListView.builder(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 10),
-                                    itemCount: provider.courses.length,
-                                    itemBuilder: (context, index) {
-                                      final course = provider.courses[index];
-                                      final admin =
-                                          adminProvider.admins.firstWhere(
-                                        (admin) => admin.id == course.adminId,
-                                        orElse: () => UserModel.empty(),
-                                      );
-                                      final isRegistered = registrationProvider
-                                          .registeredCourses
-                                          .any(
-                                        (register) =>
-                                            register.courseId == course.id,
-                                      );
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 10),
+                                itemCount: provider.courses.length,
+                                itemBuilder: (context, index) {
+                                  final course = provider.courses[index];
+                                  final admin =
+                                      adminProvider.admins.firstWhere(
+                                    (admin) => admin.id == course.adminId,
+                                    orElse: () => UserModel.empty(),
+                                  );
+                                  final isRegistered = registrationProvider
+                                      .registeredCourses
+                                      .any(
+                                    (register) =>
+                                        register.courseId == course.id,
+                                  );
 
-                                      return CourseCardV2(
-                                        course: course,
-                                        admin: admin,
-                                        quizCount: 10,
-                                        isRegistered: isRegistered,
-                                        totalLectures: 20,
-                                      );
-                                    },
+                                  return CourseCardV2(
+                                    course: course,
+                                    admin: admin,
+                                    quizCount: 10,
+                                    isRegistered: isRegistered,
+                                    totalLectures: 20,
                                   );
                                 },
                               ),

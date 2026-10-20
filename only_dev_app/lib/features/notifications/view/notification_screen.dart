@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
 import 'package:only_dev_app/features/posts/view/post_editor_screen.dart';
 import 'package:only_dev_app/generated/l10n.dart';
@@ -9,14 +10,14 @@ import 'package:only_dev_app/utils/app_toast_utils.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_notification_shimmer_loading.dart';
 import 'package:only_dev_app/widgets/notification-widget/notification_widget.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final ScrollController _scrollController = ScrollController();
   NotificationProvider? _provider;
 
@@ -79,8 +80,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: Consumer<NotificationProvider>(
-        builder: (context, provider, child) {
+      body: Builder(
+        builder: (context) {
+          final provider = ref.watch(notificationNotifierProvider);
           _provider = provider;
 
           if (provider.isLoading && provider.notifications.isEmpty) {

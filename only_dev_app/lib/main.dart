@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'di/dependency_injection.dart';
 import 'messaging/firebase_messaging_service.dart';
-import 'features/provider_setup.dart';
+import 'my_app.dart';
 import 'utils/easy_loading_configure_utils.dart';
 
 Future<void> main() async {
@@ -15,5 +15,5 @@ Future<void> main() async {
   await setupLocator();
   await FirebaseMessagingService.initialize();
   configEasyLoading();
-  runApp(const ProviderScope(child: ProviderSetup()));
+  runApp(const ProviderScope(child: MyApp()));
 }

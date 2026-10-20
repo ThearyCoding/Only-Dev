@@ -1,12 +1,12 @@
-import 'package:only_dev_app/features/quizzes/provider/quiz_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import '/../utils/show_dialog_infor_utils.dart';
 import '/../widgets/check-box-widget/custom_checkbox.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_for_quiz.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_underline_painter.dart';
 
-class ResultPage extends StatelessWidget {
+class ResultPage extends ConsumerWidget {
   final List<Map<String, dynamic>> questions;
   final List<String> userAnswers;
   final List<String> correctAnswers;
@@ -19,7 +19,7 @@ class ResultPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Calculate the total score and other metrics
     int totalQuestions = questions.length;
     int correctCount = 0;
@@ -32,8 +32,7 @@ class ResultPage extends StatelessWidget {
       }
     }
     double scorePercentage = (correctCount / totalQuestions) * 100;
-    final QuizProvider quizProvider =
-        Provider.of<QuizProvider>(context, listen: false);
+    final quizProvider = ref.watch(quizNotifierProvider);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

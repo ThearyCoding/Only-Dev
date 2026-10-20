@@ -1,10 +1,10 @@
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../../routes/app_routes.dart';
-import 'package:only_dev_app/features/courses/provider/lecture_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import '../../routes/app_routes.dart';
 
-class QuizTabWidget extends StatelessWidget {
+class QuizTabWidget extends ConsumerWidget {
   final String categoryId;
   final String courseId;
   final String title;
@@ -17,57 +17,56 @@ class QuizTabWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final courseProvider = ref.watch(lectureNotifierProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-      child: Consumer<LectureProvider>(
-        builder: (context, courseProvider, child) {
-          if (courseProvider.loadingQuestions) {
-            return const Center(
+      child: courseProvider.loadingQuestions
+          ? const Center(
               child: CircularProgressIndicator(),
-            );
-          } else if (courseProvider.totalQuestions == 0) {
-            return const Center(
-              child: Text('No Questions'),
-            );
-          } else {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Let's Quiz",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            )
+          : courseProvider.totalQuestions == 0
+              ? const Center(
+                  child: Text('No Questions'),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Total Question',
-                      style: TextStyle(
-                        fontSize: 16,
+                    const Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Let's Quiz",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    Text(
-                      '${courseProvider.totalQuestions} Questions',
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Question',
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          '${courseProvider.totalQuestions} Questions',
+                          style: const TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Time Quiz',
+                    const SizedBox(height: 20),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Time Quiz',
                       style: TextStyle(
                         fontSize: 16,
                       ),
@@ -131,12 +130,9 @@ class QuizTabWidget extends StatelessWidget {
                       ),
                     ),
                   ],
-                )
+                ),
               ],
-            );
-          }
-        },
-      ),
+            ),
     );
   }
 }

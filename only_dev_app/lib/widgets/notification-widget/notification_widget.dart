@@ -1,6 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconly/iconly.dart';
-import 'package:provider/provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/app_toast_utils.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import '../../model/notification_model.dart';
-import 'package:only_dev_app/features/notifications/provider/notification_provider.dart';
 
-class NotificationItem extends StatelessWidget {
+class NotificationItem extends ConsumerWidget {
   final NotificationModel notification;
 
   const NotificationItem({
@@ -19,7 +19,7 @@ class NotificationItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final notificationColor = notification.isDetailSeen
@@ -31,8 +31,8 @@ class NotificationItem extends StatelessWidget {
     return ZoomTapAnimation(
       onTap: () async {
         navigation(context);
-        await context
-            .read<NotificationProvider>()
+        await ref
+            .read(notificationNotifierProvider)
             .toggleDetailSeen(notification.id, true);
       },
       child: Card(
@@ -60,8 +60,7 @@ class NotificationItem extends StatelessWidget {
             splashRadius: 20,
             icon: const Icon(Icons.more_horiz),
             onPressed: () {
-              showBottomSheet(context, notification.id);
-              
+              showBottomSheet(context, notification.id, ref);
             },
           ),
           title: Text(
@@ -137,7 +136,7 @@ class NotificationItem extends StatelessWidget {
     }
   }
 
- void showBottomSheet(BuildContext context, String notificationId) {
+ void showBottomSheet(BuildContext context, String notificationId, WidgetRef ref) {
   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
   showModalBottomSheet(
@@ -210,8 +209,8 @@ class NotificationItem extends StatelessWidget {
                       child: ListTile(
                         onTap: () async {
                           if (index == 0) {
-                            await context
-                                .read<NotificationProvider>()
+                            await ref
+                                .read(notificationNotifierProvider)
                                 .deleteNotification(notificationId);
                             AppToastUtils.success("Notification deleted successfully");
                            

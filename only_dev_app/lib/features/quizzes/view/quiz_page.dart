@@ -1,15 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:only_dev_app/routes/app_routes.dart';
-import 'package:only_dev_app/widgets/loadings-widget/build_quiz_loading_shimmer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
-import 'package:only_dev_app/features/quizzes/provider/quiz_provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/utils/show_dialog_infor_utils.dart';
+import 'package:only_dev_app/widgets/loadings-widget/build_quiz_loading_shimmer.dart';
 
-class QuizPage extends StatefulWidget {
+class QuizPage extends ConsumerStatefulWidget {
   final String courseId;
   final String courseTitle;
   final String categoryId;
@@ -22,48 +21,46 @@ class QuizPage extends StatefulWidget {
   });
 
   @override
-  State<QuizPage> createState() => _QuizPageState();
+  ConsumerState<QuizPage> createState() => _QuizPageState();
 }
 
-class _QuizPageState extends State<QuizPage> {
-  late QuizProvider quizProvider;
+class _QuizPageState extends ConsumerState<QuizPage> {
   User? user = FirebaseAuth.instance.currentUser;
   final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    quizProvider = Provider.of<QuizProvider>(context, listen: false);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final quizProvider = ref.read(quizNotifierProvider);
       quizProvider.setcourseId = widget.courseId;
       quizProvider.settitle = widget.courseTitle;
       quizProvider.setcategoryId = widget.categoryId;
       quizProvider.fetchQuestions(widget.courseId);
     });
-
-    quizProvider.addListener(_onProviderChange);
-  }
-
-  void _onProviderChange() {
-    if (_pageController.hasClients) {
-      _pageController.animateToPage(
-        quizProvider.currentQuestionIndex,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    quizProvider.removeListener(_onProviderChange);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final quizProvider = ref.watch(quizNotifierProvider);
+
+    ref.listen(quizNotifierProvider, (previous, next) {
+      if (previous?.currentQuestionIndex != next.currentQuestionIndex &&
+          _pageController.hasClients) {
+        _pageController.animateToPage(
+          next.currentQuestionIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.courseTitle),
@@ -92,36 +89,32 @@ class _QuizPageState extends State<QuizPage> {
                     },
                   );
                 }
-                // ignore: use_build_context_synchronously
-                // Navigator.pop(context);
               }
             }),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Consumer<QuizProvider>(
-          builder: (context, quizProvider, child) {
-            return quizProvider.questions.isEmpty
-                ? const BuildQuizLoadingShimmer()
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Time Remaining: ${quizProvider.time} seconds',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 10),
-                      LinearProgressIndicator(
-                        value: (quizProvider.currentQuestionIndex + 1) /
-                            quizProvider.questions.length,
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: PageView.builder(
-                          controller: _pageController,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: quizProvider.questions.length,
-                          itemBuilder: (context, index) {
+        child: quizProvider.questions.isEmpty
+            ? const BuildQuizLoadingShimmer()
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Time Remaining: ${quizProvider.time} seconds',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: (quizProvider.currentQuestionIndex + 1) /
+                        quizProvider.questions.length,
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: quizProvider.questions.length,
+                      itemBuilder: (context, index) {
                             final question = quizProvider.questions[index];
                             return SingleChildScrollView(
                               child: Column(
@@ -277,9 +270,7 @@ class _QuizPageState extends State<QuizPage> {
                         ],
                       ),
                     ],
-                  );
-          },
-        ),
+                  ),
       ),
     );
   }

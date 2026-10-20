@@ -60,6 +60,18 @@ Before changing anything, inspect the existing project structure and follow its 
 - The backend must provide a consolidated screen endpoint (e.g., `GET /home`) returning an aggregated payload (`banners`, `categories`, `courses`, `recent_courses`, `popular_courses`).
 - The mobile app requests this single composite endpoint through its ViewModel/Repository via Dio, minimizing mobile network round trips, battery consumption, and complex fragmented loading states.
 
+## 14. Feature-Scoped State & Riverpod Exclusivity
+- **Complete Ban on `package:provider`**: The legacy `provider` package is completely removed. Do not import or reintroduce `package:provider`.
+- **Feature-Scoped State First**: Place Notifiers, ViewModels, and State models directly inside `lib/features/<feature>/provider/`.
+- **Lifecycle Management (`.autoDispose`)**: Feature-scoped state should utilize `.autoDispose` so memory is automatically reclaimed when navigating away.
+- **Strictly Global State**: Only true app-wide singletons (Auth JWT session, ThemeMode, Locale) belong in `lib/core/providers/`.
+- **ListenableBuilder Decoupling**: BaseView implementations use Flutter's native `ListenableBuilder` to remain independent of third-party state managers.
+
+## 15. UI Media, Image & Refresh Infrastructure
+- **Universal Image Pipeline**: All network images, avatars, banners, and thumbnails must use `AppImageWidget` and `AppCircleAvatar` (`lib/widgets/app_widgets/app_image_widget.dart`). Never call raw `Image.network` or `CachedNetworkImage` directly in screens.
+- **Native Pull-To-Refresh**: Use Flutter's native `RefreshIndicator` and standard `ScrollController` listener for pagination. Never use third-party `pull_to_refresh` packages.
+- **Patched Video Player**: Video streaming uses the local patched package `only_dev_app/packages/better_player` with defensive NaN guards in Cupertino progress bars.
+
 ---
 
 ## Required API Data Flow

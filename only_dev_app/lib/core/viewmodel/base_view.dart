@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../di/dependency_injection.dart';
 import 'base_viewmodel.dart';
 
@@ -44,12 +43,10 @@ class _BaseViewState<T extends BaseViewModel> extends State<BaseView<T>> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<T>.value(
-      value: _model,
-      child: Consumer<T>(
-        builder: widget.builder,
-        child: widget.child,
-      ),
+    return ListenableBuilder(
+      listenable: _model,
+      builder: (context, child) => widget.builder(context, _model, child),
+      child: widget.child,
     );
   }
 }

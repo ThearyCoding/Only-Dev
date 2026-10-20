@@ -1,17 +1,17 @@
-import 'package:only_dev_app/features/auth/provider/auth_provider.dart';
-import 'package:only_dev_app/features/auth/view/login_with_social_media_or_sign_up_with_email.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/features/auth/view/login_with_social_media_or_sign_up_with_email.dart';
 import '../../routes/app_routes.dart';
 import 'package:only_dev_app/data/repositories/user_repository.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/features/home/view/main_screen.dart';
 import 'package:only_dev_app/service/api/dio_client.dart';
 
-class AuthStateHandler extends StatelessWidget {
+class AuthStateHandler extends ConsumerWidget {
   const AuthStateHandler({super.key});
 
   Future<bool> _checkInfoComplete(User currentUser) async {
@@ -24,9 +24,8 @@ class AuthStateHandler extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider =
-        Provider.of<AuthenticationProvider>(context, listen: false);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authProvider = ref.watch(authNotifierProvider);
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
