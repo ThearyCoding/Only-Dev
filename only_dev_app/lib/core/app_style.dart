@@ -75,3 +75,4 @@ class AppStyle {
 
 /// Semantic alias for color-focused usages
 typedef AppColors = AppStyle;
+
