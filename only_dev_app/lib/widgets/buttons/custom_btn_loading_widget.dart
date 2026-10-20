@@ -7,14 +7,17 @@ class CustomBtnLoadingWidget extends StatefulWidget {
   final Color? backgroundColor;
   final double borderRadius;
   final bool? isInput;
+  final TextStyle? textStyle;
 
-  const CustomBtnLoadingWidget(
-      {super.key,
-      this.onTap,
-      required this.btnText,
-      this.backgroundColor = Colors.green,
-      this.borderRadius = 5.0,
-      this.isInput = false});
+  const CustomBtnLoadingWidget({
+    super.key,
+    this.onTap,
+    required this.btnText,
+    this.backgroundColor,
+    this.borderRadius = 8.0,
+    this.isInput = false,
+    this.textStyle,
+  });
 
   @override
   CustomBtnLoadingWidgetState createState() => CustomBtnLoadingWidgetState();
@@ -25,71 +28,75 @@ class CustomBtnLoadingWidgetState extends State<CustomBtnLoadingWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AbsorbPointer(
-            absorbing: btnState == ButtonState.busy,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width,
-              child: LoadingBtn(
-                height: 50,
-                borderRadius: widget.borderRadius,
-                roundLoadingShape: false,
-                animate: true,
-                color: widget.backgroundColor,
-                elevation: 0,
-                borderSide: BorderSide(
-                  strokeAlign: 1.0,
-                  width: 1.0,
-                  color: widget.isInput == true
-                      ? Colors.transparent
-                      : Colors.grey,
+    final theme = Theme.of(context);
+    final buttonColor = widget.backgroundColor ?? theme.primaryColor;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final btnWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width;
+
+        return AbsorbPointer(
+          absorbing: btnState == ButtonState.busy,
+          child: SizedBox(
+            width: btnWidth,
+            height: 50,
+            child: LoadingBtn(
+              height: 50,
+              borderRadius: widget.borderRadius,
+              roundLoadingShape: false,
+              animate: true,
+              color: buttonColor,
+              elevation: 0,
+              borderSide: BorderSide.none,
+              width: btnWidth,
+              loader: Container(
+                padding: const EdgeInsets.all(10),
+                width: 36,
+                height: 36,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-                width: MediaQuery.of(context).size.width * 0.7,
-                loader: Container(
-                  padding: const EdgeInsets.all(10),
-                  width: 40,
-                  height: 40,
-                  child: const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
-                onTap: btnState == ButtonState.idle
-                    ? (startLoading, stopLoading, btnState) async {
+              ),
+              onTap: btnState == ButtonState.idle
+                  ? (startLoading, stopLoading, btnState) async {
+                      if (mounted) {
                         setState(() {
                           this.btnState = ButtonState.busy;
                         });
-          
-                        startLoading();
-          
-                        // Check if a custom onTap function is provided
-                        if (widget.onTap != null) {
-                          await widget.onTap!(
-                              startLoading, stopLoading, btnState);
-                        }
-          
-                        // Stop loading animation
+                      }
+
+                      startLoading();
+
+                      if (widget.onTap != null) {
+                        await widget.onTap!(
+                            startLoading, stopLoading, btnState);
+                      }
+
+                      if (mounted) {
                         stopLoading();
-          
-                        // Reset button to idle state
                         setState(() {
                           this.btnState = ButtonState.idle;
                         });
                       }
-                    : null,
-                child: Text(
-                  widget.btnText,
-                  style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black),
-                ),
+                    }
+                  : null,
+              child: Text(
+                widget.btnText,
+                style: widget.textStyle ??
+                    const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
               ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
+

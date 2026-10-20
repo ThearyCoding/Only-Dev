@@ -36,7 +36,7 @@ class CourseDetailView extends ConsumerStatefulWidget {
 class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _detailsTitleKey = GlobalKey();
-  final double _coverHeight = 220.0;
+  final double _coverHeight = 260.0;
 
   @override
   void initState() {
@@ -60,7 +60,7 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
     if (_detailsTitleKey.currentContext != null) {
       final RenderBox? renderBox =
           _detailsTitleKey.currentContext?.findRenderObject() as RenderBox?;
-      if (renderBox != null) {
+      if (renderBox != null && renderBox.hasSize) {
         final position = renderBox.localToGlobal(Offset.zero);
         final threshold = kToolbarHeight + MediaQuery.of(context).padding.top;
         if (position.dy <= threshold && !model.showTitleInAppBar) {
@@ -708,6 +708,8 @@ class _CourseDetailViewState extends ConsumerState<CourseDetailView> {
               Expanded(
                 flex: 6,
                 child: CustomBtnLoadingWidget(
+                  backgroundColor: primaryColor,
+                  borderRadius: 12.0,
                   btnText: model.isEnrolled
                       ? 'Start Learning'
                       : (isFree ? localization.enrollnow : 'Enroll Now'),
