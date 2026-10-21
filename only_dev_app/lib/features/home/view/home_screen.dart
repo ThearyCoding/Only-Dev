@@ -25,16 +25,7 @@ import 'package:only_dev_app/widgets/categories-widget/category_widget.dart';
 import 'package:flutter/scheduler.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  final VoidCallback? onProfileImageTapped;
-  final VoidCallback? onSeeAllCoursesTapped;
-  final VoidCallback? onNotificationsTapped;
-
-  const HomePage({
-    super.key,
-    this.onProfileImageTapped,
-    this.onSeeAllCoursesTapped,
-    this.onNotificationsTapped,
-  });
+  const HomePage({super.key});
 
   @override
   HomePageState createState() => HomePageState();
@@ -125,14 +116,21 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
             padding: EdgeInsets.zero,
             color: Theme.of(context).iconTheme.color,
             icon: const Icon(IconlyBold.notification, color: Colors.grey),
-            onPressed: widget.onNotificationsTapped,
+            onPressed: () {
+              ref.read(bottomNavIndexProvider.notifier).state = 2;
+              ref.read(notificationNotifierProvider).markAllAsRead();
+            },
           ),
           Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Consumer(builder: (context, ref, child) {
                 final user = ref.watch(userNotifierProvider).user;
                 if (user != null) {
-                  return ProfileImage(onTap: widget.onProfileImageTapped!);
+                  return ProfileImage(
+                    onTap: () {
+                      ref.read(bottomNavIndexProvider.notifier).state = 3;
+                    },
+                  );
                 } else {
                   return TextButton(
                     onPressed: () => context.push(RoutesPath.login),

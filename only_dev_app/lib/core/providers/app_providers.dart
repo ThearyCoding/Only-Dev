@@ -463,6 +463,9 @@ final courseContentNotifierProvider = StateNotifierProvider.autoDispose
 // ==========================================
 // 7. Global Application Riverpod Providers
 // ==========================================
+/// Active tab index in MainPage bottom navigation (0: Home, 1: Courses, 2: Notifications, 3: Profile)
+final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
+
 final internetConnectionNotifierProvider =
     ChangeNotifierProvider<InternetConnectionProvider>((ref) {
   return InternetConnectionProvider();

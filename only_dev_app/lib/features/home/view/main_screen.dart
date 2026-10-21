@@ -10,24 +10,8 @@ import 'package:only_dev_app/features/notifications/view/notification_screen.dar
 import 'package:only_dev_app/features/profile/view/user_information_screen.dart';
 import 'home_screen.dart';
 
-class MainPage extends ConsumerStatefulWidget {
+class MainPage extends ConsumerWidget {
   const MainPage({super.key});
-
-  @override
-  ConsumerState<MainPage> createState() => MainPageState();
-}
-
-class MainPageState extends ConsumerState<MainPage> {
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      if (_selectedIndex == 2) {
-        ref.read(notificationNotifierProvider).markAllAsRead();
-      }
-    });
-  }
 
   Widget _buildIcon(IconData icon, bool isSelected, {int? badgeCount}) {
     return Stack(
@@ -63,53 +47,38 @@ class MainPageState extends ConsumerState<MainPage> {
     );
   }
 
-  void _onProfileImageTapped() {
-    setState(() {
-      _selectedIndex = 3;
-    });
-  }
-
-  void _onSeeAllCourses() {
-    setState(() {
-      _selectedIndex = 1;
-    });
-  }
-
-  void _onNotificationTapped() {
-    setState(() {
-      _selectedIndex = 2;
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(bottomNavIndexProvider);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          HomePage(
-            onSeeAllCoursesTapped: _onSeeAllCourses,
-            onProfileImageTapped: _onProfileImageTapped,
-            onNotificationsTapped: _onNotificationTapped,
-          ),
-          const CourseListScreen(),
-          const NotificationsScreen(),
-          const UserInformationScreen(),
+        index: selectedIndex,
+        children: const [
+          HomePage(),
+          CourseListScreen(),
+          NotificationsScreen(),
+          UserInformationScreen(),
         ],
       ),
       bottomNavigationBar: DotNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: selectedIndex,
+        onTap: (index) {
+          ref.read(bottomNavIndexProvider.notifier).state = index;
+          if (index == 2) {
+            ref.read(notificationNotifierProvider).markAllAsRead();
+          }
+        },
         marginR: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         itemPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
         items: [
           DotNavigationBarItem(
-            icon: _buildIcon(IconlyBold.home, _selectedIndex == 0),
+            icon: _buildIcon(IconlyBold.home, selectedIndex == 0),
           ),
           DotNavigationBarItem(
-            icon: _buildIcon(Icons.video_collection, _selectedIndex == 1),
+            icon: _buildIcon(Icons.video_collection, selectedIndex == 1),
           ),
           DotNavigationBarItem(
             icon: Consumer(
@@ -117,14 +86,14 @@ class MainPageState extends ConsumerState<MainPage> {
                 final notif = ref.watch(notificationNotifierProvider);
                 return _buildIcon(
                   IconlyBold.notification,
-                  _selectedIndex == 2,
+                  selectedIndex == 2,
                   badgeCount: notif.unreadCount.value,
                 );
               },
             ),
           ),
           DotNavigationBarItem(
-            icon: _buildIcon(IconlyBold.profile, _selectedIndex == 3),
+            icon: _buildIcon(IconlyBold.profile, selectedIndex == 3),
           ),
         ],
         dotIndicatorColor: AppStyle.primaryColor,
