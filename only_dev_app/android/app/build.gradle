@@ -24,16 +24,17 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.e_leaningapp"
-    compileSdkVersion 34
+    compileSdkVersion flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     sourceSets {
@@ -67,5 +68,7 @@ flutter {
 
 dependencies {
     implementation 'com.facebook.android:facebook-login:latest.release'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation 'com.google.android.material:material:1.12.0'
 
 }
