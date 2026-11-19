@@ -98,19 +98,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
         ),
         actions: [
           IconButton(
-            padding: EdgeInsets.zero,
-            tooltip: localizations.searchCourses,
-            splashRadius: 20,
-            onPressed: () {
-              context.push(RoutesPath.searchPage);
-            },
-            icon: const Icon(
-              Icons.search,
-              size: 25,
-              color: Colors.grey,
-            ),
-          ),
-          IconButton(
             tooltip: localizations.notifications,
             splashRadius: 20,
             padding: EdgeInsets.zero,
@@ -172,39 +159,63 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                 child: InkWell(
                   onTap: () => context.push(RoutesPath.searchPage),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Ink(
-                    width: MediaQuery.of(context).size.width - 32,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(10),
+                      color: isDarkMode
+                          ? AppStyle.darkSurface
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDarkMode
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.grey.shade300,
+                        width: 1,
+                      ),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 16.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.search,
-                            size: 24,
-                            color: Theme.of(context).iconTheme.color,
-                          ),
-                          const SizedBox(width: 8.0),
-                          Text(
+                    child: Row(
+                      children: [
+                        Icon(
+                          IconlyLight.search,
+                          size: 20,
+                          color: isDarkMode
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
                             localizations.searchCourses,
                             style: TextStyle(
-                                fontSize: 20,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .color),
+                              fontSize: 14,
+                              fontWeight: FontWeight.normal,
+                              color: isDarkMode
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color:
+                                AppStyle.primaryColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.tune_rounded,
+                            size: 16,
+                            color: AppStyle.primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
