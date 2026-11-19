@@ -1,4 +1,3 @@
-import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,8 +8,8 @@ import '../../widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 import '../../widgets/cards/build_course_card_widget_ui_v2.dart';
 
 class TabItemRecentWidget extends ConsumerStatefulWidget {
-  final Key uniqueKey;
-  const TabItemRecentWidget(this.uniqueKey, {super.key});
+  final Key? uniqueKey;
+  const TabItemRecentWidget([this.uniqueKey]) : super(key: uniqueKey);
 
   @override
   ConsumerState<TabItemRecentWidget> createState() => _TabItemRecentWidgetState();
@@ -41,29 +40,27 @@ class _TabItemRecentWidgetState extends ConsumerState<TabItemRecentWidget>
       return const Center(child: Text('No recent courses found'));
     }
 
-    return ExtendedVisibilityDetector(
-      uniqueKey: widget.uniqueKey,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: courseProvider.recentCourses.length,
-        itemBuilder: (context, index) {
-          final course = courseProvider.recentCourses[index];
-          final quizCount = courseProvider.quizCounts[course.id] ?? 0;
-          final admin = adminProvider.admins.firstWhere(
-              (admin) => admin.id == course.adminId,
-              orElse: () => UserModel.empty());
-          final totalLectures = courseProvider.lecturesMap[course.id] ?? 0;
-          final isRegistered = registrationProvider.registeredCourses
-              .any((register) => register.courseId == course.id);
-          return CourseCardV2(
-            course: course,
-            admin: admin,
-            quizCount: quizCount,
-            isRegistered: isRegistered,
-            totalLectures: totalLectures,
-          );
-        },
-      ),
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: courseProvider.recentCourses.length,
+      itemBuilder: (context, index) {
+        final course = courseProvider.recentCourses[index];
+        final quizCount = courseProvider.quizCounts[course.id] ?? 0;
+        final admin = adminProvider.admins.firstWhere(
+            (admin) => admin.id == course.adminId,
+            orElse: () => UserModel.empty());
+        final totalLectures = courseProvider.lecturesMap[course.id] ?? 0;
+        final isRegistered = registrationProvider.registeredCourses
+            .any((register) => register.courseId == course.id);
+        return CourseCardV2(
+          course: course,
+          admin: admin,
+          quizCount: quizCount,
+          isRegistered: isRegistered,
+          totalLectures: totalLectures,
+        );
+      },
     );
   }
 

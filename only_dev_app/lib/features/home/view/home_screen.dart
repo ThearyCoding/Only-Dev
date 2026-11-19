@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:extended_nested_scroll_view/extended_nested_scroll_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:only_dev_app/core/app_style.dart';
 
@@ -39,8 +38,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
   late CategoriesProvider categoriesProvider;
   final User? user = locator<FirebaseAuth>().currentUser;
   late final TabController _tabController;
-  final GlobalKey<ExtendedNestedScrollViewState> _key =
-      GlobalKey<ExtendedNestedScrollViewState>();
 
   @override
   void initState() {
@@ -154,8 +151,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
           } else {
             expandedHeight = 320.0;
           }
-          final double statusBarHeight = MediaQuery.of(context).padding.top;
-          final double pinnedHeaderHeight = statusBarHeight + kToolbarHeight;
           return Column(
             children: [
               Padding(
@@ -221,44 +216,39 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                 ),
               ),
               Expanded(
-                child: ExtendedNestedScrollView(
-                  pinnedHeaderSliverHeightBuilder: () {
-                    return pinnedHeaderHeight;
-                  },
-                  onlyOneScrollInBody: true,
+                child: NestedScrollView(
                   controller: _scrollController,
                   floatHeaderSlivers: true,
-                  key: _key,
                   headerSliverBuilder:
                       (BuildContext context, bool innerBoxIsScrolled) {
-                      return <Widget>[
-                        SliverAppBar(
-                          backgroundColor:
-                              Theme.of(context).scaffoldBackgroundColor,
-                          pinned: true,
-                          automaticallyImplyLeading: false,
-                          expandedHeight: expandedHeight + 50,
-                          flexibleSpace: FlexibleSpaceBar(
-                            collapseMode: CollapseMode.pin,
-                            background: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const BannerWidget(),
+                    return <Widget>[
+                      SliverAppBar(
+                        backgroundColor:
+                            Theme.of(context).scaffoldBackgroundColor,
+                        pinned: true,
+                        automaticallyImplyLeading: false,
+                        expandedHeight: expandedHeight + 50,
+                        flexibleSpace: FlexibleSpaceBar(
+                          collapseMode: CollapseMode.pin,
+                          background: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                CategoryWidget(
-                                  categoriesProvider: categoriesProvider,
-                                  scrollController: _categoriesscrollCategories,
-                                )
-                              ],
-                            ),
+                                child: const BannerWidget(),
+                              ),
+                              CategoryWidget(
+                                categoriesProvider: categoriesProvider,
+                                scrollController: _categoriesscrollCategories,
+                              )
+                            ],
                           ),
-                          bottom: PreferredSize(
-                            preferredSize: const Size.fromHeight(0),
+                        ),
+                        bottom: PreferredSize(
+                          preferredSize: const Size.fromHeight(42),
                             child: Container(
                               color: Theme.of(context).scaffoldBackgroundColor,
                               child: TabBar(
@@ -314,9 +304,9 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                     body: TabBarView(
                       controller: _tabController,
                       children: const [
-                        TabItemLessonsWidget(Key('tab1')),
-                        TabItemRecentWidget(Key('tab2')),
-                        TabItemPopularWidget(Key('tab3'))
+                        TabItemLessonsWidget(),
+                        TabItemRecentWidget(),
+                        TabItemPopularWidget(),
                       ],
                     ),
                   ),
