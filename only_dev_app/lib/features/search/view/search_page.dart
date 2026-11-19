@@ -7,14 +7,14 @@ import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/widgets/cards/build_course_card_widget_ui_v2.dart';
 import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 
-class SearchEnginePage extends ConsumerStatefulWidget {
-  const SearchEnginePage({Key? key}) : super(key: key);
+class SearchPage extends ConsumerStatefulWidget {
+  const SearchPage({super.key});
 
   @override
-  SearchEnginePageState createState() => SearchEnginePageState();
+  SearchPageState createState() => SearchPageState();
 }
 
-class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
+class SearchPageState extends ConsumerState<SearchPage> {
   final TextEditingController textController = TextEditingController();
   final FocusNode focusNode = FocusNode();
 
@@ -153,3 +153,6 @@ class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
     );
   }
 }
+
+typedef SearchEnginePage = SearchPage;
+typedef SearchEngineScreen = SearchPage;

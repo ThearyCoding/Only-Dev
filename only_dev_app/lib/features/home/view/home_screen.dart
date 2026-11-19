@@ -102,7 +102,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
             tooltip: localizations.searchCourses,
             splashRadius: 20,
             onPressed: () {
-              context.push(RoutesPath.searchEngineScreen);
+              context.push(RoutesPath.searchPage);
             },
             icon: const Icon(
               Icons.search,
@@ -174,7 +174,7 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
-                  onTap: () => context.push(RoutesPath.searchEngineScreen),
+                  onTap: () => context.push(RoutesPath.searchPage),
                   borderRadius: BorderRadius.circular(10),
                   child: Ink(
                     width: MediaQuery.of(context).size.width - 32,

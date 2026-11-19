@@ -20,7 +20,7 @@ import 'package:only_dev_app/features/quizzes/view/quiz_page.dart';
 import 'package:only_dev_app/features/quizzes/view/quiz_result_screen.dart';
 import 'package:only_dev_app/features/quizzes/view/result_quiz_screen.dart';
 import 'package:only_dev_app/features/quizzes/view/review_question_screen.dart';
-import 'package:only_dev_app/features/search/view/search_engine_screen.dart';
+import 'package:only_dev_app/features/search/view/search_page.dart';
 import 'package:only_dev_app/features/settings/view/language_selection_screen.dart';
 import 'package:only_dev_app/features/settings/view/setting_screen.dart';
 import 'package:only_dev_app/features/profile/view/complete_info_screen.dart';
@@ -172,8 +172,8 @@ class AppRoutes {
           builder: (context, state) => const DisEnableNotificationScreen(),
         ),
         GoRoute(
-            path: RoutesPath.searchEngineScreen,
-            builder: (context, state) => const SearchEnginePage()),
+            path: RoutesPath.searchPage,
+            builder: (context, state) => const SearchPage()),
         GoRoute(
             path: RoutesPath.courseScreen,
             builder: (context, state) {

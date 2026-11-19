@@ -6,7 +6,7 @@ import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/widgets/course-widget/course_list_widget.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_shimmer_course_card_v2.dart';
 import 'package:only_dev_app/widgets/loadings-widget/build_tap_shimmer_widget.dart';
-import 'package:only_dev_app/features/search/view/search_engine_screen.dart';
+import 'package:only_dev_app/features/search/view/search_page.dart';
 
 class CourseListScreen extends ConsumerStatefulWidget {
   const CourseListScreen({super.key});
@@ -55,7 +55,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const SearchEnginePage()),
+                    builder: (context) => const SearchPage()),
               );
             },
             icon: const Icon(Icons.search, size: 26),

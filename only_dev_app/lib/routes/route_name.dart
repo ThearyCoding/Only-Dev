@@ -8,7 +8,8 @@ class RouteName {
   static const String topicScreen = 'topics';
   static const String detailCourseScreen = 'detail-course';
   static const String courseScreen = 'course-screen';
-  static const String searchEngineScreen = 'search-engine-screen';
+  static const String searchPage = 'search';
+  static const String searchEngineScreen = searchPage;
   static const String isEnableNotifications = 'is-enable-notifications';
   static const String detailImageScreen = 'detail-image-screen';
   static const String editProfileInformation = 'edit-profile-information';
