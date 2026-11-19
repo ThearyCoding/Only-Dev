@@ -5,6 +5,7 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/widgets/cards/build_course_card_widget_ui_v2.dart';
+import '../../../widgets/textfield/app_text_loupe.dart';
 
 class SearchEnginePage extends ConsumerStatefulWidget {
   const SearchEnginePage({Key? key}) : super(key: key);
@@ -79,6 +80,7 @@ class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
                     borderRadius: BorderRadius.circular(5.0),
                   ),
                   child: TextField(
+                    magnifierConfiguration: AppTextLoupe.configuration,
                     controller: textController,
                     focusNode: focusNode,
                     onSubmitted: (value) {
@@ -132,8 +134,7 @@ class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
                                 itemCount: provider.courses.length,
                                 itemBuilder: (context, index) {
                                   final course = provider.courses[index];
-                                  final admin =
-                                      adminProvider.admins.firstWhere(
+                                  final admin = adminProvider.admins.firstWhere(
                                     (admin) => admin.id == course.adminId,
                                     orElse: () => UserModel.empty(),
                                   );

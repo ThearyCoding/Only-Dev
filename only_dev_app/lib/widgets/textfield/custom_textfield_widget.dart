@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_text_loupe.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -26,6 +27,7 @@ class CustomTextField extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: TextFormField(
+        magnifierConfiguration: AppTextLoupe.configuration,
         controller: controller,
         style: const TextStyle(fontSize: 16.0),
         decoration: InputDecoration(

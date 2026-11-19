@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:only_dev_app/core/app_style.dart';
+import '../../../widgets/textfield/app_text_loupe.dart';
 
 class AuthTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -50,11 +51,14 @@ class _AuthTextFieldState extends State<AuthTextField> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF334155),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.85)
+                : const Color(0xFF334155),
           ),
         ),
         const SizedBox(height: 6),
         TextFormField(
+          magnifierConfiguration: AppTextLoupe.configuration,
           controller: widget.controller,
           obscureText: widget.isPassword ? _obscureText : false,
           keyboardType: widget.keyboardType,
@@ -96,7 +100,8 @@ class _AuthTextFieldState extends State<AuthTextField> {
                     },
                   )
                 : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppStyle.radiusMd),
               borderSide: BorderSide(
@@ -140,4 +145,3 @@ class _AuthTextFieldState extends State<AuthTextField> {
     );
   }
 }
-

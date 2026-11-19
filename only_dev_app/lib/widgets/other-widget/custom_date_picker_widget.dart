@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../textfield/app_text_loupe.dart';
 
 class CustomDatePicker extends StatelessWidget {
   final String selectedValue;
@@ -26,6 +27,7 @@ class CustomDatePicker extends StatelessWidget {
           children: [
             Expanded(
               child: TextFormField(
+                magnifierConfiguration: AppTextLoupe.configuration,
                 decoration: InputDecoration(
                   label: RichText(
                     text: TextSpan(

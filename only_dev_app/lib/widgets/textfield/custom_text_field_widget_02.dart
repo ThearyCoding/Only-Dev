@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'app_text_loupe.dart';
 
 class CustomTextFieldWidget02 extends StatefulWidget {
   final String? labelText;
@@ -37,8 +38,7 @@ class CustomTextFieldWidget02 extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  CustomTextFieldWidget02State createState() =>
-      CustomTextFieldWidget02State();
+  CustomTextFieldWidget02State createState() => CustomTextFieldWidget02State();
 }
 
 class CustomTextFieldWidget02State extends State<CustomTextFieldWidget02> {
@@ -102,6 +102,7 @@ class CustomTextFieldWidget02State extends State<CustomTextFieldWidget02> {
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
       child: TextFormField(
+        magnifierConfiguration: AppTextLoupe.configuration,
         focusNode: _focusNode,
         controller: widget.controller,
         validator: widget.validator,

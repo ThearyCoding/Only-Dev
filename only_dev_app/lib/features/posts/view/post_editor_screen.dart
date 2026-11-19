@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/posts/view/post_list_screen.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
+import '../../../widgets/textfield/app_text_loupe.dart';
 
 class PostEditorScreen extends ConsumerStatefulWidget {
   const PostEditorScreen({super.key});
@@ -135,6 +136,7 @@ class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
+                magnifierConfiguration: AppTextLoupe.configuration,
                 controller: _titleController,
                 decoration: const InputDecoration(
                   labelText: 'Title',
@@ -151,6 +153,8 @@ class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
                     child: Column(
                       children: [
                         TextField(
+                          magnifierConfiguration:
+                              AppTextLoupe.configuration,
                           controller: controller,
                           maxLines: 4,
                           decoration: const InputDecoration(
@@ -194,12 +198,14 @@ class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: editorState.isSubmitting ? null : _addTextSection,
+                    onPressed:
+                        editorState.isSubmitting ? null : _addTextSection,
                     icon: const Icon(Icons.text_fields),
                     label: const Text('Add Text'),
                   ),
                   ElevatedButton.icon(
-                    onPressed: editorState.isSubmitting ? null : _addImageSection,
+                    onPressed:
+                        editorState.isSubmitting ? null : _addImageSection,
                     icon: const Icon(Icons.add_a_photo),
                     label: const Text('Add Image'),
                   ),
