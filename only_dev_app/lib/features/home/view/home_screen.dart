@@ -210,19 +210,16 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                 ),
               ),
               Expanded(
-                child: Scrollbar(
-                  interactive: true,
+                child: ExtendedNestedScrollView(
+                  pinnedHeaderSliverHeightBuilder: () {
+                    return pinnedHeaderHeight;
+                  },
+                  onlyOneScrollInBody: true,
                   controller: _scrollController,
-                  child: ExtendedNestedScrollView(
-                    pinnedHeaderSliverHeightBuilder: () {
-                      return pinnedHeaderHeight;
-                    },
-                    onlyOneScrollInBody: true,
-                    controller: _scrollController,
-                    floatHeaderSlivers: true,
-                    key: _key,
-                    headerSliverBuilder:
-                        (BuildContext context, bool innerBoxIsScrolled) {
+                  floatHeaderSlivers: true,
+                  key: _key,
+                  headerSliverBuilder:
+                      (BuildContext context, bool innerBoxIsScrolled) {
                       return <Widget>[
                         SliverAppBar(
                           backgroundColor:
@@ -313,7 +310,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                     ),
                   ),
                 ),
-              ),
             ],
           );
         },
