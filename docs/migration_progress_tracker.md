@@ -252,6 +252,14 @@ This document tracks all completed milestones, current architectural implementat
 - [x] Replace Firebase Storage with Cloudflare R2 presigned uploads.
 - [x] Connect Course Detail Screen to `GET /api/v1/courses/get-detail/:id` with Bearer token enrollment checking.
 - [x] Connect Enrollment button to `POST /api/v1/enrollments`.
+- [x] Connect Interactive Quiz flow & submission to NestJS REST API:
+  - Connected `GET /api/v1/quizzes/course/:courseId` to load questions with dynamic options, point values, and time limit configurations.
+  - Connected `POST /api/v1/quizzes/:id/submit` in `QuizProvider.goToNextQuestion()` to submit student answer payloads (`questionId`, `selectedOptionIds`, `timeTakenSeconds`).
+  - Implemented backend evaluation feedback rendering in `ResultQuizScreen` with real attempt number, pass/fail status badge, score percentage, elapsed time, and Only Dev primary color styling.
+  - Updated `ReviewQuestionScreen` and `BuildReviewQuestionCard` with safe parsing and theme alignment.
+  - Added unit tests for backend `QuizzesService` (`quizzes.service.spec.ts`, 8 tests passing).
+  - Added unit tests for Flutter `QuizProvider` (`quiz_provider_test.dart`, 7 tests passing).
+  - Added widget tests for Flutter `ResultQuizScreen` (`result_quiz_screen_test.dart`, 3 tests passing).
 - [ ] Connect Course Catalog Screen to `GET /api/v1/courses`.
 - [ ] Connect BetterPlayer video resume to `POST /api/v1/enrollments/progress/:courseId`.
 

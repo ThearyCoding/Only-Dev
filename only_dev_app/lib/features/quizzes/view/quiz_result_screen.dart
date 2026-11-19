@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:only_dev_app/core/app_style.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
+import 'package:only_dev_app/routes/app_routes.dart';
 import '/../utils/show_dialog_infor_utils.dart';
 import '/../widgets/check-box-widget/custom_checkbox.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_for_quiz.dart';
@@ -120,9 +123,9 @@ class ResultPage extends ConsumerWidget {
               child: ListView.builder(
                 itemCount: questions.length,
                 itemBuilder: (context, index) {
-                  String question = questions[index]['question'];
+                  String question = (questions[index]['question'] ?? questions[index]['prompt'] ?? '').toString();
                   List<String> options =
-                      List<String>.from(questions[index]['options']);
+                      List<String>.from((questions[index]['options'] as List?) ?? []);
                   String userAnswer =
                       index < userAnswers.length ? userAnswers[index] : '';
                   String correctAnswer = correctAnswers[index];
@@ -218,8 +221,15 @@ class ResultPage extends ConsumerWidget {
                             quizProvider.reTakeTest,
                             'Re-Quiz?',
                             'Are you sure you want to re-quiz?');
-                        if (isExit!) {
-                          // context.go(AppRoutes.topicScreen);
+                        if (isExit == true && context.mounted) {
+                          context.go(
+                            RoutesPath.quizscreen,
+                            extra: {
+                              "categoryId": quizProvider.categoryId,
+                              "title": quizProvider.title,
+                              "courseId": quizProvider.courseId,
+                            },
+                          );
                         }
                       },
                       labelColor: Theme.of(context).textTheme.bodyLarge!.color,
@@ -230,12 +240,19 @@ class ResultPage extends ConsumerWidget {
                     const SizedBox(width: 16),
                     CustomButton(
                       onPressed: () {
-                        // context.go(AppRoutes.topicScreen);
+                        context.go(
+                          RoutesPath.topicScreen,
+                          extra: {
+                            "categoryId": quizProvider.categoryId,
+                            "title": quizProvider.title,
+                            "courseId": quizProvider.courseId,
+                          },
+                        );
                       },
                       borderColor: Colors.transparent,
                       label: 'Finish',
                       labelColor: Colors.white,
-                      bgColor: Colors.green,
+                      bgColor: AppStyle.primaryColor,
                       width: MediaQuery.of(context).size.width * 0.4,
                     ),
                   ],

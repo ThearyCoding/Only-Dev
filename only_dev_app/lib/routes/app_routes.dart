@@ -83,6 +83,7 @@ class AppRoutes {
             final questions = args['questions'] as List<Map<String, dynamic>>?;
             final userAnswers = args['userAnswers'] as List<String>?;
             final correctAnswers = args['correctAnswers'] as List<String>?;
+            final submission = args['submission'] as Map<String, dynamic>?;
             if (questions != null &&
                 userAnswers != null &&
                 correctAnswers != null) {
@@ -90,6 +91,7 @@ class AppRoutes {
                 questions: questions,
                 userAnswers: userAnswers,
                 correctAnswers: correctAnswers,
+                submission: submission,
               );
             } else {
               return const SizedBox();

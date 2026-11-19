@@ -1,5 +1,5 @@
-import '/../widgets/cards/build_review_question_card.dart';
 import 'package:flutter/material.dart';
+import 'package:only_dev_app/widgets/cards/build_review_question_card.dart';
 
 class ReviewQuestionScreen extends StatelessWidget {
   final List<Map<String, dynamic>> questions;
@@ -7,11 +7,11 @@ class ReviewQuestionScreen extends StatelessWidget {
   final List<String> correctAnswers;
 
   const ReviewQuestionScreen({
-    Key? key,
+    super.key,
     required this.questions,
     required this.userAnswers,
     required this.correctAnswers,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,26 +20,27 @@ class ReviewQuestionScreen extends StatelessWidget {
         title: const Text('Review Questions'),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(12.0),
         itemCount: questions.length,
         itemBuilder: (context, index) {
           final questionData = questions[index];
-          final String question = questionData['question'] as String;
-          final List<String> options =
-              List<String>.from(questionData['options'] as List);
+          final String question = (questionData['question'] ?? questionData['prompt'] ?? '').toString();
+          final List<String> options = List<String>.from((questionData['options'] as List?) ?? []);
           final String correctAnswerText =
               (questionData['answer'] as String?)?.trim().toLowerCase() ?? '';
-          final String userAnswer = userAnswers[index].trim().toLowerCase();
+          final String userAnswer =
+              (index < userAnswers.length ? userAnswers[index] : '').trim().toLowerCase();
 
-          // Handle null cases and find the indexes safely
+          // Safely find matching indices
           final int correctAnswerIndex = options.indexWhere(
               (option) => option.trim().toLowerCase() == correctAnswerText);
           final int selectedAnswerIndex = options.indexWhere(
               (option) => option.trim().toLowerCase() == userAnswer);
 
-          final bool isCorrect = correctAnswerIndex == selectedAnswerIndex;
+          final bool isCorrect = correctAnswerIndex != -1 &&
+              correctAnswerIndex == selectedAnswerIndex;
           final String explanation =
-              questionData['explanation'] as String? ?? '';
+              (questionData['explanation'] ?? '').toString();
 
           return ReviewQuestionCard(
             question: question,

@@ -1,5 +1,6 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:only_dev_app/core/app_style.dart';
 
 class ReviewQuestionCard extends StatelessWidget {
   final String question;
@@ -51,14 +52,14 @@ class ReviewQuestionCard extends StatelessWidget {
                   Icon(
                     size: 17,
                     isCorrect ? Icons.check_circle : Icons.error,
-                    color: isCorrect ? Colors.green : Colors.red,
+                    color: isCorrect ? AppStyle.primaryColor : AppStyle.error,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     isCorrect ? 'Correct' : 'Incorrect',
                     style: TextStyle(
                       fontSize: 15,
-                      color: isCorrect ? Colors.green : Colors.red,
+                      color: isCorrect ? AppStyle.primaryColor : AppStyle.error,
                     ),
                   ),
                   const Spacer(),

@@ -13,20 +13,35 @@ import 'package:only_dev_app/routes/app_routes.dart';
 class QuizProvider with ChangeNotifier {
   final QuizRepository _quizRepository = locator<QuizRepository>();
   final SharedPreferences _prefs = locator<SharedPreferences>();
+  User? get _user {
+    try {
+      if (locator.isRegistered<FirebaseAuth>()) {
+        return locator<FirebaseAuth>().currentUser;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   List<Map<String, dynamic>> _questions = [];
-  final User? _user = locator<FirebaseAuth>().currentUser;
   int _currentQuestionIndex = 0;
   String _selectedAnswer = '';
   List<String> _userAnswers = [];
   int _timer = 20;
+  int _elapsedSeconds = 0;
   Timer? _countdownTimer;
 
-  late String _courseId;
-  late String _categoryId;
-  late String _title;
+  String _courseId = '';
+  String _categoryId = '';
+  String _title = '';
   String defaultQuizId = '';
+  int _passingScorePercent = 70;
+  int _timeLimitMinutes = 0;
+  int _maxAttemptsAllowed = 0;
+
   bool _isQuizCompleted = false;
   bool _isFetching = false;
+  bool _isSubmitting = false;
+  Map<String, dynamic>? _lastSubmissionResult;
 
   // Getters
   List<Map<String, dynamic>> get questions => _questions;
@@ -34,11 +49,17 @@ class QuizProvider with ChangeNotifier {
   String get selectedAnswer => _selectedAnswer;
   List<String> get userAnswers => _userAnswers;
   int get time => _timer;
+  int get elapsedSeconds => _elapsedSeconds;
   bool get isQuizCompleted => _isQuizCompleted;
   bool get isFetching => _isFetching;
+  bool get isSubmitting => _isSubmitting;
+  Map<String, dynamic>? get lastSubmissionResult => _lastSubmissionResult;
   String get courseId => _courseId;
   String get categoryId => _categoryId;
   String get title => _title;
+  int get passingScorePercent => _passingScorePercent;
+  int get timeLimitMinutes => _timeLimitMinutes;
+  int get maxAttemptsAllowed => _maxAttemptsAllowed;
 
   // Setters
   set setcourseId(String id) => _courseId = id;
@@ -55,7 +76,10 @@ class QuizProvider with ChangeNotifier {
     _selectedAnswer = '';
     _userAnswers.clear();
     _timer = 20;
+    _elapsedSeconds = 0;
     _isQuizCompleted = false;
+    _isSubmitting = false;
+    _lastSubmissionResult = null;
     questions.clear();
     notifyListeners();
 
@@ -69,7 +93,7 @@ class QuizProvider with ChangeNotifier {
       await _prefs.remove('quiz_progress_${uid}_$_courseId');
     }
     restartQuiz();
-    fetchQuestions(_courseId);
+    await fetchQuestions(_courseId);
   }
 
   Future<void> fetchQuestions(String courseId) async {
@@ -79,30 +103,79 @@ class QuizProvider with ChangeNotifier {
     try {
       final quizzes = await _quizRepository.getQuizzesByCourse(courseId);
       List<Map<String, dynamic>> fetchedQuestions = [];
+
       if (quizzes.isNotEmpty) {
         final quiz = quizzes.first;
         defaultQuizId = (quiz['id'] ?? quiz['_id'] ?? '').toString();
+        _passingScorePercent = (quiz['passing_score_percent'] ?? quiz['passingScorePercent'] ?? 70) as int;
+        _timeLimitMinutes = (quiz['time_limit_minutes'] ?? quiz['timeLimitMinutes'] ?? 0) as int;
+        _maxAttemptsAllowed = (quiz['max_attempts_allowed'] ?? quiz['maxAttemptsAllowed'] ?? 0) as int;
+
+        if (_title.isEmpty && quiz['title'] != null) {
+          _title = quiz['title'].toString();
+        }
+
         final raw = quiz['questions'] as List? ?? [];
         fetchedQuestions = raw.map((item) {
           final m = Map<String, dynamic>.from(item as Map);
-          if (m['options'] != null && m['options'] is List) {
-            final opts = (m['options'] as List).map((o) {
-              if (o is Map) {
-                return (o['text'] ?? o['title'] ?? '').toString();
+          final prompt = (m['prompt'] ?? m['question'] ?? '').toString();
+          m['prompt'] = prompt;
+          m['question'] = prompt;
+          m['id'] = (m['_id'] ?? m['id'] ?? '').toString();
+          m['_id'] = m['id'];
+
+          final rawOptsList = m['options'] as List? ?? [];
+          final List<Map<String, dynamic>> rawOptions = [];
+          final List<String> optTexts = [];
+          String correctAnswerText = '';
+          String explanationText = '';
+
+          for (final opt in rawOptsList) {
+            if (opt is Map) {
+              final optMap = Map<String, dynamic>.from(opt);
+              final id = (optMap['id'] ?? '').toString();
+              final text = (optMap['text'] ?? optMap['title'] ?? '').toString();
+              final isCorrect = optMap['is_correct'] == true || optMap['isCorrect'] == true;
+              final expl = (optMap['explanation'] ?? '').toString();
+
+              if (isCorrect) {
+                correctAnswerText = text;
+                explanationText = expl;
               }
-              return o.toString();
-            }).toList();
-            m['options'] = opts;
+
+              rawOptions.add({
+                'id': id,
+                'text': text,
+                'is_correct': isCorrect,
+                'explanation': expl,
+              });
+              optTexts.add(text);
+            } else {
+              final text = opt.toString();
+              rawOptions.add({
+                'id': text,
+                'text': text,
+                'is_correct': false,
+                'explanation': '',
+              });
+              optTexts.add(text);
+            }
           }
+
+          if (correctAnswerText.isEmpty && m['answer'] != null) {
+            correctAnswerText = m['answer'].toString();
+          }
+          if (explanationText.isEmpty && m['explanation'] != null) {
+            explanationText = m['explanation'].toString();
+          }
+
+          m['options'] = optTexts;
+          m['rawOptions'] = rawOptions;
+          m['answer'] = correctAnswerText;
+          m['explanation'] = explanationText;
+
           return m;
         }).toList();
-      }
-
-      for (var question in fetchedQuestions) {
-        if (question['options'] != null && question['options'] is List) {
-          List<dynamic> options = question['options'];
-          options.shuffle();
-        }
       }
 
       _questions = fetchedQuestions;
@@ -122,12 +195,12 @@ class QuizProvider with ChangeNotifier {
     }
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _elapsedSeconds++;
       if (_timer == 0) {
         goToNextQuestion();
         timer.cancel();
       } else {
         _timer--;
-        log("Timer tick: $_timer seconds remaining.");
         notifyListeners();
       }
     });
@@ -140,37 +213,82 @@ class QuizProvider with ChangeNotifier {
 
   void cancelTimer() {
     if (_countdownTimer != null && _countdownTimer!.isActive) {
-      log("Cancelling the active timer.");
       _countdownTimer!.cancel();
     }
   }
 
-  void goToNextQuestion() {
+  Future<void> goToNextQuestion() async {
     cancelTimer();
 
+    // Record the user's selection for the current question
+    if (_currentQuestionIndex < _userAnswers.length) {
+      _userAnswers[_currentQuestionIndex] = _selectedAnswer;
+    } else {
+      _userAnswers.add(_selectedAnswer);
+    }
+
     if (_currentQuestionIndex < _questions.length - 1) {
-      if (_currentQuestionIndex < _userAnswers.length) {
-        _userAnswers[_currentQuestionIndex] = _selectedAnswer;
-      } else {
-        _userAnswers.add(_selectedAnswer);
-      }
-      saveUserProgress();
+      await saveUserProgress();
 
       _currentQuestionIndex++;
-      _selectedAnswer = '';
+      _selectedAnswer = (_currentQuestionIndex < _userAnswers.length)
+          ? _userAnswers[_currentQuestionIndex]
+          : '';
 
       resetTimer();
       startTimer();
+      notifyListeners();
     } else {
-      if (_currentQuestionIndex < _userAnswers.length) {
-        _userAnswers[_currentQuestionIndex] = _selectedAnswer;
-      } else {
-        _userAnswers.add(_selectedAnswer);
-      }
+      // Completed all questions -> Submit attempt to backend
       _isQuizCompleted = true;
-      saveUserProgress();
-      final context = navigatorKey.currentState?.context;
+      _isSubmitting = true;
+      notifyListeners();
 
+      Map<String, dynamic>? submissionResult;
+
+      if (defaultQuizId.isNotEmpty) {
+        try {
+          final timeTaken = _elapsedSeconds > 0
+              ? _elapsedSeconds
+              : (_questions.length * 20 - _timer);
+
+          final submissionPayload = {
+            'timeTakenSeconds': timeTaken,
+            'answers': List.generate(_questions.length, (i) {
+              final q = _questions[i];
+              final qId = (q['_id'] ?? q['id'] ?? '').toString();
+              final userAns = i < _userAnswers.length ? _userAnswers[i] : '';
+              final rawOpts = (q['rawOptions'] as List<dynamic>?) ?? [];
+
+              String selectedOptId = '';
+              for (final opt in rawOpts) {
+                if (opt is Map &&
+                    (opt['text'] == userAns || opt['id'] == userAns)) {
+                  selectedOptId = (opt['id'] ?? '').toString();
+                  break;
+                }
+              }
+
+              return {
+                'questionId': qId,
+                'selectedOptionIds': selectedOptId.isNotEmpty ? [selectedOptId] : <String>[],
+              };
+            }),
+          };
+
+          submissionResult = await _quizRepository.submitQuiz(defaultQuizId, submissionPayload);
+          _lastSubmissionResult = submissionResult;
+          log("Quiz attempt successfully submitted: ${submissionResult['submission_id'] ?? submissionResult['submissionId']}");
+        } catch (e) {
+          log("Error submitting quiz attempt to backend: $e");
+        }
+      }
+
+      _isSubmitting = false;
+      await saveUserProgress();
+      notifyListeners();
+
+      final context = navigatorKey.currentState?.context;
       if (context != null && context.mounted) {
         context.go(RoutesPath.resultquizscreen, extra: {
           "questions": _questions,
@@ -178,10 +296,10 @@ class QuizProvider with ChangeNotifier {
           "correctAnswers": _questions
               .map((question) => (question["answer"] ?? '').toString())
               .toList(),
+          "submission": submissionResult,
         });
       }
     }
-    notifyListeners();
   }
 
   void goToPreviousQuestion() {
@@ -189,12 +307,14 @@ class QuizProvider with ChangeNotifier {
 
     if (_currentQuestionIndex > 0) {
       _currentQuestionIndex--;
-      _selectedAnswer = _userAnswers[_currentQuestionIndex];
+      _selectedAnswer = (_currentQuestionIndex < _userAnswers.length)
+          ? _userAnswers[_currentQuestionIndex]
+          : '';
 
       resetTimer();
       startTimer();
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> saveUserProgress() async {
@@ -207,6 +327,8 @@ class QuizProvider with ChangeNotifier {
         'userAnswers': _userAnswers,
         'isQuizCompleted': _isQuizCompleted,
         'timer': _timer,
+        'elapsedSeconds': _elapsedSeconds,
+        'lastSubmissionResult': _lastSubmissionResult,
       };
       await _prefs.setString('quiz_progress_${uid}_$_courseId', jsonEncode(data));
     } catch (e) {
@@ -226,10 +348,13 @@ class QuizProvider with ChangeNotifier {
         _userAnswers = List<String>.from(data['userAnswers'] ?? []);
         _isQuizCompleted = data['isQuizCompleted'] ?? false;
         _timer = data['timer'] ?? 20;
+        _elapsedSeconds = data['elapsedSeconds'] ?? 0;
+        if (data['lastSubmissionResult'] != null) {
+          _lastSubmissionResult = Map<String, dynamic>.from(data['lastSubmissionResult'] as Map);
+        }
 
         if (_isQuizCompleted) {
           final context = navigatorKey.currentState?.context;
-
           if (context != null && context.mounted) {
             context.go(RoutesPath.resultquizscreen, extra: {
               "questions": _questions,
@@ -237,6 +362,7 @@ class QuizProvider with ChangeNotifier {
               "correctAnswers": _questions
                   .map((question) => (question["answer"] ?? '').toString())
                   .toList(),
+              "submission": _lastSubmissionResult,
             });
           }
         } else {

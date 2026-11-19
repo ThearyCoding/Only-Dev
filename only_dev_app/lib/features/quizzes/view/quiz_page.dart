@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:only_dev_app/core/app_style.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/utils/show_dialog_infor_utils.dart';
@@ -65,32 +66,30 @@ class _QuizPageState extends ConsumerState<QuizPage> {
       appBar: AppBar(
         title: Text(widget.courseTitle),
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              bool? exit = await askComfirmation(
-                context,
-                quizProvider.cancelTimer,
-                'Exit Quiz',
-                'Are you sure you want to exit the quiz?',
-              );
-              if (exit == true) {
-                // ignore: use_build_context_synchronously
-                if (ModalRoute.of(context)?.isCurrent != true) {
-                  // ignore: use_build_context_synchronously
-                  Navigator.pop(context);
-                } else {
-                  // ignore: use_build_context_synchronously
-                  context.go(
-                    RoutesPath.topicScreen,
-                    extra: {
-                      "categoryId": quizProvider.categoryId,
-                      "title": quizProvider.title,
-                      "courseId": quizProvider.courseId,
-                    },
-                  );
-                }
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            bool? exit = await askComfirmation(
+              context,
+              quizProvider.cancelTimer,
+              'Exit Quiz',
+              'Are you sure you want to exit the quiz?',
+            );
+            if (exit == true && context.mounted) {
+              if (ModalRoute.of(context)?.isCurrent != true) {
+                Navigator.pop(context);
+              } else {
+                context.go(
+                  RoutesPath.topicScreen,
+                  extra: {
+                    "categoryId": quizProvider.categoryId,
+                    "title": quizProvider.title,
+                    "courseId": quizProvider.courseId,
+                  },
+                );
               }
-            }),
+            }
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -99,178 +98,283 @@ class _QuizPageState extends ConsumerState<QuizPage> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Time Remaining: ${quizProvider.time} seconds',
-                    style: const TextStyle(fontSize: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Time Remaining: ${quizProvider.time}s',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: quizProvider.time <= 5
+                              ? AppStyle.error
+                              : Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Text(
+                        'Question ${quizProvider.currentQuestionIndex + 1} of ${quizProvider.questions.length}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: (quizProvider.currentQuestionIndex + 1) /
-                        quizProvider.questions.length,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: (quizProvider.currentQuestionIndex + 1) /
+                          quizProvider.questions.length,
+                      color: AppStyle.primaryColor,
+                      backgroundColor: Colors.grey.shade300,
+                      minHeight: 6,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: PageView.builder(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: quizProvider.questions.length,
                       itemBuilder: (context, index) {
-                            final question = quizProvider.questions[index];
-                            return SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Question ${index + 1}:',
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                        final question = quizProvider.questions[index];
+                        final questionText = (question['question'] ??
+                                question['prompt'] ??
+                                '')
+                            .toString();
+                        final options = List<String>.from(
+                            (question['options'] as List?) ?? []);
+
+                        return SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Question ${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? AppStyle.darkSurface
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  questionText,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    height: 1.4,
                                   ),
-                                  const SizedBox(height: 10),
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      question['question'],
-                                      style: const TextStyle(fontSize: 20),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  AnimationLimiter(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: List.generate(
-                                        question['options'].length,
-                                        (optionIndex) {
-                                          return AnimationConfiguration
-                                              .staggeredList(
-                                            position: optionIndex,
-                                            duration: const Duration(
-                                                milliseconds: 375),
-                                            child: SlideAnimation(
-                                              verticalOffset: 50.0,
-                                              child: FadeInAnimation(
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(vertical: 8.0),
-                                                  child: Material(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12),
-                                                    color: Colors.transparent,
-                                                    child: InkWell(
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              AnimationLimiter(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: List.generate(
+                                    options.length,
+                                    (optionIndex) {
+                                      final option = options[optionIndex];
+                                      final isSelected =
+                                          quizProvider.selectedAnswer == option;
+
+                                      return AnimationConfiguration
+                                          .staggeredList(
+                                        position: optionIndex,
+                                        duration: const Duration(
+                                            milliseconds: 300),
+                                        child: SlideAnimation(
+                                          verticalOffset: 30.0,
+                                          child: FadeInAnimation(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 6.0),
+                                              child: Material(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          12),
+                                                  onTap: quizProvider
+                                                          .isSubmitting
+                                                      ? null
+                                                      : () {
+                                                          quizProvider
+                                                                  .selectedAnswer =
+                                                              option;
+                                                        },
+                                                  splashColor: AppStyle
+                                                      .primaryColor
+                                                      .withOpacity(0.15),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            16),
+                                                    decoration: BoxDecoration(
                                                       borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      onTap: () {
-                                                        quizProvider
-                                                                .selectedAnswer =
-                                                            question['options']
-                                                                [optionIndex];
-                                                      },
-                                                      splashColor: Colors.blue
-                                                          .withOpacity(0.3),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(16),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(12),
-                                                          border: Border.all(
-                                                            color: quizProvider
-                                                                        .selectedAnswer ==
-                                                                    question[
-                                                                            'options']
-                                                                        [
-                                                                        optionIndex]
-                                                                ? Colors.blue
-                                                                : Colors.grey
-                                                                    .shade400,
+                                                          BorderRadius
+                                                              .circular(12),
+                                                      color: isSelected
+                                                          ? AppStyle.primaryColor
+                                                              .withOpacity(
+                                                                  0.08)
+                                                          : Colors
+                                                              .transparent,
+                                                      border: Border.all(
+                                                        color: isSelected
+                                                            ? AppStyle
+                                                                .primaryColor
+                                                            : Colors
+                                                                .grey.shade400,
+                                                        width:
+                                                            isSelected ? 2 : 1,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 24,
+                                                          height: 24,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            border: Border.all(
+                                                              color: isSelected
+                                                                  ? AppStyle
+                                                                      .primaryColor
+                                                                  : Colors.grey,
+                                                              width: 2,
+                                                            ),
+                                                            color: isSelected
+                                                                ? AppStyle
+                                                                    .primaryColor
+                                                                : Colors
+                                                                    .transparent,
+                                                          ),
+                                                          child: isSelected
+                                                              ? const Icon(
+                                                                  Icons.check,
+                                                                  size: 16,
+                                                                  color: Colors
+                                                                      .white,
+                                                                )
+                                                              : null,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            option,
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  isSelected
+                                                                      ? FontWeight
+                                                                          .w600
+                                                                      : FontWeight
+                                                                          .normal,
+                                                            ),
                                                           ),
                                                         ),
-                                                        child: Text(
-                                                          question['options']
-                                                              [optionIndex],
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
-                                                        ),
-                                                      ),
+                                                      ],
                                                     ),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ],
+                                ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: (quizProvider.currentQuestionIndex == 0 ||
+                                  quizProvider.isSubmitting)
+                              ? null
+                              : () {
+                                  quizProvider.goToPreviousQuestion();
+                                },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Previous'),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: quizProvider.currentQuestionIndex == 0
-                                  ? null
-                                  : () {
-                                      quizProvider.goToPreviousQuestion();
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor:
-                                    quizProvider.currentQuestionIndex == 0
-                                        ? Colors.white
-                                        : Colors.white,
-                                backgroundColor:
-                                    quizProvider.currentQuestionIndex == 0
-                                        ? Colors.grey.shade300
-                                        : Colors.blue,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text('Previous'),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: (quizProvider.selectedAnswer.isEmpty ||
+                                  quizProvider.isSubmitting)
+                              ? null
+                              : () {
+                                  quizProvider.goToNextQuestion();
+                                },
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: AppStyle.primaryColor,
+                            disabledBackgroundColor: Colors.grey.shade300,
+                            disabledForegroundColor: Colors.grey.shade600,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: quizProvider.selectedAnswer.isEmpty
-                                  ? null
-                                  : () {
-                                      quizProvider.goToNextQuestion();
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.blue,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          child: quizProvider.isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  quizProvider.currentQuestionIndex ==
+                                          quizProvider.questions.length - 1
+                                      ? 'Submit Quiz'
+                                      : 'Next',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              child: const Text('Next'),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
+                ],
+              ),
       ),
     );
   }

@@ -13,9 +13,12 @@ void main() {
       expect(AppImageWidget.isValidUrl('http://'), isFalse);
       expect(AppImageWidget.isValidUrl('https://'), isFalse);
 
-      expect(AppImageWidget.isValidUrl('https://example.com/image.png'), isTrue);
-      expect(AppImageWidget.isValidUrl('http://localhost:4000/image.jpg'), isTrue);
-      expect(AppImageWidget.isValidUrl(' https://example.com/avatar.jpg '), isTrue);
+      expect(
+          AppImageWidget.isValidUrl('https://example.com/image.png'), isTrue);
+      expect(
+          AppImageWidget.isValidUrl('http://localhost:4000/image.jpg'), isTrue);
+      expect(AppImageWidget.isValidUrl(' https://example.com/avatar.jpg '),
+          isTrue);
     });
 
     test('safeNetworkImageProvider returns null for invalid URLs', () {
@@ -24,11 +27,14 @@ void main() {
       expect(AppImageWidget.safeNetworkImageProvider('  '), isNull);
       expect(AppImageWidget.safeNetworkImageProvider('invalid-uri'), isNull);
 
-      final provider = AppImageWidget.safeNetworkImageProvider('https://example.com/test.png');
+      final provider = AppImageWidget.safeNetworkImageProvider(
+          'https://example.com/test.png');
       expect(provider, isNotNull);
     });
 
-    testWidgets('AppCircleAvatar renders initials without throwing when imageUrl is empty', (tester) async {
+    testWidgets(
+        'AppCircleAvatar renders initials without throwing when imageUrl is empty',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -44,7 +50,9 @@ void main() {
       expect(find.text('JD'), findsOneWidget);
     });
 
-    testWidgets('AppCircleAvatar renders fallback question mark when name and url are empty', (tester) async {
+    testWidgets(
+        'AppCircleAvatar renders fallback question mark when name and url are empty',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -60,7 +68,8 @@ void main() {
       expect(find.text('?'), findsOneWidget);
     });
 
-    testWidgets('AppImageWidget renders fallback icon when imageUrl is invalid', (tester) async {
+    testWidgets('AppImageWidget renders fallback icon when imageUrl is invalid',
+        (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -78,4 +87,3 @@ void main() {
     });
   });
 }
-
