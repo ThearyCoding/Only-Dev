@@ -5,7 +5,7 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/generated/l10n.dart';
 import 'package:only_dev_app/model/user_model.dart';
 import 'package:only_dev_app/widgets/cards/build_course_card_widget_ui_v2.dart';
-import '../../../widgets/textfield/app_text_loupe.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 
 class SearchEnginePage extends ConsumerStatefulWidget {
   const SearchEnginePage({Key? key}) : super(key: key);
@@ -72,33 +72,24 @@ class SearchEnginePageState extends ConsumerState<SearchEnginePage> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
-                    borderRadius: BorderRadius.circular(5.0),
+                child: AppTextField(
+                  controller: textController,
+                  focusNode: focusNode,
+                  hintText: localization.searchHint,
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Colors.grey,
                   ),
-                  child: TextField(
-                    magnifierConfiguration: AppTextLoupe.configuration,
-                    controller: textController,
-                    focusNode: focusNode,
-                    onSubmitted: (value) {
-                      if (value.isNotEmpty) {
-                        provider.txtSearch = value;
-                        provider.searchCourses(value);
-                      }
-                    },
-                    decoration: InputDecoration(
-                      icon: const Icon(
-                        Icons.search,
-                        color: Colors.grey,
-                      ),
-                      border: InputBorder.none,
-                      hintText: localization.searchHint,
-                      hintStyle: const TextStyle(color: Colors.grey),
-                    ),
-                  ),
+                  fillColor: Theme.of(context).colorScheme.secondary,
+                  borderRadius: 8.0,
+                  borderless: true,
+                  textInputAction: TextInputAction.search,
+                  onFieldSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      provider.txtSearch = value;
+                      provider.searchCourses(value);
+                    }
+                  },
                 ),
               ),
               Expanded(

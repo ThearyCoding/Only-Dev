@@ -6,8 +6,8 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/core/viewmodel/base_view.dart';
 import 'package:only_dev_app/routes/app_routes.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 import '../viewmodel/auth_viewmodel.dart';
-import '../widgets/auth_text_field.dart';
 import '../widgets/google_sign_in_button.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
@@ -67,7 +67,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               const SizedBox(height: 20),
 
               // Full Name
-              AuthTextField(
+              AppTextField(
                 controller: _fullNameController,
                 labelText: 'Full Name',
                 hintText: 'John Doe',
@@ -82,7 +82,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               const SizedBox(height: 14),
 
               // Email
-              AuthTextField(
+              AppTextField(
                 controller: _emailController,
                 labelText: 'Email Address',
                 hintText: 'name@example.com',
@@ -101,7 +101,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               const SizedBox(height: 14),
 
               // Password
-              AuthTextField(
+              AppTextField(
                 controller: _passwordController,
                 labelText: 'Password',
                 hintText: 'Minimum 6 characters',
@@ -120,7 +120,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               const SizedBox(height: 14),
 
               // Confirm Password
-              AuthTextField(
+              AppTextField(
                 controller: _confirmPasswordController,
                 labelText: 'Confirm Password',
                 hintText: 'Re-enter your password',

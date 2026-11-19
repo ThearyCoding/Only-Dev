@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/posts/view/post_list_screen.dart';
 import 'package:only_dev_app/utils/app_toast_utils.dart';
-import '../../../widgets/textfield/app_text_loupe.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 
 class PostEditorScreen extends ConsumerStatefulWidget {
   const PostEditorScreen({super.key});
@@ -135,13 +135,10 @@ class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                magnifierConfiguration: AppTextLoupe.configuration,
+              AppTextField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
+                labelText: 'Title',
+                hintText: 'Enter title...',
               ),
               const SizedBox(height: 16),
               ...editorState.sections.map((section) {
@@ -152,16 +149,11 @@ class _PostEditorScreenState extends ConsumerState<PostEditorScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Column(
                       children: [
-                        TextField(
-                          magnifierConfiguration:
-                              AppTextLoupe.configuration,
+                        AppTextField(
                           controller: controller,
+                          labelText: 'Content',
+                          hintText: 'Write content here...',
                           maxLines: 4,
-                          decoration: const InputDecoration(
-                            labelText: 'Content',
-                            alignLabelWithHint: true,
-                            border: OutlineInputBorder(),
-                          ),
                         ),
                         Align(
                           alignment: Alignment.centerRight,

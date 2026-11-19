@@ -16,7 +16,7 @@ import 'package:only_dev_app/utils/image_picker_utils.dart';
 import 'package:only_dev_app/widgets/buttons/custom_btn_loading_widget.dart';
 import 'package:only_dev_app/widgets/check-box-widget/custom_check_box_widget_02.dart';
 import 'package:only_dev_app/widgets/other-widget/custom_date_picker_widget.dart';
-import 'package:only_dev_app/widgets/textfield/custom_text_field_widget_02.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 
 class CompleteInformations extends ConsumerStatefulWidget {
   final User user;
@@ -227,46 +227,30 @@ class _CompleteInformationsState extends ConsumerState<CompleteInformations> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Column(
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('First Name | *'),
-                    ),
-                    const SizedBox(height: 8),
-                    CustomTextFieldWidget02(
-                      labelText: 'First Name ',
-                      hintText: 'E.g., Chorn',
-                      controller: txtfirstname,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                AppTextField(
+                  labelText: 'First Name',
+                  isRequired: true,
+                  hintText: 'E.g., Chorn',
+                  controller: txtfirstname,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your first name';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
-                Column(
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Last Name | *'),
-                    ),
-                    const SizedBox(height: 8),
-                    CustomTextFieldWidget02(
-                      labelText: 'Last Name ',
-                      hintText: 'E.g., Chorn',
-                      controller: txtlastname,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your last name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                AppTextField(
+                  labelText: 'Last Name',
+                  isRequired: true,
+                  hintText: 'E.g., Chorn',
+                  controller: txtlastname,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your last name';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 15),
                 Row(

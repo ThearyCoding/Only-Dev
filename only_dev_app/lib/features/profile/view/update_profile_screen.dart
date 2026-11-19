@@ -3,8 +3,7 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:only_dev_app/di/dependency_injection.dart';
 import 'package:only_dev_app/model/user_model.dart';
-import 'package:only_dev_app/widgets/textfield/custom_text_field_widget_02.dart';
-import 'package:only_dev_app/widgets/textfield/custom_textfield_widget.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 import 'package:only_dev_app/utils/custom_validator.dart';
 import 'package:only_dev_app/utils/date_picker_utils.dart';
 import 'package:flutter/material.dart';
@@ -242,9 +241,10 @@ class EditProfileInformationState
                         child: ValueListenableBuilder<String?>(
                           valueListenable: _errorTextFirstNameNotifier,
                           builder: (context, errorText, _) {
-                            return CustomTextFieldWidget02(
+                            return AppTextField(
                               controller: txtfirstname,
-                              labelText: 'First Name | ',
+                              labelText: 'First Name',
+                              isRequired: true,
                               hintText: 'E.g., John',
                               errorText: errorText,
                               inputFormatters: [
@@ -263,9 +263,10 @@ class EditProfileInformationState
                         child: ValueListenableBuilder<String?>(
                           valueListenable: _errorTextLastNameNotifier,
                           builder: (context, errorText, _) {
-                            return CustomTextFieldWidget02(
+                            return AppTextField(
                               controller: txtlastname,
-                              labelText: 'Last Name | ',
+                              labelText: 'Last Name',
+                              isRequired: true,
                               hintText: 'E.g., Smith',
                               errorText: errorText,
                               validator: (value) => customValidator(value),
@@ -294,17 +295,18 @@ class EditProfileInformationState
                     },
                   ),
                   const SizedBox(height: 20),
-                  Column(
-                    children: [
-                      const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text('Additional Bio (Optional)')),
-                      const SizedBox(height: 10),
-                      CustomTextField(
-                        controller: txtbio,
-                        hintText: 'Add a bio...',
-                      ),
-                    ],
+                  AppTextField(
+                    controller: txtbio,
+                    labelText: 'Additional Bio (Optional)',
+                    hintText: 'Add a bio...',
+                    maxLines: 4,
+                    maxLength: 100,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    onChanged: (_) {
+                      if (!_hasUnsavedChanges.value) {
+                        _hasUnsavedChanges.value = true;
+                      }
+                    },
                   ),
                   const SizedBox(height: 20),
                   ValueListenableBuilder<bool>(

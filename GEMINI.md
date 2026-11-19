@@ -145,6 +145,7 @@ The seeder loads verified streaming URLs for video player testing:
 7. **Native UI Standards**:
    - **No Legacy Refresh Packages**: Always use Flutter's built-in `RefreshIndicator` and standard `ScrollController` listener for pagination.
    - **Universal Image Pipeline**: Always use `AppImageWidget` and `AppCircleAvatar` (`lib/widgets/app_widgets/app_image_widget.dart`).
+   - **Universal Text Field Standard**: Always use `AppTextField` (`lib/widgets/app_widgets/app_textfield_widget.dart`). Never invoke raw `TextField` or `TextFormField` directly in UI screens or create fragmented variants (e.g. `v2`, `v3`). `AppTextField` provides native iOS 17+/18 magnifying loupe support ([`AppTextLoupe`]), automatic password visibility toggle, validation, multi-line/bio support, and unified light/dark `AppStyle` theme styling.
 8. **App Name Consistency**:
    - App title is **Only Dev** across:
      - iOS: `CFBundleDisplayName` & `CFBundleName` in `Info.plist`

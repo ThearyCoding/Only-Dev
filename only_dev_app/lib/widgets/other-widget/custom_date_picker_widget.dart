@@ -1,65 +1,34 @@
 import 'package:flutter/material.dart';
-import '../textfield/app_text_loupe.dart';
+import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
 
 class CustomDatePicker extends StatelessWidget {
   final String selectedValue;
-  final Function onPressed;
+  final VoidCallback onPressed;
   final TextStyle? labelStyle;
   final Color? labelColor;
+
   const CustomDatePicker({
-    Key? key,
+    super.key,
     required this.selectedValue,
     required this.onPressed,
     this.labelStyle,
     this.labelColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onPressed(),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.grey),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                magnifierConfiguration: AppTextLoupe.configuration,
-                decoration: InputDecoration(
-                  label: RichText(
-                    text: TextSpan(
-                      text: 'Date of Birth | ',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        color: labelColor ??
-                            Theme.of(context).textTheme.bodyMedium!.color,
-                      ),
-                      children: const <TextSpan>[
-                        TextSpan(
-                          text: '*',
-                          style: TextStyle(color: Colors.red, fontSize: 16.0),
-                        ),
-                      ],
-                    ),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                controller: TextEditingController(text: selectedValue),
-                readOnly: true,
-              ),
-            ),
-            IconButton(
-              splashRadius: 20,
-              icon: const Icon(Icons.calendar_today),
-              onPressed: () => onPressed(),
-            ),
-          ],
-        ),
+    return AppTextField(
+      controller: TextEditingController(text: selectedValue),
+      labelText: 'Date of Birth',
+      labelStyle: labelStyle,
+      labelColor: labelColor,
+      isRequired: true,
+      readOnly: true,
+      onTap: onPressed,
+      suffixIcon: IconButton(
+        splashRadius: 20,
+        icon: const Icon(Icons.calendar_today_rounded, size: 20),
+        onPressed: onPressed,
       ),
     );
   }
