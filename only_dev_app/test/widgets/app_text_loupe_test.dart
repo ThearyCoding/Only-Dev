@@ -109,11 +109,11 @@ void main() {
     });
   });
 
-  testWidgets('configuration: Flutter loupe on iOS, Material on Android',
+  testWidgets('configuration: AppTextLoupe on both iOS and Android',
       (tester) async {
-    for (final (platform, type) in <(TargetPlatform, Type)>[
-      (TargetPlatform.iOS, AppTextLoupe),
-      (TargetPlatform.android, TextMagnifier),
+    for (final TargetPlatform platform in <TargetPlatform>[
+      TargetPlatform.iOS,
+      TargetPlatform.android,
     ]) {
       debugDefaultTargetPlatformOverride = platform;
       late Widget? built;
@@ -125,8 +125,15 @@ void main() {
         );
         return const SizedBox();
       }));
-      expect(built.runtimeType, type);
+      expect(built, isA<AppTextLoupe>(), reason: '$platform');
     }
     debugDefaultTargetPlatformOverride = null;
+  });
+
+  test('closes when the finger is dragged far below the line (iOS rule)', () {
+    // 40pt below the line: still moving the caret.
+    expect(AppTextLoupe.shouldHideFor(info(const Offset(100, 350))), isFalse);
+    // 90pt below the line: close.
+    expect(AppTextLoupe.shouldHideFor(info(const Offset(100, 400))), isTrue);
   });
 }

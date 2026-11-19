@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:only_dev_app/core/app_style.dart';
-import 'package:only_dev_app/widgets/textfield/app_text_loupe.dart';
+import 'package:only_dev_app/widgets/textfield/ios_style_text_form_field.dart';
 
 /// Single, unified, highly reusable text field widget for the entire Only Dev application.
 ///
@@ -181,9 +181,7 @@ class _AppTextFieldState extends State<AppTextField> {
       return IconButton(
         tooltip: _obscured ? 'Show password' : 'Hide password',
         icon: Icon(
-          _obscured
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          _obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           size: 20,
           color: isDark ? Colors.white54 : const Color(0xFF64748B),
         ),
@@ -265,8 +263,8 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           const SizedBox(height: 6),
         ],
-        TextFormField(
-          magnifierConfiguration: AppTextLoupe.configuration,
+        // iOS-style editing on every platform (look, gestures, loupe).
+        IosStyleTextFormField(
           controller: widget.controller,
           initialValue: widget.initialValue,
           focusNode: widget.focusNode,

@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-/// Flutter-drawn text loupe tuned to match the iOS 17+/18 system loupe.
+/// Flutter-drawn text loupe, used on both iOS and Android, styled after the
+/// iOS 17+/18 system loupe.
 ///
 /// All constants were measured frame-by-frame from screen recordings of the
 /// native Messages text field on an iPhone 16 Plus simulator (iOS 18.6):
@@ -61,28 +61,29 @@ class AppTextLoupe extends StatefulWidget {
   /// (same rule as UIKit / CupertinoTextMagnifier).
   static const double hideBelowThreshold = 48;
 
-  /// iOS: the Flutter loupe above. Other platforms keep Flutter's adaptive
-  /// (Material) magnifier, which already matches Android's EditText.
+  /// Use [AppTextLoupe] on every platform (it is drawn by Flutter, not the
+  /// OS), so iOS and Android share the same loupe look and animations.
   static final TextMagnifierConfiguration configuration =
       TextMagnifierConfiguration(
     magnifierBuilder: (
       BuildContext context,
       MagnifierController controller,
       ValueNotifier<MagnifierInfo> magnifierInfo,
-    ) {
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        return AppTextLoupe(
-          controller: controller,
-          magnifierInfo: magnifierInfo,
-        );
-      }
-      return TextMagnifier.adaptiveMagnifierConfiguration.magnifierBuilder(
-        context,
-        controller,
-        magnifierInfo,
-      );
-    },
+    ) =>
+        AppTextLoupe(controller: controller, magnifierInfo: magnifierInfo),
   );
+
+  /// Whether the loupe should close because the finger left the line.
+  ///
+  /// iOS rule, applied on every platform: AppTextField gives Android iOS-style
+  /// gestures (no teardrop handle hanging below the text), so the finger is
+  /// on the line while moving the caret, as on iOS.
+  @visibleForTesting
+  static bool shouldHideFor(MagnifierInfo info) {
+    final double belowLine =
+        info.globalGesturePosition.dy - info.caretRect.center.dy;
+    return belowLine > hideBelowThreshold;
+  }
 
   /// The point being magnified: follows the finger horizontally (clamped to
   /// the field, like UITextView — not to the end of the text), vertically
@@ -135,7 +136,7 @@ class _AppTextLoupeState extends State<AppTextLoupe>
   late final Ticker _followTicker;
 
   /// Where the loupe is heading (latest gesture) vs. where it is drawn.
-  Offset? _target;
+  final ValueNotifier<Offset?> _target = ValueNotifier<Offset?>(null);
   final ValueNotifier<Offset?> _focal = ValueNotifier<Offset?>(null);
   double _caretHeight = 20;
   Duration _lastTick = Duration.zero;
@@ -184,9 +185,7 @@ class _AppTextLoupeState extends State<AppTextLoupe>
 
     // Dragged too far below the line: close (but keep the overlay so it can
     // reopen if the finger comes back), like the system loupe.
-    final double belowLine =
-        info.globalGesturePosition.dy - info.caretRect.center.dy;
-    if (belowLine > AppTextLoupe.hideBelowThreshold) {
+    if (AppTextLoupe.shouldHideFor(info)) {
       if (widget.controller.shown) {
         widget.controller.hide(removeFromOverlay: false);
       }
@@ -197,11 +196,11 @@ class _AppTextLoupeState extends State<AppTextLoupe>
     }
 
     if (info.caretRect.height > 0) _caretHeight = info.caretRect.height;
-    _target = AppTextLoupe.focalPointFor(info);
+    _target.value = AppTextLoupe.focalPointFor(info);
 
     if (_focal.value == null) {
       // First position: appear exactly at the caret, no glide in.
-      _focal.value = _target;
+      _focal.value = _target.value;
     } else if (!_followTicker.isActive) {
       _lastTick = Duration.zero;
       _followTicker.start();
@@ -209,7 +208,7 @@ class _AppTextLoupeState extends State<AppTextLoupe>
   }
 
   void _onFollowTick(Duration elapsed) {
-    final Offset? target = _target;
+    final Offset? target = _target.value;
     final Offset? current = _focal.value;
     if (target == null || current == null) {
       _followTicker.stop();
@@ -239,6 +238,7 @@ class _AppTextLoupeState extends State<AppTextLoupe>
     _ioCurve.dispose();
     _io.dispose();
     _focal.dispose();
+    _target.dispose();
     super.dispose();
   }
 

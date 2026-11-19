@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:only_dev_app/widgets/app_widgets/app_textfield_widget.dart';
+import 'package:only_dev_app/widgets/textfield/ios_style_text_form_field.dart';
 
 void main() {
   group('AppTextField Widget Tests', () {
-    testWidgets('renders label and required asterisk when isRequired is true', (tester) async {
+    testWidgets('renders label and required asterisk when isRequired is true',
+        (tester) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
 
@@ -43,14 +45,15 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byType(TextFormField), 'test@onlydev.com');
+      await tester.enterText(find.byType(IosStyleTextFormField), 'test@onlydev.com');
       await tester.pump();
 
       expect(controller.text, equals('test@onlydev.com'));
       expect(changedValue, equals('test@onlydev.com'));
     });
 
-    testWidgets('toggles password visibility with built-in suffix icon', (tester) async {
+    testWidgets('toggles password visibility with built-in suffix icon',
+        (tester) async {
       final controller = TextEditingController(text: 'secret123');
       addTearDown(controller.dispose);
 
@@ -78,7 +81,8 @@ void main() {
       await tester.tap(find.byType(IconButton));
       await tester.pump();
 
-      final updatedEditableText = tester.widget<EditableText>(editableTextFinder);
+      final updatedEditableText =
+          tester.widget<EditableText>(editableTextFinder);
       expect(updatedEditableText.obscureText, isFalse);
       expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
     });
@@ -105,7 +109,8 @@ void main() {
       expect(find.text('Tell us about yourself...'), findsOneWidget);
       expect(find.text('0/100'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField), 'Hello world from Only Dev!');
+      await tester.enterText(
+          find.byType(IosStyleTextFormField), 'Hello world from Only Dev!');
       await tester.pump();
 
       expect(find.text('26/100'), findsOneWidget);
@@ -144,7 +149,8 @@ void main() {
       expect(find.text('Username is required'), findsOneWidget);
     });
 
-    testWidgets('supports borderless search style with prefix icon', (tester) async {
+    testWidgets('supports borderless search style with prefix icon',
+        (tester) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
 
