@@ -6,7 +6,6 @@ import 'package:only_dev_app/core/providers/app_providers.dart';
 import 'package:only_dev_app/features/courses/provider/categories_provider.dart';
 import 'package:only_dev_app/features/courses/provider/course_provider.dart';
 import 'package:only_dev_app/features/enrollments/provider/registration_provider.dart';
-import 'package:only_dev_app/widgets/tabs-widget/custom_tap_material_indicator.dart';
 import 'package:only_dev_app/widgets/tabs-widget/tab_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +29,8 @@ class HomePage extends ConsumerStatefulWidget {
   HomePageState createState() => HomePageState();
 }
 
-class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixin {
+class HomePageState extends ConsumerState<HomePage>
+    with TickerProviderStateMixin {
   final ScrollController _categoriesscrollCategories = ScrollController();
   final ScrollController _scrollController = ScrollController();
   late CourseProvider courseController;
@@ -119,8 +119,10 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                   return TextButton(
                     onPressed: () => context.push(RoutesPath.login),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      backgroundColor: AppStyle.primaryColor.withValues(alpha: 0.15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      backgroundColor:
+                          AppStyle.primaryColor.withValues(alpha: 0.15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -153,68 +155,6 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
           }
           return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-                child: InkWell(
-                  onTap: () => context.push(RoutesPath.searchPage),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? AppStyle.darkSurface
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isDarkMode
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.grey.shade300,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          IconlyLight.search,
-                          size: 20,
-                          color: isDarkMode
-                              ? Colors.grey.shade400
-                              : Colors.grey.shade600,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            localizations.searchCourses,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.normal,
-                              color: isDarkMode
-                                  ? Colors.grey.shade400
-                                  : Colors.grey.shade600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color:
-                                AppStyle.primaryColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.tune_rounded,
-                            size: 16,
-                            color: AppStyle.primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
               Expanded(
                 child: NestedScrollView(
                   controller: _scrollController,
@@ -248,69 +188,77 @@ class HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixi
                           ),
                         ),
                         bottom: PreferredSize(
-                          preferredSize: const Size.fromHeight(42),
+                          preferredSize: const Size.fromHeight(60),
+                          child: Container(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                            // iOS-style segmented control: grey track,
+                            // equal-width segments, sliding raised pill.
                             child: Container(
-                              color: Theme.of(context).scaffoldBackgroundColor,
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? AppStyle.darkSurface
+                                    : const Color(0xFFF1F2F4),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
                               child: TabBar(
                                 controller: _tabController,
+                                isScrollable: false,
+                                labelPadding: EdgeInsets.zero,
                                 splashFactory: NoSplash.splashFactory,
-                                overlayColor:
-                                    WidgetStateProperty.resolveWith<Color?>(
-                                        (Set<WidgetState> states) {
-                                  return states.contains(WidgetState.focused)
-                                      ? null
-                                      : Colors.transparent;
-                                }),
-                                indicatorSize: TabBarIndicatorSize.label,
-                                indicator: MaterialIndicator(
-                                  height: 3,
-                                  topLeftRadius: 0,
-                                  topRightRadius: 0,
-                                  bottomLeftRadius: 5,
-                                  bottomRightRadius: 5,
-                                  horizontalPadding: 10,
-                                  color: AppStyle.primaryLight,
-                                  verticalPadding:
-                                      AppLocalizations.of(context).khmer ==
-                                              'ខ្មែរ'
-                                          ? 7
-                                          : 10,
-                                  tabPosition: TabPosition.bottom,
+                                overlayColor: const WidgetStatePropertyAll(
+                                    Colors.transparent),
+                                dividerColor: Colors.transparent,
+                                indicatorSize: TabBarIndicatorSize.tab,
+                                indicator: BoxDecoration(
+                                  color: isDarkMode
+                                      ? const Color(0xFF3A3A3C)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                          alpha: isDarkMode ? 0.30 : 0.08),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                indicatorColor: AppStyle.primaryColor,
-                                isScrollable: true,
+                                labelColor: AppStyle.primaryColor,
+                                unselectedLabelColor: isDarkMode
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                                labelStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                unselectedLabelStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
                                 tabs: [
-                                  TabItem(
-                                    title: localizations.lessons,
-                                    count: courseController.courses.length,
-                                  ),
-                                  TabItem(
-                                    title: localizations.recentLessons,
-                                    count:
-                                        courseController.recentCourses.length,
-                                  ),
-                                  TabItem(
-                                    title: localizations.popularLessons,
-                                    count:
-                                        courseController.popularCourses.length,
-                                  ),
+                                  TabItem(title: localizations.lessons),
+                                  TabItem(title: localizations.recentLessons),
+                                  TabItem(title: localizations.popularLessons),
                                 ],
                               ),
                             ),
                           ),
                         ),
-                      ];
-                    },
-                    body: TabBarView(
-                      controller: _tabController,
-                      children: const [
-                        TabItemLessonsWidget(),
-                        TabItemRecentWidget(),
-                        TabItemPopularWidget(),
-                      ],
-                    ),
+                      ),
+                    ];
+                  },
+                  body: TabBarView(
+                    controller: _tabController,
+                    children: const [
+                      TabItemLessonsWidget(),
+                      TabItemRecentWidget(),
+                      TabItemPopularWidget(),
+                    ],
                   ),
                 ),
+              ),
             ],
           );
         },

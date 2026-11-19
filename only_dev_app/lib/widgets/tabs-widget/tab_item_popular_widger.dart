@@ -41,7 +41,11 @@ class _TabItemPopularWidgetState extends ConsumerState<TabItemPopularWidget>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 24),
+      // Clear the floating bottom nav bar (Scaffold.extendBody).
+        padding: EdgeInsets.only(
+          top: 8,
+          bottom: 24 + MediaQuery.paddingOf(context).bottom,
+        ),
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: courseProvider.popularCourses.length,
       itemBuilder: (context, index) {

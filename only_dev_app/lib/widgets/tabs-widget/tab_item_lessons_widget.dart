@@ -51,7 +51,11 @@ class _TabItemLessonsWidgetState extends ConsumerState<TabItemLessonsWidget>
     return RefreshIndicator(
       onRefresh: _refreshCourses,
       child: ListView.builder(
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        // Clear the floating bottom nav bar (Scaffold.extendBody).
+        padding: EdgeInsets.only(
+          top: 8,
+          bottom: 24 + MediaQuery.paddingOf(context).bottom,
+        ),
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: courseProvider.courses.length,
         itemBuilder: (context, index) {
