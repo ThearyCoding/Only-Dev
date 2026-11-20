@@ -12,6 +12,7 @@
     "build:prod": "cross-env NODE_ENV=production nest build",
     "db:local": "node scripts/start-local-db.js",
     "seed": "cross-env NODE_ENV=development nest build && node dist/seed/seed.cli.js",
+    "seed:dev": "cross-env NODE_ENV=development nest build && node dist/seed/seed.cli.js",
     "seed:uat": "cross-env NODE_ENV=uat nest build && node dist/seed/seed.cli.js",
     "seed:prod": "cross-env NODE_ENV=production nest build && node dist/seed/seed.cli.js",
     "deploy": "nest deploy",

@@ -16,7 +16,7 @@ async function start() {
   const mongod = await MongoMemoryServer.create({
     instance: {
       port: 27017,
-      dbName: 'only_dev',
+      dbName: process.env.DB_NAME || 'onlydev_dev',
       dbPath,
       storageEngine: 'wiredTiger',
     },

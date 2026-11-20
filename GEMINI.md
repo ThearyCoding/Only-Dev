@@ -43,7 +43,7 @@ This document defines the system architecture, infrastructure, coding rules, and
 | Service | Environment / Runtime | Address / Port | Description |
 | :--- | :--- | :--- | :--- |
 | **NestJS API** | Node.js (TypeScript) | `http://localhost:4000/api/v1` | Core REST API backend |
-| **Local MongoDB** | `mongodb-memory-server` (Disk-backed) | `mongodb://127.0.0.1:27017/only_dev` | Persistent local database stored in `only_dev_api/.mongodb_data` |
+| **Local MongoDB** | `mongodb-memory-server` (Disk-backed) | `mongodb://127.0.0.1:27017/onlydev_dev` | Persistent local database stored in `only_dev_api/.mongodb_data` |
 | **Cloudflare R2** | AWS S3 SDK Compatible | Cloudflare Presigned PUT URLs | Direct binary video/avatar streaming upload |
 | **Redis** | Optional In-Memory Cache | `localhost:6379` | Fast caching for `/home` and course listings |
 

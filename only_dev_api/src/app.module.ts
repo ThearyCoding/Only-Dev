@@ -33,7 +33,7 @@ import { AppController } from './app.controller.js';
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>(
           'MONGODB_URI',
-          'mongodb://localhost:27017/e_learning_db',
+          'mongodb://127.0.0.1:27017/onlydev_dev',
         ),
       }),
     }),
