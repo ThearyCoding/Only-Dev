@@ -1,15 +1,8 @@
-import 'dart:io';
+import '../../core/config/app_config.dart';
 
 class ApiEndpoints {
-  // Base URLs:
-  // On iOS Simulator & Desktop: localhost works directly.
-  // On Android Emulator: 10.0.2.2 routes to the host machine.
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:4000/api/v1';
-    }
-    return 'http://localhost:4000/api/v1';
-  }
+  /// Base API URL dynamically provided by the active AppConfig environment
+  static String get baseUrl => AppConfig.instance.apiBaseUrl;
 
   // Screen-Aggregated BFF Endpoints (Single Screen = Single Endpoint)
   static const String home = '/home';

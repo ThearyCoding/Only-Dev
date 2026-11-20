@@ -1,4 +1,4 @@
-package com.example.e_leaningapp
+package com.onlydev.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

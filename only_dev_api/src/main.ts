@@ -34,8 +34,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   const port = process.env.PORT || 4000;
+  const nodeEnv = process.env.NODE_ENV || 'development';
   await app.listen(port);
 
+  logger.log(`🌍 Environment: ${nodeEnv.toUpperCase()}`);
   logger.log(`🚀 NestJS Backend running at: http://localhost:${port}/${apiPrefix}`);
 }
 

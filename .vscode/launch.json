@@ -1,25 +1,37 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "e_leaningapp",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "e_leaningapp (profile mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "e_leaningapp (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Only Dev [DEV]",
+      "request": "launch",
+      "type": "dart",
+      "program": "only_dev_app/lib/main_dev.dart"
+    },
+    {
+      "name": "Only Dev [UAT]",
+      "request": "launch",
+      "type": "dart",
+      "program": "only_dev_app/lib/main_uat.dart"
+    },
+    {
+      "name": "Only Dev [PROD]",
+      "request": "launch",
+      "type": "dart",
+      "program": "only_dev_app/lib/main_prod.dart"
+    },
+    {
+      "name": "Only Dev [DEV] (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "program": "only_dev_app/lib/main_dev.dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Only Dev [PROD] (Release)",
+      "request": "launch",
+      "type": "dart",
+      "program": "only_dev_app/lib/main_prod.dart",
+      "flutterMode": "release"
+    }
+  ]
 }

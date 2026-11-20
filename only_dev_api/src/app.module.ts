@@ -15,10 +15,15 @@ import { AppController } from './app.controller.js';
 
 @Module({
   imports: [
-    // Configuration
+    // Multi-environment Configuration: loads .env.<NODE_ENV>.local, .env.<NODE_ENV>, .env.local, .env
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: [
+        `.env.${process.env.NODE_ENV || 'development'}.local`,
+        `.env.${process.env.NODE_ENV || 'development'}`,
+        '.env.local',
+        '.env',
+      ],
     }),
 
     // MongoDB connection via Mongoose

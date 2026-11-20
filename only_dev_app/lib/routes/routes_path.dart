@@ -19,12 +19,8 @@ class RoutesPath {
   static const String profileScreen = '/profile';
   static const String postDetailsScreen = '/post-details';
   static const String settingscreen = '/settings-screen';
-  static const String cartscreen = '/cart-screen';
   static const String resultscreen = '/result-screen';
   static const String resultquizscreen = "/result-quiz-screen";
   static const String reviewquestionscreen = "/review-question-screen";
   static const String languageSelectionScreen = '/language-selection-screen';
-  static const String paymentOptionsPage = '/payment-options-page';
-  static const String khqrpaymentScreen = '/khqr-payment-screen';
-
 }

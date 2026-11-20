@@ -83,6 +83,27 @@ The seeder loads verified streaming URLs for video player testing:
 - **Universal Image & Avatar Pipeline**: All network images, user avatars, course banners, and thumbnails must use `AppImageWidget` and `AppCircleAvatar` (`lib/widgets/app_widgets/app_image_widget.dart`). Never invoke raw `Image.network` or `CachedNetworkImage` directly in UI screens.
 - **Native Refresh & Infinite Scroll**: Do NOT use `pull_to_refresh` or third-party wrappers. Use native Flutter `RefreshIndicator` and `ScrollController` threshold pagination.
 
+### 2.6 Multi-Environment Architecture (`dev`, `uat`, `prod`)
+The monorepo supports isolated environments across both backend and mobile client:
+
+- **NestJS Backend (`only_dev_api`)**:
+  - Environment files: `.env.development`, `.env.uat`, `.env.production` (cascading fallback to `.env`).
+  - Run targets:
+    - Development: `npm run start:dev`
+    - UAT: `npm run start:uat`
+    - Production: `npm run start:prod`
+  - Seeding targets: `npm run seed:dev`, `npm run seed:uat`, `npm run seed:prod`
+  - Build targets: `npm run build`, `npm run build:uat`, `npm run build:prod`
+
+- **Flutter Mobile Client (`only_dev_app`)**:
+  - Centralized configuration in [`lib/core/config/app_config.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/core/config/app_config.dart).
+  - Explicit entrypoints:
+    - Development: `flutter run -t lib/main_dev.dart`
+    - UAT: `flutter run -t lib/main_uat.dart`
+    - Production: `flutter run -t lib/main_prod.dart`
+  - Or compile-time define: `flutter run --dart-define=ENV=dev|uat|prod` (or `--dart-define-from-file=env/<env>.json`).
+  - Ready-to-run VS Code debug configurations available in [`.vscode/launch.json`](file:///Users/theary.chorn/Documents/Only-Dev/.vscode/launch.json).
+
 ---
 
 ## 3. Backend Rules & Standards (`only_dev_api`)

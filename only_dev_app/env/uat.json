@@ -1,0 +1,4 @@
+{
+  "ENV": "uat",
+  "API_URL": "https://uat-api.onlydev.com/api/v1"
+}

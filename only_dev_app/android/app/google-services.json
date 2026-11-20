@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "958733498686",
-    "project_id": "elearning-app-a6e15",
-    "storage_bucket": "elearning-app-a6e15.appspot.com"
+    "project_number": "644837978602",
+    "project_id": "only-dev-project",
+    "storage_bucket": "only-dev-project.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:958733498686:android:ec919230808af1a2f0d46f",
+        "mobilesdk_app_id": "1:644837978602:android:11ea53d6dc0a62e5efc293",
         "android_client_info": {
-          "package_name": "com.example.e_leaningapp"
+          "package_name": "com.onlydev.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAEatVnKqV7uiRj71fGHStv-eyP6Wd3BUw"
+          "current_key": "AIzaSyDXfbLs8v7Z_lLLQv95w9_ST0We-iaILcA"
         }
       ],
       "services": {

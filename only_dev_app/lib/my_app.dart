@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/config/app_config.dart';
 import 'core/global_navigation.dart';
 import 'core/providers/app_providers.dart';
 import 'generated/l10n.dart';
@@ -42,10 +43,10 @@ class MyAppState extends ConsumerState<MyApp> {
     final languageProvider = ref.watch(languageNotifierProvider);
 
     return MaterialApp.router(
-      title: 'Only Dev',
+      title: AppConfig.instance.appName,
       routerConfig: _router,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: AppConfig.instance.isDev,
       theme: CustomThemes.lightTheme,
       darkTheme: CustomThemes.darkTheme,
       themeMode: themeProvider.currentTheme,

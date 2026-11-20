@@ -26,8 +26,7 @@ xmlns:tools="http://schemas.android.com/tools"
   </intent>
 </queries>
     <application
-      
-        android:label="Only Dev"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"

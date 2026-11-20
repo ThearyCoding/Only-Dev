@@ -1,19 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'di/dependency_injection.dart';
-import 'messaging/firebase_messaging_service.dart';
-import 'my_app.dart';
-import 'utils/easy_loading_configure_utils.dart';
+import 'core/config/app_config.dart';
+import 'main_common.dart';
 
+/// Default entry point: dynamically resolves environment from --dart-define
+/// or falls back to AppEnvironment.dev.
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  await setupLocator();
-  await FirebaseMessagingService.initialize();
-  configEasyLoading();
-  runApp(const ProviderScope(child: MyApp()));
+  await mainCommon(AppConfig.fromEnvironment());
 }

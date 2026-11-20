@@ -2,24 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLIENT_ID</key>
-	<string>958733498686-sm63bn81svsmshlbvq8m7g4jqkf0oige.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.958733498686-sm63bn81svsmshlbvq8m7g4jqkf0oige</string>
-	<key>ANDROID_CLIENT_ID</key>
-	<string>958733498686-js4kaihn2taahamk1ef16neb8f9lbtud.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAOsQ8w_4VQuKXxcM1hPL-ESBbtF3Ea0P4</string>
+	<string>AIzaSyDRYoOCpF3FltsdWuhL866f1E0Am4azdIg</string>
 	<key>GCM_SENDER_ID</key>
-	<string>958733498686</string>
+	<string>644837978602</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.eLeaningapp</string>
+	<string>com.onlydev.app</string>
 	<key>PROJECT_ID</key>
-	<string>elearning-app-a6e15</string>
+	<string>only-dev-project</string>
 	<key>STORAGE_BUCKET</key>
-	<string>elearning-app-a6e15.appspot.com</string>
+	<string>only-dev-project.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:958733498686:ios:2b04893acc6ed76ef0d46f</string>
+	<string>1:644837978602:ios:c06abae348714568efc293</string>
 </dict>
 </plist>

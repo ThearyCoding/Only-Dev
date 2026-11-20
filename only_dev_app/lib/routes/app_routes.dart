@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/global_navigation.dart';
 import '../di/dependency_injection.dart';
-import 'package:only_dev_app/features/cart/view/cart_screen.dart';
 import 'package:only_dev_app/features/courses/view/course_content_screen.dart';
 import 'package:only_dev_app/features/courses/view/courses_screen.dart';
 import 'package:only_dev_app/features/courses/view/course_detail_screen.dart';
@@ -14,8 +13,6 @@ import 'package:only_dev_app/features/common/view/error_screen.dart';
 import 'package:only_dev_app/features/home/view/main_screen.dart';
 import 'package:only_dev_app/features/notifications/view/dis_enable_notification_screen.dart';
 import 'package:only_dev_app/features/common/view/detail_image_screen.dart';
-import 'package:only_dev_app/features/cart/view/khqr_payment_page.dart';
-import 'package:only_dev_app/features/cart/view/payment_options_page.dart';
 import 'package:only_dev_app/features/quizzes/view/quiz_page.dart';
 import 'package:only_dev_app/features/quizzes/view/quiz_result_screen.dart';
 import 'package:only_dev_app/features/quizzes/view/result_quiz_screen.dart';
@@ -35,18 +32,6 @@ class AppRoutes {
     initialLocation: RoutesPath.home,
     navigatorKey: navigatorKey,
     routes: [
-        GoRoute(
-          path: RoutesPath.khqrpaymentScreen,
-          pageBuilder: (context, state) {
-            return const CupertinoPage(child: KhqrPaymentPage());
-          },
-        ),
-        GoRoute(
-          path: RoutesPath.paymentOptionsPage,
-          builder: (context, state) {
-            return const PaymentOptionsPage();
-          },
-        ),
         GoRoute(
           path: RoutesPath.reviewquestionscreen,
           builder: (context, state) {
@@ -134,10 +119,6 @@ class AppRoutes {
             return QuizPage(
                 courseId: courseId, courseTitle: title, categoryId: categoryId);
           },
-        ),
-        GoRoute(
-          path: RoutesPath.cartscreen,
-          builder: (context, state) => const CartScreen(),
         ),
         GoRoute(
           path: RoutesPath.settingscreen,

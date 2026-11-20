@@ -29,7 +29,10 @@ This document tracks all completed milestones, current architectural implementat
 | **Complete Firestore Elimination** | Zero Firestore, Pure REST/Local | ✅ Completed | `cloud_firestore` removed, 0 imports in app |
 | **Riverpod Migration & No-setState Rule** | `flutter_riverpod` 2.6.1 | ✅ Completed | Zero `setState`, zero direct repo calls in UI |
 | **Database Seeder & Real Videos** | Mongoose, Verified MP4 & HLS | ✅ Completed | 5 courses, 18 lessons, real videos, quizzes, enrollments |
-| **End-to-End API Integration** | Mobile $\leftrightarrow$ NestJS REST API | ⏳ In Progress | Phase 6 |
+| **End-to-End API Integration** | Mobile $\leftrightarrow$ NestJS REST API | ✅ Completed | Home, Courses, Detail, Enrollments, Progress, Quizzes, Search |
+| **Multi-Environment Setup** | `dev`, `uat`, `prod` (API + App) | ✅ Completed | Cascading `.env`, `AppConfig`, dedicated entry points, launch configs |
+| **App ID & Package Rebranding** | `com.onlydev.app` (Original for Prod) | ✅ Completed | Android flavors, iOS build settings, macOS, Linux, Windows |
+| **Firebase Multi-Environment** | `only-dev-project`, Dynamic Options | ✅ Completed | Multi-platform options, 0 analyzer issues, 81/81 Flutter tests |
 
 ---
 
@@ -246,13 +249,17 @@ This document tracks all completed milestones, current architectural implementat
 
 ---
 
-## ⏳ Phase 6: End-to-End Mobile Integration & Testing (Next)
+## ✅ Phase 6: End-to-End Mobile Integration & Testing (Completed)
 
-- [x] Connect Home Screen to `GET /api/v1/home` composite endpoint.
-- [x] Replace Firebase Storage with Cloudflare R2 presigned uploads.
-- [x] Connect Course Detail Screen to `GET /api/v1/courses/get-detail/:id` with Bearer token enrollment checking.
-- [x] Connect Enrollment button to `POST /api/v1/enrollments`.
-- [x] Connect Interactive Quiz flow & submission to NestJS REST API:
+- [x] **Connect Home Screen to `GET /api/v1/home`**:
+  - Aggregated BFF composite endpoint loading banners, categories, popular, and recent courses with Redis cache.
+- [x] **Replace Firebase Storage with Cloudflare R2**:
+  - Presigned binary streaming upload architecture via NestJS `POST /api/v1/storage/presign` and direct S3 SDK presigner.
+- [x] **Connect Course Detail Screen**:
+  - `GET /api/v1/courses/get-detail/:id` with Bearer token authentication, section and lesson curriculum hierarchy, and dynamic enrollment status checking.
+- [x] **Connect Enrollment Flow**:
+  - `POST /api/v1/enrollments` for course registration with optimistic state updates and error rollbacks.
+- [x] **Connect Interactive Quiz Flow & Submission**:
   - Connected `GET /api/v1/quizzes/course/:courseId` to load questions with dynamic options, point values, and time limit configurations.
   - Connected `POST /api/v1/quizzes/:id/submit` in `QuizProvider.goToNextQuestion()` to submit student answer payloads (`questionId`, `selectedOptionIds`, `timeTakenSeconds`).
   - Implemented backend evaluation feedback rendering in `ResultQuizScreen` with real attempt number, pass/fail status badge, score percentage, elapsed time, and Only Dev primary color styling.
@@ -260,6 +267,85 @@ This document tracks all completed milestones, current architectural implementat
   - Added unit tests for backend `QuizzesService` (`quizzes.service.spec.ts`, 8 tests passing).
   - Added unit tests for Flutter `QuizProvider` (`quiz_provider_test.dart`, 7 tests passing).
   - Added widget tests for Flutter `ResultQuizScreen` (`result_quiz_screen_test.dart`, 3 tests passing).
-- [ ] Connect Course Catalog Screen to `GET /api/v1/courses`.
-- [ ] Connect BetterPlayer video resume to `POST /api/v1/enrollments/progress/:courseId`.
+- [x] **Connect Course Catalog Screen to `GET /api/v1/courses`**:
+  - Connected `CourseListProvider` and `CourseListScreen` to `CourseRepository.getCourses()`, supporting tabbed category filters, pagination, and caching.
+- [x] **Connect BetterPlayer Video Resume to `POST /api/v1/enrollments/progress/:courseId`**:
+  - `CourseContentNotifier` hooks into `BetterPlayerEventType.progress` and `BetterPlayerEventType.finished` events to sync playback positions and mark completed lessons ($90\%+$ threshold) in both local SharedPreferences and remote backend.
+
+---
+
+## ✅ Phase 7: Multi-Environment Architecture & App Rebranding (Completed)
+
+### 7.1 NestJS Backend Multi-Environment
+- [x] **Cascading Environment Loading**:
+  - Implemented multi-tier configuration in [`only_dev_api/src/app.module.ts`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/src/app.module.ts) loading `.env.<NODE_ENV>.local`, `.env.<NODE_ENV>`, `.env.local`, and `.env`.
+  - Created environment files:
+    - [`.env.development`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/.env.development) (Local persistent MongoDB, local Redis, dev JWT secrets).
+    - [`.env.uat`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/.env.uat) (UAT database `only_dev_uat`, UAT Redis, and staging credentials).
+    - [`.env.production`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/.env.production) (Atlas cluster URI, managed Redis, production security keys).
+    - [`.env.example`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_api/.env.example) (Consolidated reference template).
+- [x] **Cross-Platform NPM Scripts**:
+  - Added `cross-env` to ensure seamless execution across macOS, Linux, and Windows:
+    - Dev: `npm run start:dev`, `npm run seed:dev`
+    - UAT: `npm run start:uat`, `npm run build:uat`, `npm run seed:uat`
+    - Prod: `npm run start:prod`, `npm run build:prod`, `npm run seed:prod`
+
+### 7.2 Flutter Multi-Environment Architecture
+- [x] **Central Environment Configuration**:
+  - Implemented [`lib/core/config/app_config.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/core/config/app_config.dart) with `AppEnvironment` enum (`dev`, `uat`, `prod`).
+  - Dynamic local backend host resolution: auto-bridges `http://10.0.2.2:4000/api/v1` for Android Emulator and `http://localhost:4000/api/v1` for iOS Simulator / macOS / Web / Desktop.
+  - Supports dynamic on-the-fly override via compile-time define `--dart-define=API_URL=...` (ideal for physical device testing).
+- [x] **Dedicated Target Entry Points**:
+  - Created [`lib/main_common.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/main_common.dart) (shared bootstrap).
+  - Created [`lib/main_dev.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/main_dev.dart) (`AppConfig.dev`).
+  - Created [`lib/main_uat.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/main_uat.dart) (`AppConfig.uat`).
+  - Created [`lib/main_prod.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/main_prod.dart) (`AppConfig.prod`).
+  - Created [`lib/main.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/main.dart) (defaults to `AppConfig.fromEnvironment()`).
+- [x] **Environment Definitions & IDE Debug Targets**:
+  - Created JSON config files in [`only_dev_app/env/`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/env/) (`dev.json`, `uat.json`, `prod.json`) for `--dart-define-from-file`.
+  - Configured [`.vscode/launch.json`](file:///Users/theary.chorn/Documents/Only-Dev/.vscode/launch.json) with 5 ready-to-run debug configurations for DEV, UAT, and PROD.
+
+### 7.3 Application ID & Package Rebranding (`com.onlydev.app`)
+- [x] **Eliminated Legacy Package Names**:
+  - Completely purged all traces of `com.example.e_leaningapp` and `com.example.eLeaningapp`.
+- [x] **Android Configuration**:
+  - Updated `namespace` and `applicationId` to `com.onlydev.app`.
+  - Added product flavors in [`android/app/build.gradle`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/android/app/build.gradle):
+    - `dev`: `applicationIdSuffix ".dev"` $\rightarrow$ `com.onlydev.app.dev`, app label `"Only Dev (Dev)"`
+    - `uat`: `applicationIdSuffix ".uat"` $\rightarrow$ `com.onlydev.app.uat`, app label `"Only Dev (UAT)"`
+    - `prod`: no suffix $\rightarrow$ clean original `com.onlydev.app`, app label `"Only Dev"`
+  - Migrated Kotlin source package from `com/example/e_leaningapp` to [`com/onlydev/app/MainActivity.kt`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/android/app/src/main/kotlin/com/onlydev/app/MainActivity.kt) and deleted the old directory.
+- [x] **iOS Configuration**:
+  - Updated `PRODUCT_BUNDLE_IDENTIFIER = "com.onlydev.app$(BUNDLE_ID_SUFFIX)";` in [`Runner.xcodeproj`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/ios/Runner.xcodeproj/project.pbxproj).
+  - Set `BUNDLE_ID_SUFFIX = .dev` in [`Debug.xcconfig`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/ios/Flutter/Debug.xcconfig) and clean `BUNDLE_ID_SUFFIX = ` in [`Release.xcconfig`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/ios/Flutter/Release.xcconfig).
+- [x] **macOS, Linux & Windows Configuration**:
+  - Standardized bundle identifier to `com.onlydev.app` and copyright notice to `2026 com.onlydev`.
+
+### 7.4 Live Firebase Project Setup (`only-dev-project`)
+- [x] **Registered Real Firebase Project**:
+  - Created live project **`only-dev-project`** under `chorntheary12@gmail.com`.
+  - Registered all platform clients: Android (`com.onlydev.app`), iOS (`com.onlydev.app`), macOS, Web, and Windows.
+  - Downloaded live configuration files [`google-services.json`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/android/app/google-services.json) and [`GoogleService-Info.plist`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/ios/Runner/GoogleService-Info.plist).
+- [x] **Dynamic Multi-Environment FirebaseOptions**:
+  - Refactored [`lib/firebase_options.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/lib/firebase_options.dart) to expose `DefaultFirebaseOptions.currentPlatform` that automatically resolves options based on active `AppConfig.instance.environment`.
+  - Populated with live API keys, App IDs, and project configurations.
+- [x] **Verification & Test Coverage**:
+  - Added multi-environment tests in [`test/core/config/app_config_test.dart`](file:///Users/theary.chorn/Documents/Only-Dev/only_dev_app/test/core/config/app_config_test.dart).
+  - All 81/81 Flutter unit and widget tests passing.
+  - All 30/30 NestJS backend tests passing.
+  - Zero analyzer errors in `lib/core/` and `lib/firebase_options.dart`.
+
+---
+
+## 🎯 Phase 8: Upcoming Strategic Milestones (Next Actions)
+
+1. **Automated Jenkins CI/CD Pipelines**:
+   - Provision Jenkins controller & build agents (Linux Docker & macOS).
+   - Implement multi-environment pipelines for Backend, Flutter Web, Android, and iOS.
+2. **Push Notifications (FCM) End-to-End**:
+   - Save FCM device tokens to user document (`PATCH /api/v1/users/me` with `fcmToken`).
+   - Trigger push notifications from NestJS backend on enrollment confirmation and course updates.
+3. **Offline Caching & Performance**:
+   - Implement offline caching for course lessons and curriculum metadata using Hive or SQLite.
+
 
