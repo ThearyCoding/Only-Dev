@@ -264,34 +264,89 @@ class _AppTextLoupeState extends State<AppTextLoupe>
         return Positioned.fromRect(
           rect: rect,
           child: IgnorePointer(
-            child: RawMagnifier(
-              size: rect.size,
-              magnificationScale:
-                  lerpDouble(1.0, AppTextLoupe.magnification, t)!,
-              // Content under `focal` is drawn at the loupe's centre.
-              focalPointOffset: focal - rect.center,
-              decoration: MagnifierDecoration(
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: tint,
-                    width: AppTextLoupe.borderWidth,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                RawMagnifier(
+                  size: rect.size,
+                  magnificationScale:
+                      lerpDouble(1.0, AppTextLoupe.magnification, t)!,
+                  // Content under `focal` is drawn at the loupe's centre.
+                  focalPointOffset: focal - rect.center,
+                  // No `shadows` here: RawMagnifier's shadow leaks into the
+                  // lens (~12% black), turning the field behind it grey.
+                  // The shadow is painted outside the lens below instead.
+                  decoration: MagnifierDecoration(
+                    shape: StadiumBorder(
+                      side: BorderSide(
+                        color: tint,
+                        width: AppTextLoupe.borderWidth,
+                      ),
+                    ),
+                  ),
+                  child: ColoredBox(
+                    color:
+                        tint.withValues(alpha: AppTextLoupe.maxTint * (1 - t)),
                   ),
                 ),
-                shadows: <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12 * t),
-                    blurRadius: 14,
-                    offset: const Offset(0, 3),
+                // Painted after the magnifier, so its backdrop never sees it.
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: LoupeOuterShadowPainter(opacity: t),
                   ),
-                ],
-              ),
-              child: ColoredBox(
-                color: tint.withValues(alpha: AppTextLoupe.maxTint * (1 - t)),
-              ),
+                ),
+              ],
             ),
           ),
         );
       },
     );
   }
+}
+
+/// Soft drop shadow drawn only *outside* the loupe's stadium shape.
+///
+/// Replaces [MagnifierDecoration.shadows], whose shadow also darkens the
+/// inside of the lens. The clip here is a bounded ring (outer rect minus
+/// stadium), so the lens interior is never touched.
+@visibleForTesting
+class LoupeOuterShadowPainter extends CustomPainter {
+  LoupeOuterShadowPainter({required this.opacity});
+
+  /// 0..1, follows the open/close animation.
+  final double opacity;
+
+  static const double blurRadius = 14;
+  static const Offset offset = Offset(0, 3);
+  static const double alpha = 0.12;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (opacity <= 0 || size.isEmpty) return;
+    final Rect rect = Offset.zero & size;
+    final RRect lens =
+        RRect.fromRectAndRadius(rect, Radius.circular(size.shortestSide / 2));
+    final Path outside = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(rect.inflate(blurRadius * 3 + offset.distance)),
+      Path()..addRRect(lens),
+    );
+    canvas
+      ..save()
+      ..clipPath(outside)
+      ..drawRRect(
+        lens.shift(offset),
+        Paint()
+          ..color = Colors.black.withValues(alpha: alpha * opacity)
+          ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal,
+            Shadow.convertRadiusToSigma(blurRadius),
+          ),
+      )
+      ..restore();
+  }
+
+  @override
+  bool shouldRepaint(LoupeOuterShadowPainter oldDelegate) =>
+      oldDelegate.opacity != opacity;
 }
